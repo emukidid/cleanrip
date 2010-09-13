@@ -11,7 +11,9 @@ A tool to backup your Gamecube/Wii Discs using IOS58 and no need for cIOS.
 ===Features:===
 FAT32 / NTFS file system support
 
-USB 2.0 support
+USB 2.0 Support
+
+Front SD Support
 
 Gamecube / Wii / Wii Dual layer disc dumping
 
