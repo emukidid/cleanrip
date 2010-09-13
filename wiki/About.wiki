@@ -7,17 +7,17 @@ A tool to backup your Gamecube/Wii Discs using IOS58 and no need for cIOS.
 
 
 ==Features:==
-- FAT32 / NTFS file system support
-- USB 2.0 support
-- Gamecube / Wii / Wii Dual layer disc dumping
-- File Splitting (1,2,3GB or Maximum file size - use only on NTFS)
-- MD5 sum presented to the user on successful rip
+* FAT32 / NTFS file system support
+* USB 2.0 support
+* Gamecube / Wii / Wii Dual layer disc dumping
+* File Splitting (1,2,3GB or Maximum file size - use only on NTFS)
+* MD5 sum presented to the user on successful rip
 
 
 ==Requirements:==
-- Wii running the latest HBC (http://bootmii.org)
-- Wii or GC Controller
-- USB or SD storage device (>1.35GB free space)
+* Wii running the latest HBC (http://bootmii.org)
+* Wii or GC Controller
+* USB or SD storage device (>1.35GB free space)
 
 
 ==Credits:==
