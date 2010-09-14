@@ -38,9 +38,6 @@
 /* DVD Stuff */
 u32 dvd_hard_init = 0;
 static u32 read_cmd = NORMAL;
-static int last_current_dir = -1;
-int is_unicode,files;
-file_entries DVDToc;
 
 #ifdef HW_DOL
 #define mfpvr()   ({unsigned int rval; \
@@ -51,6 +48,17 @@ volatile unsigned long* dvd = (volatile unsigned long*)0xCD806000;
 #else
 volatile unsigned long* dvd = (volatile unsigned long*)0xCC006000;
 #endif
+
+void xeno_disable() {
+  char *readBuf = (char*)memalign(32,64*1024);
+  if(!readBuf) {
+    return;
+  }
+  DVD_LowRead64(readBuf, 64*1024, 0);           //xeno GC enable patching
+  DVD_LowRead64(readBuf, 64*1024, 0x1000000);   //xeno GC disable patching
+  free(readBuf);
+}
+
 
 int init_dvd() {
 // Gamecube Mode
@@ -99,55 +107,11 @@ int init_dvd() {
     read_cmd = NORMAL;
   }
   dvd_read_id();
+  
+  xeno_disable();
+  
   return 0;
 #endif
-}
-
-void dvd_unlock()
-{
-	dvd[0] |= 0x00000014;
-	dvd[1] = 0;
-	dvd[2] = 0xFF016D61;
-	dvd[3] = 0x74736869;
-	dvd[4] = 0x74610200;
-	dvd[7] = 1;
-	while ((dvd[0] & 0x14) == 0);
-
-	dvd[0] |= 0x00000014;
-	dvd[1] = 0;
-	dvd[2] = 0xFF006476;
-	dvd[3] = 0x642D6761;
-	dvd[4] = 0x6D650300;
-	dvd[7] = 1;
-	while ((dvd[0] & 0x14) == 0);
-}
-
-void dvd_setstatus()
-{
-	dvd[0] = 0x2E;
-	dvd[1] = 0;
-
-	dvd[2] = 0xee060300;
-	dvd[3] = 0;
-	dvd[4] = 0;
-	dvd[5] = 0;
-	dvd[6] = 0;
-	dvd[7] = 1; // enable reading!
-	while (dvd[7] & 1);
-}
-
-void dvd_SetExtension()
-{
-	dvd[0] = 0x2E;
-	dvd[1] = 0;
-
-	dvd[2] = 0x55010000;
-	dvd[3] = 0;
-	dvd[4] = 0;
-	dvd[5] = 0;
-	dvd[6] = 0;
-	dvd[7] = 1; // enable reading!
-	while (dvd[7] & 1);
 }
 
 int dvd_read_id()
@@ -170,6 +134,22 @@ int dvd_read_id()
 	return 0;
 }
 
+int dvd_read_bca(void *buffer)
+{
+	dvd[0] = 0x2E;
+	dvd[1] = 0;
+	dvd[2] = 0xDA000000;
+	dvd[3] = 0;
+	dvd[4] = 0x40;
+	dvd[5] = (u32)buffer;
+	dvd[6] = 0x40;
+	dvd[7] = 3; // enable reading!
+	while (dvd[7] & 1);
+	if (dvd[0] & 0x4)
+		return 1;
+	return 0;
+}
+
 unsigned int dvd_get_error(void)
 {
 	dvd[2] = 0xE0000000;
@@ -178,7 +158,6 @@ unsigned int dvd_get_error(void)
 	while (dvd[7] & 1);
 	return dvd[8];
 }
-
 
 void dvd_motor_off()
 {
@@ -220,17 +199,6 @@ int DVD_LowRead64(void* dst, unsigned int len, uint64_t offset)
 	if (dvd[0] & 0x4)
 		return 1;
 	return 0;
-}
-
-void dvd_set_offset(u64 offset)
-{
-	dvd[0] = 0x2E;
-	dvd[1] = 0;
-	dvd[2] = 0xD9000000;
-	dvd[3] = ((offset>>2)&0xFFFFFFFF);
-	dvd[4] = 0;
-	dvd[7] = 1;
-	while (dvd[7] & 1);
 }
 
 static char error_str[256];
@@ -320,232 +288,6 @@ char *dvd_error_str()
   
 }
 
-
-int read_sector(void* buffer, uint32_t sector)
-{
-	return DVD_LowRead64(buffer, 2048, sector * 2048);
-}
-
-int read_safe(void* dst, uint64_t offset, int len)
-{
-	int ret = 0, len_read = 0;
-  unsigned char* sector_buffer = (unsigned char*)memalign(32,2048); 
-  
-  // if required, align the start and read it
-  if(offset&2047) {
-    int alignment = offset&2047;
-    int amount_to_copy = len > 2048-alignment ? 2048-alignment : len-alignment;
-    ret |= DVD_LowRead64(sector_buffer, 2048, offset - alignment);
-    memcpy(dst, sector_buffer+alignment, amount_to_copy );	
-
-    len_read += amount_to_copy;
-		offset += amount_to_copy;
-		len -= amount_to_copy;
-		dst += amount_to_copy;
-  }
-  
-  //if required, do aligned reads now until the end.
-	while (len)
-	{
-		ret |= DVD_LowRead64(sector_buffer, 2048, offset);
-		int amount_to_copy = len > 2048 ? 2048 : len;
-		memcpy(dst, sector_buffer, amount_to_copy);	
-
-		len_read += amount_to_copy;
-		offset += amount_to_copy;
-		len -= amount_to_copy;
-		dst += amount_to_copy;
-	}
-	free(sector_buffer);
-	if((ret) || (dvd_get_error())) {
-  	return -1;
-	}
-
-  return len_read;
-}
-
-int read_direntry(unsigned char* direntry)
-{
-       int nrb = *direntry++;
-       ++direntry;
-
-       int sector;
-
-       direntry += 4;
-       sector = (*direntry++) << 24;
-       sector |= (*direntry++) << 16;
-       sector |= (*direntry++) << 8;
-       sector |= (*direntry++);        
-
-       int size;
-
-       direntry += 4;
-
-       size = (*direntry++) << 24;
-       size |= (*direntry++) << 16;
-       size |= (*direntry++) << 8;
-       size |= (*direntry++);
-
-       direntry += 7; // skip date
-
-       int flags = *direntry++;
-       ++direntry; ++direntry; direntry += 4;
-
-       int nl = *direntry++;
-
-       char* name = &DVDToc.file[files].name[0];
-
-       DVDToc.file[files].sector = sector;
-       DVDToc.file[files].size = size;
-       DVDToc.file[files].flags = flags;
-
-       if ((nl == 1) && (direntry[0] == 1)) // ".."
-       {
-               DVDToc.file[files].name[0] = 0;
-               if (last_current_dir != sector)
-                       files++;
-       }
-       else if ((nl == 1) && (direntry[0] == 0))
-       {
-               last_current_dir = sector;
-       }
-       else
-       {
-               if (is_unicode)
-               {
-                       int i;
-                       for (i = 0; i < (nl / 2); ++i)
-                               name[i] = direntry[i * 2 + 1];
-                       name[i] = 0;
-                       nl = i;
-               }
-               else
-               {
-                       memcpy(name, direntry, nl);
-                       name[nl] = 0;
-               }
-
-               if (!(flags & 2))
-               {
-                       if (name[nl - 2] == ';')
-                               name[nl - 2] = 0;
-
-                       int i = nl;
-                       while (i >= 0)
-                               if (name[i] == '.')
-                                       break;
-                               else
-                                       --i;
-
-                       ++i;
-
-               }
-               else
-               {
-                       name[nl++] = '/';
-                       name[nl] = 0;
-               }
-
-               files++;
-       }
-
-       return nrb;
-}
-
-
-
-void read_directory(int sector, int len)
-{
-  int ptr = 0;
-  unsigned char *sector_buffer = (unsigned char*)memalign(32,2048);
-  read_sector(sector_buffer, sector);
-  
-  files = 0;
-  memset(&DVDToc,0,sizeof(file_entries));
-  while (len > 0)
-  {
-    ptr += read_direntry(sector_buffer + ptr);
-    if (ptr >= 2048 || !sector_buffer[ptr])
-    {
-      len -= 2048;
-      sector++;
-      read_sector(sector_buffer, sector);
-      ptr = 0;
-    }
-  }
-  free(sector_buffer);
-}
-
-int dvd_read_directoryentries(uint64_t offset, int size) {
-  int sector = 16;
-  unsigned char *bufferDVD = (unsigned char*)memalign(32,2048);
-  struct pvd_s* pvd = 0;
-  struct pvd_s* svd = 0;
-  
-  while (sector < 32)
-  {
-    if (read_sector(bufferDVD, sector))
-    {
-      free(bufferDVD);
-      return FATAL_ERROR;
-    }
-    if (!memcmp(((struct pvd_s *)bufferDVD)->id, "\2CD001\1", 8))
-    {
-      svd = (void*)bufferDVD;
-      break;
-    }
-    ++sector;
-  }
-  
-  
-  if (!svd)
-  {
-    sector = 16;
-    while (sector < 32)
-    {
-      if (read_sector(bufferDVD, sector))
-      {
-        free(bufferDVD);
-        return FATAL_ERROR;
-      }
-      
-      if (!memcmp(((struct pvd_s *)bufferDVD)->id, "\1CD001\1", 8))
-      {
-        pvd = (void*)bufferDVD;
-        break;
-      }
-      ++sector;
-    }
-  }
-  
-  if ((!pvd) && (!svd))
-  {
-    free(bufferDVD);
-    return NO_ISO9660_DISC;
-  }
-  
-  files = 0;
-  if (svd)
-  {
-    is_unicode = 1;
-    read_direntry(svd->root_direntry);
-  }
-  else
-  {
-    is_unicode = 0;
-    read_direntry(pvd->root_direntry);
-  }
-  
-  if((size + offset) == 0)  // enter root
-    read_directory(DVDToc.file[0].sector, DVDToc.file[0].size);
-  else
-    read_directory(offset>>11, size);
-
-  free(bufferDVD);
-  if(files>0)
-    return files;
-  return NO_FILES;
-}
 
 
 
