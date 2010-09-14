@@ -102,7 +102,7 @@ void _DrawBackdrop() {
   drawBitmap(backdrop_Bitmap, 0, 0, 640,480);
   sprintf(iosStr,"IOS %i", iosversion);
   WriteFont(520,40, iosStr);
-  WriteFont(225,40, "v1.0 by emu_kidid");  
+  WriteFont(225,40, "v1.0.1 by emu_kidid");  
 }
 
 void _DrawHLine (int x1, int x2, int y, int color)
