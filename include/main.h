@@ -36,9 +36,12 @@
 #define TYPE_FAT 0
 #define TYPE_NTFS 1
 
-#define NGC_DISC_SIZE    0x57058000LL
-#define WII_D5_SIZE     0x118240000LL
-#define WII_D9_SIZE     0x1FB4E0000LL
+#define ONE_MEGABYTE    0x000200
+#define ONE_GIGABYTE    0x080000
+
+#define NGC_DISC_SIZE   0x0AE0B0
+#define WII_D5_SIZE     0x230480
+#define WII_D9_SIZE     0x3F69C0
 
 #define HW_REG_BASE   0xcd800000
 #define HW_ARMIRQMASK (HW_REG_BASE + 0x03c)

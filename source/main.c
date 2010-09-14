@@ -71,8 +71,8 @@ u32 get_buttons_pressed() {
   WPADData *wiiPad;
   u32 buttons = 0;
   
-  if(1){ PAD_ScanPads(); padNeedScan = 0; }
-  if(1){ WPAD_ScanPads(); wpadNeedScan = 0; }
+  if(padNeedScan){ PAD_ScanPads(); padNeedScan = 0; }
+  if(wpadNeedScan){ WPAD_ScanPads(); wpadNeedScan = 0; }
   
   u16 gcPad = PAD_ButtonsDown(0);
 	wiiPad = WPAD_Data(0);
@@ -607,23 +607,36 @@ void prompt_new_file(FILE *fp, int chunk, int type, int fs) {
   fclose(fp);
   if(fs == TYPE_FAT) {
     fatUnmount("fat");
+    if(type == TYPE_SD) {
+      frontsd->shutdown();
+    }
+    else if(type == TYPE_USB) {
+      usb->shutdown();
+    }
   }
   if(fs == TYPE_NTFS) {
     ntfsUnmount(&rawNTFSMount[0], true); 
     free(mounts);
+    usb->shutdown();
   }
   dvd_motor_off();
   
-  DrawFrameStart();
-	DrawEmptyBox (30,180, vmode->fbWidth-38, 350, COLOR_BLACK);
-	WriteCentre(255,"Insert a device for the next chunk");
-	WriteCentre(315,"Press  A to continue  B to Exit");
-	wait_press_A_exit_B();
-
 	int ret = -1;
 	do {
+    DrawFrameStart();
+	  DrawEmptyBox (30,180, vmode->fbWidth-38, 350, COLOR_BLACK);
+	  WriteCentre(255,"Insert a device for the next chunk");
+	  WriteCentre(315,"Press  A to continue  B to Exit");
+	  wait_press_A_exit_B();
+	
   	if(fs == TYPE_FAT) {
-  	  ret = fatMountSimple ("fat", type == TYPE_USB ? usb : frontsd);
+    	int i = 0;
+    	for(i = 0; i < 10; i++) {
+  	    ret = fatMountSimple ("fat", type == TYPE_USB ? usb : frontsd);
+  	    if(ret == 1) {
+    	    break;
+  	    }
+	    }
 	  }
 	  else if(fs == TYPE_NTFS) {
   	  fatInitDefault();
@@ -663,23 +676,53 @@ void prompt_new_file(FILE *fp, int chunk, int type, int fs) {
 	init_dvd();
 }
 
+void dump_bca() {
+  sprintf(txtbuffer, "%s%s.bca",&mountPath[0],&gameName[0]);
+  FILE *fp = fopen(txtbuffer, "wb");
+  if(fp) {
+    char* bca_data = (char*)0x90100000;
+    memset(bca_data, 0, 0x40);
+    dvd_read_bca(bca_data);
+    fwrite(bca_data, 1, 0x40, fp);
+    fclose(fp);
+  }
+}
+
+void dump_md5(char *txt) {
+  char md5line[1024];
+  memset(md5line, 0, 1024);
+  sprintf(md5line, "%s MD5: %s\n",&gameName[0],txt);
+  sprintf(txtbuffer, "%s%s.md5",&mountPath[0],&gameName[0]);
+  FILE *fp = fopen(txtbuffer, "wb");
+  if(fp) {
+    fwrite(md5line, 1, 1024, fp);
+    fclose(fp);
+  }
+}
+
 void dump_game(int disc_type, int type, int fs) {
-  
+
   md5_state_t state;
   md5_byte_t digest[16];
   
   // The read size
-  int opt_read_size = 1024*1024;
+  int opt_read_size = ONE_MEGABYTE;
     
-  u64 startOffset = 0LL;
-  u64 endOffset = disc_type==IS_NGC_DISC ? NGC_DISC_SIZE : (u64)((u32)options_map[WII_DUAL_LAYER] == DUAL_LAYER ? WII_D9_SIZE : WII_D5_SIZE);
+  u32 previousLBA = 0;
+  u32 startLBA = 0;
+  u32 endLBA = disc_type==IS_NGC_DISC ? NGC_DISC_SIZE : (options_map[WII_DUAL_LAYER] == DUAL_LAYER ? WII_D9_SIZE : WII_D5_SIZE);
   
-  u32 chunk_size_wii = (u32)(options_map[WII_CHUNK_SIZE]+1);
-  // Get the chunk size
-  u64 opt_chunk_size = chunk_size_wii == CHUNK_MAX ? (u64)(endOffset+opt_read_size) : ((u64)(chunk_size_wii*0x40000000LL));
+  // Work out the chunk size
+  u32 chunk_size_wii = options_map[WII_CHUNK_SIZE];
+  u32 opt_chunk_size = chunk_size_wii == CHUNK_MAX ? (endLBA+opt_read_size) : ((chunk_size_wii+1)*ONE_GIGABYTE);
   
   if(disc_type==IS_NGC_DISC) {
     opt_chunk_size = NGC_DISC_SIZE;
+  }
+  
+  // Dump the BCA for Wii discs
+  if(disc_type==IS_WII_DISC) {
+    dump_bca();
   }
   
   // Create the read buffer
@@ -687,7 +730,13 @@ void dump_game(int disc_type, int type, int fs) {
      
   md5_init(&state);
   
-  sprintf(txtbuffer, "%s%s.part0.iso",&mountPath[0],&gameName[0]);
+  // There will be chunks, name accordingly
+  if(opt_chunk_size < endLBA) {
+    sprintf(txtbuffer, "%s%s.part0.iso",&mountPath[0],&gameName[0]);
+  }
+  else {
+    sprintf(txtbuffer, "%s%s.iso",&mountPath[0],&gameName[0]);
+  }
   FILE *fp = fopen(&txtbuffer[0],"wb");
   if(fp==NULL) {
     DrawFrameStart();
@@ -706,15 +755,17 @@ void dump_game(int disc_type, int type, int fs) {
   long long startTime = gettime();
   int chunk = 1;
   
-	while(!ret && ((u64)(startOffset+opt_read_size) < (u64)(endOffset))) {
-    if((u64)startOffset > (u64)(opt_chunk_size*chunk)) {
+	while(!ret && (startLBA+opt_read_size) < endLBA) {
+    if(startLBA > (opt_chunk_size*chunk)) {
   	  prompt_new_file(fp, chunk, type, fs);
   	  chunk++;
 	  }
-		ret = DVD_LowRead64(buffer, opt_read_size, startOffset);
-		md5_append(&state, (const md5_byte_t *)buffer, opt_read_size);
-		int bytes_written = fwrite(buffer, 1, opt_read_size, fp);
-		if(bytes_written != opt_read_size) {
+	  
+		ret = DVD_LowRead64(buffer, (u32)(opt_read_size<<11), (u64)(((u64)startLBA)<<11));
+		md5_append(&state, (const md5_byte_t *)buffer, (u32)(opt_read_size<<11));
+		
+		int bytes_written = fwrite(buffer, 1, (u32)(opt_read_size<<11), fp);
+		if(bytes_written != (u32)(opt_read_size<<11)) {
 			fclose(fp);
 			DrawFrameStart();
     	DrawEmptyBox (30,180, vmode->fbWidth-38, 350, COLOR_BLACK);
@@ -729,29 +780,32 @@ void dump_game(int disc_type, int type, int fs) {
 		if(get_buttons_pressed() & PAD_BUTTON_B) {
 			ret = -61;
 		}
+		// Update status every second
+		int timePassed = diff_msec(copyTime, gettime());
+    if(timePassed > 1000) {
+      int msecPerRead = (((startLBA-previousLBA)<<11) / timePassed);
+		  u64 remainder = (endLBA-startLBA);
+      u32 etaTime = (remainder / msecPerRead) * timePassed;
+  		sprintf(txtbuffer,"%dMb %4.0fkb/s - ETA %02d:%02d:%02d",
+  		        (int)(((u64)((u64)startLBA<<11))/(1024*1024)), 
+  		        (float)(msecPerRead),
+  		        (int)(((etaTime/1000)/60/60)%60),(int)(((etaTime/1000)/60)%60),(int)((etaTime/1000)%60));
+  		DrawFrameStart();
+      DrawProgressBar((int)((float)((float)startLBA/(float)endLBA)*100), txtbuffer);
+      DrawFrameFinish();
+  		previousLBA = startLBA;
+  		copyTime = gettime();
+		}
 		
-		long long timeNow = gettime();
-		int msecPerRead = (opt_read_size / diff_msec(copyTime,timeNow));
-		u32 remainder = (u32)((endOffset-startOffset)/1024);
-    u32 etaTime = ((remainder / (msecPerRead/1000)));
-    
-		sprintf(txtbuffer,"%dMb %4.0fkb/s - ETA %02d:%02d:%02d",
-		        (int)(startOffset/(1024*1024)), 
-		        (float)((opt_read_size/diff_msec(copyTime,timeNow))),
-		        (int)(((etaTime/1000)/60/60)%60),(int)(((etaTime/1000)/60)%60),(int)((etaTime/1000)%60));
-		DrawFrameStart();
-    DrawProgressBar((int)((float)((float)startOffset/(float)endOffset)*100), txtbuffer);
-    DrawFrameFinish();
-		copyTime = gettime();
-	  startOffset+=opt_read_size;
+	  startLBA+=opt_read_size;
 
 	}
 	// Remainder of data
-	if(!ret && startOffset < endOffset) {
-		ret = DVD_LowRead64(buffer, (u32)(endOffset-startOffset), startOffset);
-		md5_append(&state, (const md5_byte_t *)buffer, (u32)(endOffset-startOffset));
-		int bytes_written = fwrite(buffer, 1, (u32)(endOffset-startOffset), fp);
-		if(bytes_written != (u32)(endOffset-startOffset)) {
+	if(!ret && startLBA < endLBA) {
+		ret = DVD_LowRead64(buffer, (u32)((endLBA-startLBA)<<11), (u64)((u64)startLBA<<11));
+		md5_append(&state, (const md5_byte_t *)buffer, (u32)((endLBA-startLBA)<<11));
+		int bytes_written = fwrite(buffer, 1, (u32)((endLBA-startLBA)<<11), fp);
+		if(bytes_written != (u32)((endLBA-startLBA)<<11)) {
 			fclose(fp);
 			DrawFrameStart();
     	DrawEmptyBox (30,180, vmode->fbWidth-38, 350, COLOR_BLACK);
@@ -790,6 +844,7 @@ void dump_game(int disc_type, int type, int fs) {
     for (i=0; i<16; i++) sprintf(txtbuffer,"%s%02X",txtbuffer,digest[i]);
     WriteCentre(255,"MD5 SUM");
     WriteCentre(280,txtbuffer);
+    dump_md5(txtbuffer);
 	  WriteCentre(315,"Press  A to continue  B to Exit");
 	  wait_press_A_exit_B();
   }
