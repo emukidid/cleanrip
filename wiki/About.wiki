@@ -17,9 +17,11 @@ Front SD Support
 
 Gamecube / Wii / Wii Dual layer disc dumping
 
-File Splitting (1,2,3GB or Maximum file size - use only on NTFS)
+File Splitting (Maximum file size (only on NTFS) or 1, 2, 3 GB)
 
-MD5 sum presented to the user on successful rip
+MD5 sum presented to the user on successful rip (and saved)
+
+BCA dumping (experimental)
 
 
 ===Requirements:===
@@ -37,6 +39,9 @@ libOGC/devKitPPC - shagkur / WinterMute
 
 Team Twiizers for the HBC/Bootmii (http://bootmii.org)
 .. and you, the users of course :)
+
+===Further information===
+Available at: http://www.wiibrew.org/wiki/CleanRip
 
 [http://cleanrip.googlecode.com/svn/wiki/1.png]
 
