@@ -47,7 +47,7 @@
 #define HW_ARMIRQMASK 	(HW_REG_BASE + 0x03c)
 #define HW_ARMIRQFLAG 	(HW_REG_BASE + 0x038)
 
-#define MAX_WII_OPTIONS 2
+#define MAX_WII_OPTIONS 3
 #define MAX_NGC_OPTIONS 3
 
 #define READ_BUFFER 	0x90100000
@@ -73,7 +73,8 @@ enum options
 	NGC_ALIGN_FILES,
 	NGC_ALIGN_BOUNDARY,
 	WII_DUAL_LAYER,
-	WII_CHUNK_SIZE
+	WII_CHUNK_SIZE,
+	WII_NEWFILE
 };
 
 enum shrinkOptions
@@ -113,6 +114,13 @@ enum chunkOptions
   CHUNK_3GB,
   CHUNK_MAX,
   CHUNK_DELIM
+};
+
+enum newFileOptions
+{
+  ASK_USER=0,
+  AUTO_CHUNK,
+  NEWFILE_DELIM
 };
 
 #endif

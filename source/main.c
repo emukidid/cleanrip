@@ -543,6 +543,15 @@ char *getDualLayerOption() {
 	return 0;
 }
 
+char *getNewFileOption() {
+	int opt = options_map[WII_NEWFILE];
+	if (opt == ASK_USER)
+		return "Yes";
+	else if (opt == AUTO_CHUNK)
+		return "No";
+	return 0;
+}
+
 char *getChunkSizeOption() {
 	int opt = options_map[WII_CHUNK_SIZE];
 	if (opt == CHUNK_1GB)
@@ -568,6 +577,8 @@ int getMaxPos(int option_pos) {
 		return ALIGN_DELIM;
 	case NGC_SHRINK_ISO:
 		return SHRINK_DELIM;
+	case WII_NEWFILE:
+		return NEWFILE_DELIM;
 	}
 	return 0;
 }
@@ -612,6 +623,8 @@ static void get_settings(int disc_type) {
 				DrawSelectableButton(vmode->fbWidth-220, 160+(32*1), -1, 160+(32*1)+30, getDualLayerOption(), (!currentSettingPos) ? B_SELECTED:B_NOSELECT);
 				WriteFont(80, 160+(32*2), "Chunk Size");
 				DrawSelectableButton(vmode->fbWidth-220, 160+(32*2), -1, 160+(32*2)+30, getChunkSizeOption(), (currentSettingPos==1) ? B_SELECTED:B_NOSELECT);
+				WriteFont(80, 160+(32*3), "New device per chunk");
+				DrawSelectableButton(vmode->fbWidth-220, 160+(32*3), -1, 160+(32*3)+30, getNewFileOption(), (currentSettingPos==2) ? B_SELECTED:B_NOSELECT);
 			}
 			WriteCentre(370,"Press  A  to continue");
 			DrawAButton(265,360);
@@ -639,60 +652,66 @@ static void get_settings(int disc_type) {
 		while(get_buttons_pressed() & PAD_BUTTON_B);
 	}
 
-void prompt_new_file(FILE *fp, int chunk, int type, int fs) {
+void prompt_new_file(FILE *fp, int chunk, int type, int fs, int silent) {
+	// Close the file and unmount the fs
 	fclose(fp);
-	if (fs == TYPE_FAT) {
-		fatUnmount("fat");
-		if (type == TYPE_SD) {
-			frontsd->shutdown();
-		} else if (type == TYPE_USB) {
+	if(silent == ASK_USER) {
+		if (fs == TYPE_FAT) {
+			fatUnmount("fat");
+			if (type == TYPE_SD) {
+				frontsd->shutdown();
+			} else if (type == TYPE_USB) {
+				usb->shutdown();
+			}
+		}
+		if (fs == TYPE_NTFS) {
+			ntfsUnmount(&rawNTFSMount[0], true);
+			free(mounts);
 			usb->shutdown();
 		}
+		// Stop the disc if we're going to wait on the user
+		dvd_motor_off();
 	}
-	if (fs == TYPE_NTFS) {
-		ntfsUnmount(&rawNTFSMount[0], true);
-		free(mounts);
-		usb->shutdown();
-	}
-	dvd_motor_off();
 
-	int ret = -1;
-	do {
-		DrawFrameStart();
-		DrawEmptyBox(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
-		WriteCentre(255, "Insert a device for the next chunk");
-		WriteCentre(315, "Press  A to continue  B to Exit");
-		wait_press_A_exit_B();
-
-		if (fs == TYPE_FAT) {
-			int i = 0;
-			for (i = 0; i < 10; i++) {
-				ret = fatMountSimple("fat", type == TYPE_USB ? usb : frontsd);
-				if (ret == 1) {
-					break;
+	if(silent == ASK_USER) {
+		int ret = -1;
+		do {
+				DrawFrameStart();
+				DrawEmptyBox(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
+				WriteCentre(255, "Insert a device for the next chunk");
+				WriteCentre(315, "Press  A to continue  B to Exit");
+				wait_press_A_exit_B();
+	
+			if (fs == TYPE_FAT) {
+				int i = 0;
+				for (i = 0; i < 10; i++) {
+					ret = fatMountSimple("fat", type == TYPE_USB ? usb : frontsd);
+					if (ret == 1) {
+						break;
+					}
+				}
+			} else if (fs == TYPE_NTFS) {
+				fatInitDefault();
+				ntfs_md *mounts = NULL;
+				int mountCount = ntfsMountDevice(usb, &mounts, (NTFS_DEFAULT
+						| NTFS_RECOVER) | (NTFS_SU));
+				if (mountCount && mountCount != -1) {
+					sprintf(&mountPath[0], "%s:/", mounts[0].name);
+					ret = 1;
+				} else {
+					ret = -1;
 				}
 			}
-		} else if (fs == TYPE_NTFS) {
-			fatInitDefault();
-			ntfs_md *mounts = NULL;
-			int mountCount = ntfsMountDevice(usb, &mounts, (NTFS_DEFAULT
-					| NTFS_RECOVER) | (NTFS_SU));
-			if (mountCount && mountCount != -1) {
-				sprintf(&mountPath[0], "%s:/", mounts[0].name);
-				ret = 1;
-			} else {
-				ret = -1;
+			if (ret != 1) {
+				DrawFrameStart();
+				DrawEmptyBox(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
+				sprintf(txtbuffer, "Error Mounting Device [%08X]", ret);
+				WriteCentre(255, txtbuffer);
+				WriteCentre(315, "Press A to try again  B to exit");
+				wait_press_A_exit_B();
 			}
-		}
-		if (ret != 1) {
-			DrawFrameStart();
-			DrawEmptyBox(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
-			sprintf(txtbuffer, "Error Mounting Device [%08X]", ret);
-			WriteCentre(255, txtbuffer);
-			WriteCentre(315, "Press A to try again  B to exit");
-			wait_press_A_exit_B();
-		}
-	} while (ret != 1);
+		} while (ret != 1);
+	}
 
 	fp = NULL;
 	sprintf(txtbuffer, "%s%s.part%i.iso", &mountPath[0], &gameName[0], chunk);
@@ -706,7 +725,9 @@ void prompt_new_file(FILE *fp, int chunk, int type, int fs) {
 		sleep(5);
 		exit(0);
 	}
-	init_dvd();
+	if(silent == ASK_USER) {
+		init_dvd();
+	}
 }
 
 void dump_bca() {
@@ -714,6 +735,7 @@ void dump_bca() {
 	FILE *fp = fopen(txtbuffer, "wb");
 	if (fp) {
 		char* bca_data = (char*) READ_BUFFER;
+		memset(bca_data, 0, 64);
 		DI_Read_BCA(bca_data);
 		fwrite(bca_data, 1, 0x40, fp);
 		fclose(fp);
@@ -737,6 +759,9 @@ void dump_game(int disc_type, int type, int fs) {
 	md5_state_t state;
 	md5_byte_t digest[16];
 
+	// Check if we will ask the user to insert a new device per chunk
+	int silent = options_map[WII_NEWFILE];
+	
 	// The read size
 	int opt_read_size = ONE_MEGABYTE;
 
@@ -791,7 +816,7 @@ void dump_game(int disc_type, int type, int fs) {
 
 	while (!ret && (startLBA + opt_read_size) < endLBA) {
 		if (startLBA > (opt_chunk_size * chunk)) {
-			prompt_new_file(fp, chunk, type, fs);
+			prompt_new_file(fp, chunk, type, fs, silent);
 			chunk++;
 		}
 
@@ -836,58 +861,59 @@ void dump_game(int disc_type, int type, int fs) {
 			startLBA+=opt_read_size;
 
 		}
-		// Remainder of data
-		if(!ret && startLBA < endLBA) {
-			ret = DVD_LowRead64(buffer, (u32)((endLBA-startLBA)<<11), (u64)((u64)startLBA<<11));
-			md5_append(&state, (const md5_byte_t *)buffer, (u32)((endLBA-startLBA)<<11));
-			int bytes_written = fwrite(buffer, 1, (u32)((endLBA-startLBA)<<11), fp);
-			if(bytes_written != (u32)((endLBA-startLBA)<<11)) {
-				fclose(fp);
-				DrawFrameStart();
-				DrawEmptyBox (30,180, vmode->fbWidth-38, 350, COLOR_BLACK);
-				WriteCentre(255,"Write Error!");
-				WriteCentre(315,"Exiting in 10 seconds");
-				DrawFrameFinish();
-				sleep(10);
-				exit(1);
-			}
-		}
-		fclose(fp);
-		md5_finish(&state, digest);
-		if(ret != -61 && ret) {
+	// Remainder of data
+	if(!ret && startLBA < endLBA) {
+		ret = DVD_LowRead64(buffer, (u32)((endLBA-startLBA)<<11), (u64)((u64)startLBA<<11));
+		md5_append(&state, (const md5_byte_t *)buffer, (u32)((endLBA-startLBA)<<11));
+		int bytes_written = fwrite(buffer, 1, (u32)((endLBA-startLBA)<<11), fp);
+		if(bytes_written != (u32)((endLBA-startLBA)<<11)) {
+			fclose(fp);
 			DrawFrameStart();
 			DrawEmptyBox (30,180, vmode->fbWidth-38, 350, COLOR_BLACK);
-			sprintf(txtbuffer, "%s",dvd_error_str());
-			WriteCentre(255,txtbuffer);
-			WriteCentre(315,"Press  A  to continue");
-			wait_press_A();
-		}
-		else if (ret == -61) {
-			DrawFrameStart();
-			DrawEmptyBox (30,180, vmode->fbWidth-38, 350, COLOR_BLACK);
-			sprintf(txtbuffer, "Copy Cancelled");
-			WriteCentre(255,txtbuffer);
-			WriteCentre(315,"Press  A  to continue");
-			wait_press_A();
-		}
-		else {
-			sprintf(txtbuffer,"Copy completed in %d mins. Press A",diff_sec(startTime, gettime())/60);
-			DrawFrameStart();
-			DrawEmptyBox (30,180, vmode->fbWidth-38, 350, COLOR_BLACK);
-			WriteCentre(190,txtbuffer);
-			char md5sum[32];
-			memset(&md5sum[0], 0, 32);
-			int i; for (i=0; i<16; i++) sprintf(&md5sum[0],"%s%02X",&md5sum[0],digest[i]);
-			int verified = (verify_is_available(disc_type) && verify_findMD5Sum(&md5sum[0], disc_type));
-			sprintf(txtbuffer, "MD5: %s", verified ? "Verified OK" : "");
-			WriteCentre(230,txtbuffer);
-			WriteCentre(255,verified ? verify_get_name() : "Not Verified with redump.org");
-			WriteCentre(280,&md5sum[0]);
-			dump_md5(&md5sum[0]);
-			WriteCentre(315,"Press  A to continue  B to Exit");
-			wait_press_A_exit_B();
+			WriteCentre(255,"Write Error!");
+			WriteCentre(315,"Exiting in 10 seconds");
+			DrawFrameFinish();
+			sleep(10);
+			exit(1);
 		}
 	}
+	fclose(fp);
+	md5_finish(&state, digest);
+	if(ret != -61 && ret) {
+		DrawFrameStart();
+		DrawEmptyBox (30,180, vmode->fbWidth-38, 350, COLOR_BLACK);
+		sprintf(txtbuffer, "%s",dvd_error_str());
+		WriteCentre(255,txtbuffer);
+		WriteCentre(315,"Press  A  to continue");
+		wait_press_A();
+	}
+	else if (ret == -61) {
+		DrawFrameStart();
+		DrawEmptyBox (30,180, vmode->fbWidth-38, 350, COLOR_BLACK);
+		sprintf(txtbuffer, "Copy Cancelled");
+		WriteCentre(255,txtbuffer);
+		WriteCentre(315,"Press  A  to continue");
+		wait_press_A();
+	}
+	else {
+		sprintf(txtbuffer,"Copy completed in %d mins. Press A",diff_sec(startTime, gettime())/60);
+		DrawFrameStart();
+		DrawEmptyBox (30,180, vmode->fbWidth-38, 350, COLOR_BLACK);
+		WriteCentre(190,txtbuffer);
+		char md5sum[32];
+		memset(&md5sum[0], 0, 32);
+		int i; for (i=0; i<16; i++) sprintf(&md5sum[0],"%s%02X",&md5sum[0],digest[i]);
+		int verified = (verify_is_available(disc_type) && verify_findMD5Sum(&md5sum[0], disc_type));
+		sprintf(txtbuffer, "MD5: %s", verified ? "Verified OK" : "");
+		WriteCentre(230,txtbuffer);
+		WriteCentre(255,verified ? verify_get_name() : "Not Verified with redump.org");
+		WriteCentre(280,&md5sum[0]);
+		dump_md5(&md5sum[0]);
+		WriteCentre(315,"Press  A to continue  B to Exit");
+		wait_press_A_exit_B();
+	}
+	dvd_motor_off();
+}
 
 int main(int argc, char **argv) {
 
