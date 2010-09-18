@@ -30,6 +30,7 @@
 #include <unistd.h>
 #include <di/di.h>
 #include "gc_dvd.h"
+#include "main.h"
 
 #ifdef WII
 #include <di/di.h>
@@ -48,16 +49,6 @@ volatile unsigned long* dvd = (volatile unsigned long*) 0xCD806000;
 #else
 volatile unsigned long* dvd = (volatile unsigned long*)0xCC006000;
 #endif
-
-void xeno_disable() {
-	char *readBuf = (char*) memalign(32, 64* 1024 );
-	if(!readBuf) {
-		return;
-	}
-	DVD_LowRead64(readBuf, 64*1024, 0); //xeno GC enable patching
-			DVD_LowRead64(readBuf, 64*1024, 0x1000000); //xeno GC disable patching
-			free(readBuf);
-		}
 
 int init_dvd() {
 	// Gamecube Mode
@@ -98,7 +89,7 @@ int init_dvd() {
 			usleep(20000);
 		dvd_hard_init = 1;
 	}
-
+	
 	if ((dvd_get_error() & 0xFFFFFF) == 0x053000) {
 		read_cmd = DVDR;
 	} else {
@@ -106,15 +97,15 @@ int init_dvd() {
 	}
 	dvd_read_id();
 
-	xeno_disable();
-
 	return 0;
 #endif
 }
 
 int dvd_read_id() {
 #ifdef HW_RVL
-	DVD_LowRead64((void*) 0x80000000, 32, 0ULL); //for easter egg disc support
+	char readbuf[2048];
+	DVD_LowRead64(&readbuf[0], 2048, 0ULL);
+	memcpy((void*)0x80000000, &readbuf[0], 32);
 	return 0;
 #endif
 	dvd[0] = 0x2E;
@@ -124,22 +115,6 @@ int dvd_read_id() {
 	dvd[4] = 0x20;
 	dvd[5] = 0x80000000;
 	dvd[6] = 0x20;
-	dvd[7] = 3; // enable reading!
-	while (dvd[7] & 1)
-		;
-	if (dvd[0] & 0x4)
-		return 1;
-	return 0;
-}
-
-int dvd_read_bca(void *buffer) {
-	dvd[0] = 0x2E;
-	dvd[1] = 0;
-	dvd[2] = 0xDA000000;
-	dvd[3] = 0;
-	dvd[4] = 0x40;
-	dvd[5] = (u32) buffer;
-	dvd[6] = 0x40;
 	dvd[7] = 3; // enable reading!
 	while (dvd[7] & 1)
 		;
@@ -281,7 +256,7 @@ char *dvd_error_str() {
 		break;
 	}
 	if (!error_str[0])
-		sprintf(&error_str[0], "Unknown %08X", err);
+		sprintf(&error_str[0], "Unknown error %08X", err);
 	return &error_str[0];
 
 }

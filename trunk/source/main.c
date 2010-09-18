@@ -379,22 +379,24 @@ static int initialise_device(int type, int fs) {
 
 /* identify whether this disc is a Gamecube or Wii disc */
 static int identify_disc() {
+	char *readbuf = (char*)READ_BUFFER;
+
 	// Read the header
-	DVD_LowRead64((void*) 0x80000000, 32, 0ULL);
-	if ((char*) 0x80000000 != 0) {
-		strncpy(&gameName[0], (void*) 0x80000000, 6);
+	DVD_LowRead64(readbuf, 2048, 0ULL);
+	if (readbuf[0]) {
+		strncpy(&gameName[0], readbuf, 6);
 		// Multi Disc identifier support
-		if (*(u8*) 0x80000006) {
+		if (readbuf[6]) {
 			sprintf(&gameName[0], "%s-disc%i", &gameName[0],
-					(*(u8*) 0x80000006) + 1);
+					(readbuf[6]) + 1);
 		}
 	} else {
 		sprintf(&gameName[0], "disc%i", dumpCounter);
 	}
-	if ((*(volatile unsigned int*) (0x8000001C)) == NGC_MAGIC) {
+	if ((*(volatile unsigned int*) (readbuf+0x1C)) == NGC_MAGIC) {
 		return IS_NGC_DISC;
 	}
-	if ((*(volatile unsigned int*) (0x80000018)) == WII_MAGIC) {
+	if ((*(volatile unsigned int*) (readbuf+0x18)) == WII_MAGIC) {
 		return IS_WII_DISC;
 	} else {
 		return IS_UNK_DISC;
@@ -711,9 +713,8 @@ void dump_bca() {
 	sprintf(txtbuffer, "%s%s.bca", &mountPath[0], &gameName[0]);
 	FILE *fp = fopen(txtbuffer, "wb");
 	if (fp) {
-		char* bca_data = (char*) 0x90100000;
-		memset(bca_data, 0, 0x40);
-		dvd_read_bca(bca_data);
+		char* bca_data = (char*) READ_BUFFER;
+		DI_Read_BCA(bca_data);
 		fwrite(bca_data, 1, 0x40, fp);
 		fclose(fp);
 	}
@@ -754,13 +755,13 @@ void dump_game(int disc_type, int type, int fs) {
 		opt_chunk_size = NGC_DISC_SIZE;
 	}
 
-	// Dump the BCA for Wii discs
-	if (disc_type == IS_WII_DISC) {
+	// Dump the BCA for Nintendo discs
+	if (disc_type == IS_WII_DISC || disc_type == IS_NGC_DISC) {
 		dump_bca();
 	}
 
 	// Create the read buffer
-	char *buffer = (char*) 0x90100000;
+	char *buffer = (char*) READ_BUFFER;
 
 	md5_init(&state);
 
@@ -856,7 +857,7 @@ void dump_game(int disc_type, int type, int fs) {
 		if(ret != -61 && ret) {
 			DrawFrameStart();
 			DrawEmptyBox (30,180, vmode->fbWidth-38, 350, COLOR_BLACK);
-			sprintf(txtbuffer, "Read Error: %s(%08X)",dvd_error_str(),dvd_get_error());
+			sprintf(txtbuffer, "%s",dvd_error_str());
 			WriteCentre(255,txtbuffer);
 			WriteCentre(315,"Press  A  to continue");
 			wait_press_A();
