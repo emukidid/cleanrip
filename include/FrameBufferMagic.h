@@ -16,7 +16,7 @@
  * ranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU General Public Licence for more details.
  *
-**/
+ **/
 
 #ifndef FRAMEBUFFERMAGIC_H_
 #define FRAMEBUFFERMAGIC_H_
@@ -49,7 +49,8 @@ void DrawFrameFinish();
 void DrawProgressBar(int percent, char *message);
 void DrawMessageBox(int type, char *message);
 void DrawRawFont(int x, int y, char *message);
-void DrawSelectableButton(int x1, int y1, int x2, int y2, char *message, int mode);
+void DrawSelectableButton(int x1, int y1, int x2, int y2, char *message,
+		int mode);
 void DrawEmptyBox(int x1, int y1, int x2, int y2, int color);
 void DrawAButton(int x, int y);
 void DrawBButton(int x, int y);

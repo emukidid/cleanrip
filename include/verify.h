@@ -1,5 +1,5 @@
 /**
- * CleanRip - IPLFontWrite.h
+ * CleanRip - verify.h
  * Copyright (C) 2010 emu_kidid
  *
  * CleanRip homepage: http://code.google.com/p/cleanrip/
@@ -18,25 +18,13 @@
  *
  **/
 
-#ifndef IPLFontWrite_H
-#define IPLFontWrite_H
+#ifndef VERIFY_H
+#define VERIFY_H
 
-#include "FrameBufferMagic.h"
-
-#define back_framewidth vmode->fbWidth
-#define back_frameheight vmode->xfbHeight
-
-void init_font(void);
-void WriteFont(int x, int y, const char *string);
-void WriteFontHL(int x, int y, int sx, int sy, const char *string,
-		unsigned int *lookup);
-int GetTextSizeInPixels(const char *string);
-void WriteCentre(int y, const char *string);
-void WriteCentreHL(int y, const char *string);
-
-extern char txtbuffer[2048];
-extern unsigned int blit_lookup_inv[4];
-extern unsigned int blit_lookup[4];
-extern unsigned int blit_lookup_norm[4];
+void verify_init(char *mountPath);
+int verify_findMD5Sum(const char * md5, int disc_type);
+int verify_is_available(int disc_type);
+char *verify_get_name();
 
 #endif
+

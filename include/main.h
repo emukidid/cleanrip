@@ -56,6 +56,8 @@ extern GXRModeObj *vmode;	/*** Graphics Mode Object ***/
 extern u32 *xfb[2];			/*** Framebuffers ***/
 extern int whichfb;			/*** Frame buffer toggle ***/
 extern unsigned int iosversion;
+extern int verify_in_use;
+extern int verify_disc_type;
 
 enum discTypes
 {
