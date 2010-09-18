@@ -16,7 +16,7 @@
  * ranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU General Public Licence for more details.
  *
-**/
+ **/
 
 #ifndef GC_DVD_H
 #define GC_DVD_H
@@ -33,7 +33,6 @@
 #define NO_DISC      -1001
 #define NORMAL 0xA8000000
 #define DVDR   0xD0000000
-
 
 int init_dvd();
 void dvd_motor_off();
