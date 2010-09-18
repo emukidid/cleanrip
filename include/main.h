@@ -43,13 +43,14 @@
 #define WII_D5_SIZE     0x230480
 #define WII_D9_SIZE     0x3F69C0
 
-#define HW_REG_BASE   0xcd800000
-#define HW_ARMIRQMASK (HW_REG_BASE + 0x03c)
-#define HW_ARMIRQFLAG (HW_REG_BASE + 0x038)
+#define HW_REG_BASE   	0xcd800000
+#define HW_ARMIRQMASK 	(HW_REG_BASE + 0x03c)
+#define HW_ARMIRQFLAG 	(HW_REG_BASE + 0x038)
 
 #define MAX_WII_OPTIONS 2
 #define MAX_NGC_OPTIONS 3
 
+#define READ_BUFFER 	0x90100000
 
 /*** 2D Video Globals ***/
 extern GXRModeObj *vmode;	/*** Graphics Mode Object ***/
