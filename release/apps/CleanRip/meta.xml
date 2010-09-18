@@ -2,19 +2,21 @@
 <app version="1">
   <name>CleanRip</name>
   <coder>emu_kidid</coder>
-  <version>1.0</version>
-  <release_date>20100911</release_date>
+  <version>1.0.2</version>
+  <release_date>20100919</release_date>
   <short_description>Wii/GC Disc Ripper Tool</short_description> 
   <long_description>
     A tool to backup your Gamecube/Wii Discs via IOS58
     Features:
     - FAT/NTFS
     - USB 2.0 support
+    - Front SD support
+    - BCA Dumping
     Requirements:
     - Wii
     - Wii/GC Controller
     - USB or SD storage device (>1.35GB free space)
-    - Latest HBC installed
+    - HBC 1.0.8 or greater installed
 </long_description> 
   <no_ios_reload/>
 </app>
