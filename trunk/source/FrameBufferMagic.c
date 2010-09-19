@@ -101,7 +101,8 @@ void _DrawBackdrop() {
 	drawBitmap(backdrop_Bitmap, 0, 0, 640, 480);
 	sprintf(iosStr, "IOS %i", iosversion);
 	WriteFont(520, 40, iosStr);
-	WriteFont(225, 40, "v1.0.2 by emu_kidid");
+	sprintf(txtbuffer, "v%i.%i.%i by emu_kidid", V_MAJOR,V_MID,V_MINOR);
+	WriteFont(225, 40, txtbuffer);
 	if (verify_in_use) {
 		if(verify_disc_type == IS_NGC_DISC) {
 			WriteCentre(440, "Gamecube Redump.org DAT in use");
