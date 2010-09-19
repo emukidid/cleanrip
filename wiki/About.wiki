@@ -1,5 +1,5 @@
 #labels Featured
-=CleanRip - Wii/GC Disc Ripper Tool - Version 1.0.2=
+=CleanRip - Wii/GC Disc Ripper Tool - Version 1.0.3=
 
 ===What is it===
 A tool to backup your Gamecube/Wii Discs using IOS58 and no need for cIOS.
@@ -10,7 +10,8 @@ Q. How do I use the redump.org verification to see if my rips are good?
 A. Go to www.redump.org, click on downloads and then download the 
    "Nintendo GameCube datfile" and the "Nintendo Wii datfile". Extract the .dat from the
    zip archives and place them on the root of the device you will be dumping to.
-   They must be named gc.dat (Gamecube) and wii.dat (Wii), otherwise they will not be found.
+   They must be named gc.dat (Gamecube) and wii.dat (Wii), otherwise they will not be found. Until I implement http fetching of the file from within CleanRip, please make sure
+   you update the DAT files on your disk regularly.
 
 
 Q. CleanRip tells me that my dump is not verified, is this a bad rip?
@@ -55,10 +56,16 @@ A. This is useful to set to "No" when you're ripping a large game (>4GB) to a la
 
 
 ==Credits==
-libNTFS - Tantric/rodries (http://code.google.com/p/wiimc/source/browse/#svn/trunk/libs/libntfs)
+* libNTFS - Tantric/rodries (http://code.google.com/p/wiimc/source/browse/#svn/trunk/libs/libntfs)
 
-libOGC/devKitPPC - shagkur / WinterMute
+* libOGC/devKitPPC - shagkur / WinterMute
 
-Team Twiizers - http://bootmii.org/
+* md5.c - Aladdin Enterprises
+
+* sha1.c - Paul E. Jones
+
+* crc32.c - Craig Bruce
+
+* Team Twiizers - http://bootmii.org/
 
 .. and you, the users of course :)
