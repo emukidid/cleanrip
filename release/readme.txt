@@ -1,4 +1,9 @@
-CleanRip - Wii/GC Disc Ripper Tool - Version 1.0.1
+CleanRip - Wii/GC Disc Ripper Tool - Version 1.0.3
+
+Whatsnew in 1.0.3:
+- Added SHA-1 and CRC32 calculation (all saved to disk)
+- Fixed redump.org verification on second and subsequent files
+- Compiled with the latest libFAT & libOGC
 
 Whatsnew in 1.0.2:
 - Added redump.org in-program verification (see FAQ section)
@@ -25,6 +30,8 @@ A. Go to www.redump.org, click on downloads and then download the
    "Nintendo GameCube datfile" and the "Nintendo Wii datfile". Extract the .dat from the
    zip archives and place them on the root of the device you will be dumping to.
    They must be named gc.dat (Gamecube) and wii.dat (Wii), otherwise they will not be found.
+   Until I implement http fetching of the file from within CleanRip, please make sure
+   you update the DAT files on your disk regularly.
 
 Q. CleanRip tells me that my dump is not verified, is this a bad rip?
 A. It might be. To be sure, go to redump.org and have a look at the game you're trying to rip.
@@ -56,7 +63,10 @@ Requirements:
 
 
 Credits:
-libNTFS - Tantric/rodries (http://code.google.com/p/wiimc/source/browse/#svn/trunk/libs/libntfs)
-libOGC/devKitPPC - shagkur / WinterMute
-Team Twiizers - http://bootmii.org/
+* libNTFS - Tantric/rodries (http://code.google.com/p/wiimc/source/browse/#svn/trunk/libs/libntfs)
+* libOGC/devKitPPC - shagkur / WinterMute
+* md5.c - Aladdin Enterprises
+* sha1.c - Paul E. Jones
+* crc32.c - Craig Bruce
+* Team Twiizers - http://bootmii.org/
 .. and you, the users of course :)

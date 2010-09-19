@@ -93,51 +93,55 @@ void verify_init(char *mountPath) {
 }
 
 int verify_findMD5Sum(const char * md5orig, int disc_type) {
-	mxml_node_t *pointer = (disc_type == IS_NGC_DISC) ? ngcXML : wiiXML;
+	
+	char *xmlPointer = (disc_type == IS_NGC_DISC) ? ngcDAT : wiiDAT;
+	if(xmlPointer) {
+		mxml_node_t *pointer = (disc_type == IS_NGC_DISC)  ? ngcXML : wiiXML;
+		
+		pointer = mxmlLoadString(NULL, xmlPointer, MXML_TEXT_CALLBACK);
 
-	if (pointer) {
-		// open the <datafile>
-		mxml_node_t *item = mxmlFindElement(pointer, pointer, "datafile", NULL,
-				NULL, MXML_DESCEND);
-		if (item) {
-			mxml_index_t *iterator = mxmlIndexNew(item, "game", NULL);
-			mxml_node_t *gameElem = NULL;
-
-			// iterate over all the <game> entries
-			while ((gameElem = mxmlIndexEnum(iterator)) != NULL) {
-				// get the md5 and compare it
-				mxml_node_t *md5Elem = mxmlFindElement(gameElem, gameElem,
-						NULL, "md5", NULL, MXML_DESCEND);
-				// get the name too
-				mxml_node_t *nameElem = mxmlFindElement(gameElem, gameElem,
-						NULL, "name", NULL, MXML_DESCEND);
-
-				char md5[64];
-				memset(&md5[0], 0, 64);
-				strncpy(&md5[0], mxmlElementGetAttr(md5Elem, "md5"), 32);
-				
-				if (!strnicmp(&md5[0], md5orig, 32)) {
-					snprintf(&gameName[0], 128, "%s", mxmlElementGetAttr(
-							nameElem, "name"));
-					mxmlDelete(md5Elem);
-					mxmlDelete(nameElem);
-					mxmlDelete(gameElem);
-					mxmlDelete(item);
+		if (pointer) {
+			// open the <datafile>
+			mxml_node_t *item = mxmlFindElement(pointer, pointer, "datafile", NULL,
+					NULL, MXML_DESCEND);
+			if (item) {
+				mxml_index_t *iterator = mxmlIndexNew(item, "game", NULL);
+				mxml_node_t *gameElem = NULL;
+	
+				// iterate over all the <game> entries
+				while ((gameElem = mxmlIndexEnum(iterator)) != NULL) {
+					// get the md5 and compare it
+					mxml_node_t *md5Elem = mxmlFindElement(gameElem, gameElem,
+							NULL, "md5", NULL, MXML_DESCEND);
+					// get the name too
+					mxml_node_t *nameElem = mxmlFindElement(gameElem, gameElem,
+							NULL, "name", NULL, MXML_DESCEND);
+	
+					char md5[64];
+					memset(&md5[0], 0, 64);
+					strncpy(&md5[0], mxmlElementGetAttr(md5Elem, "md5"), 32);
 					
-					return 1;
+					if (!strnicmp(&md5[0], md5orig, 32)) {
+						snprintf(&gameName[0], 128, "%s", mxmlElementGetAttr(
+								nameElem, "name"));
+						return 1;
+					}
 				}
 			}
-			mxmlDelete(item);
 		}
 	}
-
 	return 0;
 }
 
 char *verify_get_name() {
+	if(strlen(&gameName[0]) > 32) {
+		 gameName[30] = '.';
+		 gameName[31] = '.';
+		 gameName[32] = 0;
+	 }
 	return &gameName[0];
 }
 
 int verify_is_available(int disc_type) {
-	return (disc_type == IS_NGC_DISC) ? (ngcXML != NULL) : (wiiXML != NULL);
+	return (disc_type == IS_NGC_DISC) ? (ngcDAT != NULL) : (wiiDAT != NULL);
 }

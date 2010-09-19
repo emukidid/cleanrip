@@ -52,6 +52,11 @@
 
 #define READ_BUFFER 	0x90100000
 
+// Version info
+#define V_MAJOR			1
+#define V_MID			0
+#define V_MINOR			3
+
 /*** 2D Video Globals ***/
 extern GXRModeObj *vmode;	/*** Graphics Mode Object ***/
 extern u32 *xfb[2];			/*** Framebuffers ***/
