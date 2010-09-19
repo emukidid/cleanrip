@@ -749,7 +749,7 @@ void dump_md5(char *txt) {
 	sprintf(txtbuffer, "%s%s.md5", &mountPath[0], &gameName[0]);
 	FILE *fp = fopen(txtbuffer, "wb");
 	if (fp) {
-		fwrite(md5line, 1, 1024, fp);
+		fwrite(md5line, 1, strlen(&md5line[0]), fp);
 		fclose(fp);
 	}
 }
