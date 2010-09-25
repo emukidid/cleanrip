@@ -101,8 +101,8 @@ void _DrawBackdrop() {
 	drawBitmap(backdrop_Bitmap, 0, 0, 640, 480);
 	sprintf(iosStr, "IOS %i", iosversion);
 	WriteFont(520, 40, iosStr);
-	sprintf(txtbuffer, "v%i.%i.%i by emu_kidid", V_MAJOR,V_MID,V_MINOR);
-	WriteFont(225, 40, txtbuffer);
+	sprintf(iosStr, "v%i.%i.%i by emu_kidid", V_MAJOR,V_MID,V_MINOR);
+	WriteFont(225, 40, iosStr);
 	if (verify_in_use) {
 		if(verify_disc_type == IS_NGC_DISC) {
 			WriteCentre(440, "Gamecube Redump.org DAT in use");
@@ -205,42 +205,22 @@ void DrawProgressBar(int percent, char *message) {
 					* (percent)))), y1 + 45, PROGRESS_BOX_BAR); //Progress Bar
 }
 
-void DrawMessageBox(int type, char *message) {
-	int x1 = ((back_framewidth / 2) - (PROGRESS_BOX_WIDTH / 2));
-	int x2 = ((back_framewidth / 2) + (PROGRESS_BOX_WIDTH / 2));
-	int y1 = ((back_frameheight / 2) - (PROGRESS_BOX_HEIGHT / 2));
-	int y2 = ((back_frameheight / 2) + (PROGRESS_BOX_HEIGHT / 2));
-	int i = 0, middleY, borderSize = 10;
-
-	middleY = (((y2 - y1) / 2) - 12) + y1;
-
-	if (middleY + 24 > y2) {
-		middleY = y1 + 3;
+void DrawMessageBox(char *l1, char *l2, char *l3, char *l4) {
+	DrawFrameStart();
+	DrawEmptyBox(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
+	if(l1) {
+		WriteCentre(190, l1);
 	}
-	//Draw Text and backfill
-	for (i = (y1 + borderSize); i < (y2 - borderSize); i++) {
-		_DrawHLine(x1 + borderSize, x2 - borderSize, i, BUTTON_COLOUR_INNER); //inner
+	if(l2) {
+		WriteCentre(255, l2);
 	}
-	WriteCentre(middleY, message);
-	//Draw Borders
-	for (i = 0; i < borderSize; i++) {
-		_DrawHLine(x1 + (i * 1), x2 - (i * 1), (y1 + borderSize) - i,
-				BUTTON_COLOUR_OUTER); //top
+	if(l3) {
+		WriteCentre(280, l3);
 	}
-	for (i = 0; i < borderSize; i++) {
-		_DrawHLine(x1 + (i * 1), x2 - (i * 1), (y2 - borderSize) + i,
-				BUTTON_COLOUR_OUTER); //bottom
+	if(l4) {
+		WriteCentre(315, l4);
 	}
-	for (i = 0; i < borderSize; i++) {
-		_DrawVLine((x1 + borderSize) - (i * 1), y1 + (i * 1), y2 - (i * 1),
-				BUTTON_COLOUR_OUTER); //left
-	}
-	for (i = 0; i < borderSize; i++) {
-		_DrawVLine((x2 - borderSize) + (i * 1), y1 + (i * 1), y2 - (i * 1),
-				BUTTON_COLOUR_OUTER); //right
-	}
-	WriteFont(x2 - GetTextSizeInPixels(typeToStr(type)) - 10, y2 - 34,
-			typeToStr(type));
+	DrawFrameFinish();
 }
 
 void DrawRawFont(int x, int y, char *message) {
@@ -326,3 +306,31 @@ void DrawEmptyBox(int x1, int y1, int x2, int y2, int color) {
 				BUTTON_COLOUR_OUTER); //right
 	}
 }
+
+int DrawYesNoDialog(char *line1, char *line2) {
+	int selection = 0;
+	while ((get_buttons_pressed() & PAD_BUTTON_A));
+	while (1) {
+		DrawFrameStart();
+		DrawEmptyBox(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
+		WriteCentre(230, line1);
+		WriteCentre(255, line2);
+		DrawSelectableButton(100, 310, -1, 340, "Yes", (selection) ? B_SELECTED : B_NOSELECT);
+		DrawSelectableButton(380, 310, -1, 340, "No", (!selection) ? B_SELECTED : B_NOSELECT);
+		DrawFrameFinish();
+		while (!(get_buttons_pressed() & (PAD_BUTTON_RIGHT | PAD_BUTTON_LEFT
+				| PAD_BUTTON_B | PAD_BUTTON_A)));
+		u32 btns = get_buttons_pressed();
+		if (btns & PAD_BUTTON_RIGHT)
+			selection ^= 1;
+		if (btns & PAD_BUTTON_LEFT)
+			selection ^= 1;
+		if (btns & PAD_BUTTON_A)
+			break;
+		while ((get_buttons_pressed() & (PAD_BUTTON_RIGHT | PAD_BUTTON_LEFT
+				| PAD_BUTTON_B | PAD_BUTTON_A)));
+	}
+	while ((get_buttons_pressed() & PAD_BUTTON_A));
+	return selection;
+}
+

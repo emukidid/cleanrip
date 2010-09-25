@@ -103,9 +103,9 @@ int init_dvd() {
 
 int dvd_read_id() {
 #ifdef HW_RVL
-	char readbuf[2048];
-	DVD_LowRead64(&readbuf[0], 2048, 0ULL);
-	memcpy((void*)0x80000000, &readbuf[0], 32);
+	char *readbuf = (char*)READ_BUFFER;
+	DVD_LowRead64(readbuf, 2048, 0ULL);
+	memcpy((void*)0x80000000, readbuf, 32);
 	return 0;
 #endif
 	dvd[0] = 0x2E;

@@ -1,4 +1,10 @@
-CleanRip - Wii/GC Disc Ripper Tool - Version 1.0.3
+CleanRip - Wii/GC Disc Ripper Tool - Version 1.0.4
+
+Whatsnew in 1.0.4:
+- Added redump.org DAT file downloading
+- Added more info to the dumpinfo.txt
+- Fixed rip completion time not showing up
+- Fixed NTFS issues (failed to create file/etc)
 
 Whatsnew in 1.0.3:
 - Added SHA-1 and CRC32 calculation (all saved to disk)
@@ -65,8 +71,9 @@ Requirements:
 Credits:
 * libNTFS - Tantric/rodries (http://code.google.com/p/wiimc/source/browse/#svn/trunk/libs/libntfs)
 * libOGC/devKitPPC - shagkur / WinterMute
+* libmxml - Michael Sweet
+* Team Twiizers - http://bootmii.org/
 * md5.c - Aladdin Enterprises
 * sha1.c - Paul E. Jones
 * crc32.c - Craig Bruce
-* Team Twiizers - http://bootmii.org/
 .. and you, the users of course :)

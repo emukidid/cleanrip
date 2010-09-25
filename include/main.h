@@ -55,7 +55,7 @@
 // Version info
 #define V_MAJOR			1
 #define V_MID			0
-#define V_MINOR			3
+#define V_MINOR			4
 
 /*** 2D Video Globals ***/
 extern GXRModeObj *vmode;	/*** Graphics Mode Object ***/
@@ -64,6 +64,8 @@ extern int whichfb;			/*** Frame buffer toggle ***/
 extern unsigned int iosversion;
 extern int verify_in_use;
 extern int verify_disc_type;
+
+u32 get_buttons_pressed();
 
 enum discTypes
 {
