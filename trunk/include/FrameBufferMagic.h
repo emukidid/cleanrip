@@ -47,11 +47,12 @@
 void DrawFrameStart();
 void DrawFrameFinish();
 void DrawProgressBar(int percent, char *message);
-void DrawMessageBox(int type, char *message);
+void DrawMessageBox(char *l1, char *l2, char *l3, char *l4);
 void DrawRawFont(int x, int y, char *message);
 void DrawSelectableButton(int x1, int y1, int x2, int y2, char *message,
 		int mode);
 void DrawEmptyBox(int x1, int y1, int x2, int y2, int color);
 void DrawAButton(int x, int y);
 void DrawBButton(int x, int y);
+int DrawYesNoDialog(char *line1, char *line2);
 #endif
