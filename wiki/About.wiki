@@ -1,5 +1,5 @@
 #labels Featured
-=CleanRip - Wii/GC Disc Ripper Tool - Version 1.0.3=
+=CleanRip - Wii/GC Disc Ripper Tool - Version 1.0.4=
 
 ===What is it===
 A tool to backup your Gamecube/Wii Discs using IOS58 and no need for cIOS.
@@ -60,12 +60,14 @@ A. This is useful to set to "No" when you're ripping a large game (>4GB) to a la
 
 * libOGC/devKitPPC - shagkur / WinterMute
 
+* libmxml - Michael Sweet
+
+* Team Twiizers - http://bootmii.org/
+
 * md5.c - Aladdin Enterprises
 
 * sha1.c - Paul E. Jones
 
 * crc32.c - Craig Bruce
-
-* Team Twiizers - http://bootmii.org/
 
 .. and you, the users of course :)
