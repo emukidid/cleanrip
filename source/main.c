@@ -910,7 +910,6 @@ void dump_game(int disc_type, int type, int fs) {
 	md5_finish(&state, digest);
 	fflush(fp);
 	fclose(fp);
-	dvd_motor_off();
 	
 	if(ret != -61 && ret) {
 		DrawFrameStart();
@@ -918,6 +917,7 @@ void dump_game(int disc_type, int type, int fs) {
 		sprintf(txtbuffer, "%s",dvd_error_str());
 		WriteCentre(255,txtbuffer);
 		WriteCentre(315,"Press  A  to continue");
+		dvd_motor_off();
 		wait_press_A();
 	}
 	else if (ret == -61) {
@@ -926,6 +926,7 @@ void dump_game(int disc_type, int type, int fs) {
 		sprintf(txtbuffer, "Copy Cancelled");
 		WriteCentre(255,txtbuffer);
 		WriteCentre(315,"Press  A  to continue");
+		dvd_motor_off();
 		wait_press_A();
 	}
 	else {
@@ -951,6 +952,7 @@ void dump_game(int disc_type, int type, int fs) {
 		WriteCentre(280,&md5sum[0]);
 		dump_info(&md5sum[0], &sha1sum[0], crc32, verified);
 		WriteCentre(315,"Press  A to continue  B to Exit");
+		dvd_motor_off();
 		wait_press_A_exit_B();
 	}
 }
