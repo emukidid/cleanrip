@@ -22,9 +22,8 @@
 #define VERIFY_H
 
 void verify_init(char *mountPath);
-int verify_findMD5Sum(const char * md5, int disc_type);
-int verify_is_available(int disc_type);
-int verify_download(char *mountPath);
+int verify_findMD5Sum(const char * md5);
+int verify_is_available();
 char *verify_get_name();
 
 #endif

@@ -27,24 +27,18 @@
 #include <ogcsys.h>
 #include <string.h>
 #include <sys/dir.h>
-#include <network.h>
 #include <mxml.h>
 #include "FrameBufferMagic.h"
 #include "IPLFontWrite.h"
 #include "gczip.h"
-#include "http.h"
 #include "main.h"
 
 // Pointers to the two files
 static char *ngcDAT = NULL;
-static char *wiiDAT = NULL;
 static int verify_initialized = 0;
-static int net_initialized = 0;
-static int dontAskAgain = 0;
 
 // XML stuff
 static mxml_node_t *ngcXML = NULL;
-static mxml_node_t *wiiXML = NULL;
 static char gameName[256];
 
 void verify_init(char *mountPath) {
@@ -58,13 +52,6 @@ void verify_init(char *mountPath) {
 			free(ngcXML);
 		}
 		free(ngcDAT);
-	}
-	if(wiiDAT) {
-		free(wiiDAT);
-		if(wiiXML) {
-			mxmlDelete(wiiXML);
-			free(wiiXML);
-		}
 	}
 
 	FILE *fp = NULL;
@@ -84,164 +71,19 @@ void verify_init(char *mountPath) {
 		fclose(fp);
 		fp = NULL;
 	}
-
-	// Check for the Wii Redump.org DAT and read it
-	sprintf(txtbuffer, "%swii.dat", mountPath);
-	fp = fopen(txtbuffer, "rb");
-	if (fp) {
-		fseek(fp, 0L, SEEK_END);
-		int size = ftell(fp);
-		fseek(fp, 0, SEEK_SET);
-		if (size > 0) {
-			wiiDAT = (char*) memalign(32, size);
-			if (wiiDAT) {
-				fread(wiiDAT, 1, size, fp);
-			}
-		}	
-		fclose(fp);
-		fp = NULL;
-	}
 	
 	if (ngcDAT) {
 		ngcXML = mxmlLoadString(NULL, ngcDAT, MXML_TEXT_CALLBACK);
 	}
-	if (wiiDAT) {
-		wiiXML = mxmlLoadString(NULL, wiiDAT, MXML_TEXT_CALLBACK);
-	}
 
-	verify_initialized = (ngcDAT && wiiDAT);
+	verify_initialized = (ngcDAT != NULL);
 }
 
-// If there was some new files obtained, return 1, else 0
-void verify_download(char *mountPath) {
-	if(dontAskAgain) {
-		return;
-	}
+int verify_findMD5Sum(const char * md5orig) {
 	
-	int res = 0;
-	// Ask the user if they want to update from the web
-	if(verify_initialized) {
-		char *line1 = "Redump.org DAT files found";
-		char *line2 = "Check for updated DAT files?";
-		res = DrawYesNoDialog(line1, line2);
-	}
-	else {
-		char *line1 = "Redump.org DAT files not found";
-		char *line2 = "Download them now?";
-		res = DrawYesNoDialog(line1, line2);
-	}
-	
-	// If yes, lets download an update
-	if(res) {
-		// Initialize the network
-		if(!net_initialized) {
-			char ip[16];
-			DrawMessageBox("Checking for DAT updates",NULL,"Initializing Network...",NULL);
-			res = if_config(ip, NULL, NULL, true);
-      		if(res >= 0) {
-	      		sprintf(txtbuffer, "IP: %s", ip);
-	      		DrawMessageBox("Checking for DAT updates","Network Initialized!",NULL,txtbuffer);
-				net_initialized = 1;
-			}
-      		else {
-	      		DrawMessageBox("Checking for DAT updates",NULL,"Network failed to Initialize!",NULL);
-	      		sleep(5);
-        		net_initialized = 0;
-        		return;
-      		}
-  		}
-  		
-  		
-  		u8 *zipFile = (u8*)memalign(32, 1*1024*1024);
-  		if(zipFile) {
-	  		// Download the GC DAT
-  			char datFilePath[64];
-	  		sprintf(datFilePath, "%sgc.dat",mountPath);
-	  		u8 *xmlFile = (u8*)memalign(32, 3*1024*1024);
-			if((res = http_request("redump.org","/datfile/gc/", zipFile, (1*1024*1024), 0, 0)) > 0) {
-				PKZIPHEADER pkzip;
-				memcpy(&pkzip, zipFile, sizeof(PKZIPHEADER));
-				if(pkzip.zipid == PKZIPID) {		//PKZIP magic
-					int uncompressedSize = FLIP32(pkzip.uncompressedSize);
-					inflate_init(&pkzip);
-					DrawMessageBox("Checking for updates",NULL,"Extracting GC DAT...",NULL);
-					res = inflate_chunk(xmlFile, zipFile, res, uncompressedSize);
-					remove(datFilePath);
-					FILE *fp = fopen(datFilePath, "wb");
-					if(fp) {
-						DrawMessageBox("Checking for updates",NULL,"Saving GC DAT...",NULL);
-						fwrite(xmlFile, 1, uncompressedSize, fp);
-						fclose(fp);
-						verify_initialized = 0;
-					}
-					else {
-						DrawMessageBox("Checking for updates",NULL,"Failed to save GC DAT...",NULL);
-						sleep(5);
-					}					
-				} else {
-					DrawMessageBox("Checking for updates",NULL,"Invalid ZIP file found",NULL);
-					sleep(5);
-				}
-			}
-			else {
-				sprintf(txtbuffer, "Error: %i", res);
-				DrawMessageBox("Checking for updates",NULL,"Couldn't find file on redump.org",txtbuffer);
-				sleep(5);
-			}
-			// Download the Wii DAT
-  			sprintf(datFilePath, "%swii.dat",mountPath);
-			if((res = http_request("redump.org","/datfile/wii/", zipFile, (1*1024*1024), 0, 0)) > 0) {
-				PKZIPHEADER pkzip;
-				memcpy(&pkzip, zipFile, sizeof(PKZIPHEADER));
-				if(pkzip.zipid == PKZIPID) {		//PKZIP magic
-					int uncompressedSize = FLIP32(pkzip.uncompressedSize);
-					inflate_init(&pkzip);
-					DrawMessageBox("Checking for updates",NULL,"Extracting Wii DAT...",NULL);
-					res = inflate_chunk(xmlFile, zipFile, res, uncompressedSize);
-					remove(datFilePath);
-					FILE *fp = fopen(datFilePath, "wb");
-					if(fp) {
-						DrawMessageBox("Checking for updates",NULL,"Saving Wii DAT...",NULL);
-						fwrite(xmlFile, 1, uncompressedSize, fp);
-						fclose(fp);
-						verify_initialized = 0;
-					}	
-					else {
-						DrawMessageBox("Checking for updates",NULL,"Failed to save Wii DAT...",NULL);
-						sleep(5);
-					}					
-				} else {
-					DrawMessageBox("Checking for updates",NULL,"Invalid ZIP file found",NULL);
-					sleep(5);
-				}
-			}
-			else {
-				sprintf(txtbuffer, "Error: %i", res);
-				DrawMessageBox("Checking for updates",NULL,"Couldn't find file on redump.org",txtbuffer);
-				sleep(5);
-			}
-			free(xmlFile);
-			free(zipFile);
-			dontAskAgain = 1;
-        } 
-         else {
-			DrawMessageBox("Checking for updates",NULL,"Failed to create save buffer!",NULL);
-			sleep(5);
-        }
-        
-	}
-	else {
-		dontAskAgain = 1;
-	}
-
-	return;
-}
-
-int verify_findMD5Sum(const char * md5orig, int disc_type) {
-	
-	char *xmlPointer = (disc_type == IS_NGC_DISC) ? ngcDAT : wiiDAT;
+	char *xmlPointer = ngcDAT;
 	if(xmlPointer) {
-		mxml_node_t *pointer = (disc_type == IS_NGC_DISC)  ? ngcXML : wiiXML;
+		mxml_node_t *pointer = ngcXML;
 		
 		pointer = mxmlLoadString(NULL, xmlPointer, MXML_TEXT_CALLBACK);
 
@@ -287,6 +129,6 @@ char *verify_get_name() {
 	return &gameName[0];
 }
 
-int verify_is_available(int disc_type) {
-	return (disc_type == IS_NGC_DISC) ? (ngcDAT != NULL) : (wiiDAT != NULL);
+int verify_is_available() {
+	return(ngcDAT != NULL);
 }

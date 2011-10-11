@@ -1,5 +1,8 @@
 CleanRip - Wii/GC Disc Ripper Tool - Version 1.0.4
 
+Whatsnew in 1.0.4 Gamecube Edition:
+- Gamecube Port (http dat file downloading removed)
+
 Whatsnew in 1.0.4:
 - Added redump.org DAT file downloading
 - Added more info to the dumpinfo.txt

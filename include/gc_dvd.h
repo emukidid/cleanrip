@@ -28,18 +28,12 @@
 #define FATAL_ERROR -3
 #define MAXIMUM_ENTRIES_PER_DIR 512
 
-#define GC_CPU_VERSION 0x00083214
-#define NO_HW_ACCESS -1000
-#define NO_DISC      -1001
-#define NORMAL 0xA8000000
-#define DVDR   0xD0000000
-
 int init_dvd();
 void dvd_motor_off();
 unsigned int dvd_get_error(void);
 char *dvd_error_str();
 int dvd_read_id();
-int DVD_LowRead64(void* dst, unsigned int len, uint64_t offset);
+int dvd_read(void* dst, unsigned int len, u32 offset);
 
 #endif
 
