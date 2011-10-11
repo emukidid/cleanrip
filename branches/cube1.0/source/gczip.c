@@ -1,15 +1,12 @@
 /****************************************************************************
  * GC Zip Extension
  *
- * GC DVD Zip File Loader.
- *
  * The idea here is not to support every zip file on the planet!
  * The unzip routine will simply unzip the first file in the zip archive.
  *
  * For maximum compression, I'd recommend using 7Zip,
  *	7za a -tzip -mx=9 rom.zip rom.smc
  ****************************************************************************/
-#if 1
 #include <gccore.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -17,11 +14,9 @@
 #include <zlib.h>
 #include "gczip.h"
 
-	int zipoffset = 0;
-	z_stream zs;
 
-    
-
+int zipoffset = 0;
+z_stream zs;
 
 int inflate_init(PKZIPHEADER* pkzip){
 	/*** Prepare the zip stream ***/
@@ -40,7 +35,7 @@ int inflate_chunk(void* dst, void* src, int length, int uncompressedSize){
 	zs.avail_in = (length  - zipoffset);
 	zs.next_in = (src + zipoffset);
 	int res;
-	int have, bufferoffset = 0;
+	int bufferoffset = 0;
 
 	/*** Now inflate ***/
 	zs.avail_out = uncompressedSize;
@@ -61,4 +56,3 @@ int inflate_chunk(void* dst, void* src, int length, int uncompressedSize){
 	zipoffset = 0;
 	return bufferoffset;
 }
-#endif

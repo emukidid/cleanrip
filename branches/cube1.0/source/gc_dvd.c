@@ -1,8 +1,8 @@
 /**
  * CleanRip - gc_dvd.c (originally from Cube64/Wii64)
- * Copyright (C) 2007, 2008, 2009, 2010 emu_kidid
+ * Copyright (C) 2007, 2008, 2009, 2010, 2011 emu_kidid
  *
- * DVD Reading support for GC/Wii
+ * DVD Reading support for GC
  *
  * CleanRip homepage: http://code.google.com/p/cleanrip
  * email address: emukidid@gmail.com
@@ -28,86 +28,26 @@
 #include <string.h>
 #include <gccore.h>
 #include <unistd.h>
-#include <di/di.h>
 #include "gc_dvd.h"
 #include "main.h"
 
-#ifdef WII
-#include <di/di.h>
-#endif
 
 /* DVD Stuff */
-u32 dvd_hard_init = 0;
-static u32 read_cmd = NORMAL;
-
-#ifdef HW_DOL
-#define mfpvr()   ({unsigned int rval; \
-      asm volatile("mfpvr %0" : "=r" (rval)); rval;})
-#endif
-#ifdef HW_RVL
-volatile unsigned long* dvd = (volatile unsigned long*) 0xCD806000;
-#else
 volatile unsigned long* dvd = (volatile unsigned long*)0xCC006000;
-#endif
 
 int init_dvd() {
 	// Gamecube Mode
-#ifdef HW_DOL
-	if (mfpvr() != GC_CPU_VERSION) //GC mode on Wii, modchip required
-	{
-		DVD_Reset(DVD_RESETHARD);
-		dvd_read_id();
-		if (!dvd_get_error()) {
-			return 0; //we're ok
-		}
-	} else //GC, no modchip even required :)
-	{
-		DVD_Reset(DVD_RESETHARD);
-		DVD_Mount();
-		if (!dvd_get_error()) {
-			return 0; //we're ok
-		}
-	}
-	if (dvd_get_error() >> 24) {
-		return NO_DISC;
-	}
-	return -1;
-
-#endif
-	// Wii (Wii mode)
-#ifdef HW_RVL
-	if (!dvd_hard_init) {
-		DI_Init();
-	}
-	if ((dvd_get_error() >> 24) == 1) {
-		return NO_DISC;
-	}
-
-	if ((!dvd_hard_init) || (dvd_get_error())) {
-		DI_Mount();
-		while (DI_GetStatus() & DVD_INIT)
-			usleep(20000);
-		dvd_hard_init = 1;
-	}
-	
-	if ((dvd_get_error() & 0xFFFFFF) == 0x053000) {
-		read_cmd = DVDR;
-	} else {
-		read_cmd = NORMAL;
-	}
+	DVD_Init();
+	DVD_Reset(DVD_RESETHARD);
 	dvd_read_id();
 
-	return 0;
-#endif
+	if (!dvd_get_error()) {
+		return 0; //we're ok
+	}
+	return -1;
 }
 
 int dvd_read_id() {
-#ifdef HW_RVL
-	char *readbuf = (char*)READ_BUFFER;
-	DVD_LowRead64(readbuf, 2048, 0ULL);
-	memcpy((void*)0x80000000, readbuf, 32);
-	return 0;
-#endif
 	dvd[0] = 0x2E;
 	dvd[1] = 0;
 	dvd[2] = 0xA8000040;
@@ -116,19 +56,22 @@ int dvd_read_id() {
 	dvd[5] = 0x80000000;
 	dvd[6] = 0x20;
 	dvd[7] = 3; // enable reading!
-	while (dvd[7] & 1)
-		;
+	while (dvd[7] & 1);
 	if (dvd[0] & 0x4)
 		return 1;
 	return 0;
 }
 
 unsigned int dvd_get_error(void) {
-	dvd[2] = 0xE0000000;
-	dvd[8] = 0;
+	dvd[0] = 0x2E;
+	dvd[1] = 0;
+	dvd[2] = 0xe0000000;
+	dvd[3] = 0;
+	dvd[4] = 0;
+	dvd[5] = 0;
+	dvd[6] = 0;
 	dvd[7] = 1; // IMM
-	while (dvd[7] & 1)
-		;
+	while (dvd[7] & 1);
 	return dvd[8];
 }
 
@@ -141,33 +84,20 @@ void dvd_motor_off() {
 	dvd[5] = 0;
 	dvd[6] = 0;
 	dvd[7] = 1; // IMM
-	while (dvd[7] & 1)
-		;
+	while (dvd[7] & 1);
 }
 
-/*
- DVD_LowRead64(void* dst, unsigned int len, uint64_t offset)
- Read Raw, needs to be on sector boundaries
- Has 8,796,093,020,160 byte limit (8 TeraBytes)
- Synchronous function.
- return -1 if offset is out of range
- */
-int DVD_LowRead64(void* dst, unsigned int len, uint64_t offset) {
-	if (offset >> 2 > 0xFFFFFFFF)
-		return -1;
-
-	if ((((int) dst) & 0xC0000000) == 0x80000000) // cached?
-		dvd[0] = 0x2E;
+int dvd_read(void* dst, unsigned int len, u32 offset) {
+	dvd[0] = 0x2E;
 	dvd[1] = 0;
-	dvd[2] = read_cmd;
-	dvd[3] = read_cmd == DVDR ? offset >> 11 : offset >> 2;
-	dvd[4] = read_cmd == DVDR ? len >> 11 : len;
+	dvd[2] = 0xA8000000;
+	dvd[3] = offset >> 2;
+	dvd[4] = len;
 	dvd[5] = (unsigned long) dst;
 	dvd[6] = len;
 	dvd[7] = 3; // enable reading!
 	DCInvalidateRange(dst, len);
-	while (dvd[7] & 1)
-		;
+	while (dvd[7] & 1);
 
 	if (dvd[0] & 0x4)
 		return 1;
@@ -238,12 +168,6 @@ char *dvd_error_str() {
 		break;
 	case 0x052402:
 		strcat(&error_str[0], " Configuration out of permitted period");
-		break;
-	case 0x053000:
-		strcat(&error_str[0], " DVD-R"); //?
-		break;
-	case 0x053100:
-		strcat(&error_str[0], " Wrong Read Type"); //?
 		break;
 	case 0x056300:
 		strcat(&error_str[0], " End of user area encountered on this track");

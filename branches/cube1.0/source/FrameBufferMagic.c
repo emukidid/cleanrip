@@ -34,8 +34,6 @@
 #include "backdrop.bmp.h"
 #include "main.h"
 
-extern u32 iosversion;
-
 // internal helper funcs
 char *typeToStr(int type) {
 	switch (type) {
@@ -99,18 +97,12 @@ void DrawBButton(int x, int y) {
 void _DrawBackdrop() {
 	char iosStr[256];
 	drawBitmap(backdrop_Bitmap, 0, 0, 640, 480);
-	sprintf(iosStr, "IOS %i", iosversion);
-	WriteFont(520, 40, iosStr);
 	sprintf(iosStr, "v%i.%i.%i by emu_kidid", V_MAJOR,V_MID,V_MINOR);
 	WriteFont(225, 40, iosStr);
 	if (verify_in_use) {
-		if(verify_disc_type == IS_NGC_DISC) {
-			WriteCentre(440, "Gamecube Redump.org DAT in use");
-		}
-		else if(verify_disc_type == IS_WII_DISC) {
-			WriteCentre(440, "Wii Redump.org DAT in use");
-		}
+		WriteCentre(420, "Gamecube Redump.org DAT in use");
 	}
+	WriteFont(225, 450, "Gamecube Edition");
 }
 
 void _DrawHLine(int x1, int x2, int y, int color) {
