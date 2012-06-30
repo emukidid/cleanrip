@@ -39,6 +39,7 @@ void dvd_motor_off();
 unsigned int dvd_get_error(void);
 char *dvd_error_str();
 int dvd_read_id();
+void dvd_read_bca(void* dst);
 int DVD_LowRead64(void* dst, unsigned int len, uint64_t offset);
 
 #endif

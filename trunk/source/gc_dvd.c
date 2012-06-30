@@ -29,12 +29,9 @@
 #include <gccore.h>
 #include <unistd.h>
 #include <di/di.h>
+#include <ogc/machine/processor.h>
 #include "gc_dvd.h"
 #include "main.h"
-
-#ifdef WII
-#include <di/di.h>
-#endif
 
 /* DVD Stuff */
 u32 dvd_hard_init = 0;
@@ -76,20 +73,36 @@ int init_dvd() {
 #endif
 	// Wii (Wii mode)
 #ifdef HW_RVL
-	if (!dvd_hard_init) {
-		DI_Init();
-	}
-	if ((dvd_get_error() >> 24) == 1) {
+	STACK_ALIGN(u8,id,32,32);
+	unsigned int error;
+
+	// enable GPIO for spin-up on drive reset (active low)
+	mask32(0x0D8000E0, 0x10, 0);
+	// assert DI reset (active low)
+	mask32(0x0D800194, 0x400, 0);
+	usleep(1000);
+	// deassert DI reset
+	mask32(0x0D800194, 0, 0x400);
+
+	error = dvd_get_error();
+	if ((error >> 24) == 1) {
 		return NO_DISC;
 	}
 
 	if ((!dvd_hard_init) || (dvd_get_error())) {
-		DI_Mount();
-		while (DI_GetStatus() & DVD_INIT)
+		// read id
+		dvd[0] = 0x54;
+		dvd[2] = 0xA8000040;
+		dvd[3] = 0;
+		dvd[4] = 0x20;
+		dvd[5] = (u32)id & 0x1FFFFFFF;
+		dvd[6] = 0x20;
+		dvd[7] = 3;
+		while (dvd[7] & 1)
 			usleep(20000);
 		dvd_hard_init = 1;
 	}
-	
+
 	if ((dvd_get_error() & 0xFFFFFF) == 0x053000) {
 		read_cmd = DVDR;
 	} else {
@@ -103,7 +116,7 @@ int init_dvd() {
 
 int dvd_read_id() {
 #ifdef HW_RVL
-	char *readbuf = (char*)READ_BUFFER;
+	char readbuf[2048] __attribute__((aligned(32)));
 	DVD_LowRead64(readbuf, 2048, 0ULL);
 	memcpy((void*)0x80000000, readbuf, 32);
 	return 0;
@@ -117,11 +130,22 @@ int dvd_read_id() {
 	dvd[6] = 0x20;
 	dvd[7] = 3; // enable reading!
 	while (dvd[7] & 1)
-		;
+		LWP_YieldThread();
 	if (dvd[0] & 0x4)
 		return 1;
 	return 0;
 }
+
+void dvd_read_bca(void* dst)
+{
+	dvd[2] = 0xDA000000;
+	dvd[5] = (unsigned long)dst & 0x1FFFFFFF;
+	dvd[6] = 0x40;
+	dvd[7] = 3;
+	DCInvalidateRange(dst, 64);
+	while (dvd[7] & 1);
+}
+
 
 unsigned int dvd_get_error(void) {
 	dvd[2] = 0xE0000000;
@@ -216,7 +240,7 @@ char *dvd_error_str() {
 		strcat(&error_str[0], " No Seek complete");
 		break;
 	case 0x031100:
-		strcat(&error_str[0], " UnRecoverd read error");
+		strcat(&error_str[0], " Unrecovered read error");
 		break;
 	case 0x040800:
 		strcat(&error_str[0], " Transfer protocol error");
