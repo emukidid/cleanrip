@@ -437,6 +437,7 @@ static int identify_disc() {
 	DVD_LowRead64(readbuf, 2048, 0ULL);
 	if (readbuf[0]) {
 		strncpy(&gameName[0], readbuf, 6);
+		gameName[6] = 0;
 		// Multi Disc identifier support
 		if (readbuf[6]) {
 			sprintf(&gameName[0], "%s-disc%i", &gameName[0],
@@ -710,7 +711,7 @@ void prompt_new_file(FILE **fp, int chunk, int type, int fs, int silent) {
 	fclose(*fp);
 	if(silent == ASK_USER) {
 		if (fs == TYPE_FAT) {
-			fatUnmount("fat");
+			fatUnmount("fat:");
 			if (type == TYPE_SD) {
 				frontsd->shutdown();
 			} else if (type == TYPE_USB) {
@@ -968,9 +969,15 @@ void dump_game(int disc_type, int type, int fs) {
 			u32 bytes_per_msec = (((u64)startLBA<<11) + opt_read_size) / totalTime;
 			u64 remainder = (((u64)endLBA - startLBA)<<11) - opt_read_size;
 
-			// multiply ETA by 3/4 to account for CAV speed increase
-			u32 etaTime = (remainder / bytes_per_msec * 3) / 4000;
-			sprintf(txtbuffer, "%dMb %4.0fKB/s - ETA %02d:%02d:%02d",
+			u32 etaTime;
+			if(disc_type == IS_NGC_DISC) {
+				// multiply ETA by 3/4 to account for CAV speed increase
+				etaTime = (remainder / bytes_per_msec * 3) / 4000;
+			}
+			else {
+				etaTime = (remainder / bytes_per_msec);
+			}
+			sprintf(txtbuffer, "%dMB %4.0fKB/s - ETA %02d:%02d:%02d",
 					(int) (((u64) ((u64) startLBA << 11)) / (1024* 1024 )),
 				(float)bytes_per_msec*1000/1024,
 				(int)((etaTime/60/60)%60),(int)((etaTime/60)%60),(int)(etaTime%60));
