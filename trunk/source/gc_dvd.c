@@ -191,7 +191,7 @@ int DVD_LowRead64(void* dst, unsigned int len, uint64_t offset) {
 	dvd[7] = 3; // enable reading!
 	DCInvalidateRange(dst, len);
 	while (dvd[7] & 1)
-		;
+		LWP_YieldThread();
 
 	if (dvd[0] & 0x4)
 		return 1;
