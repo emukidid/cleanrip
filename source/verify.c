@@ -31,7 +31,6 @@
 #include <mxml.h>
 #include "FrameBufferMagic.h"
 #include "IPLFontWrite.h"
-#include "gczip.h"
 #include "http.h"
 #include "main.h"
 
@@ -152,83 +151,52 @@ void verify_download(char *mountPath) {
   		}
   		
   		
-  		u8 *zipFile = (u8*)memalign(32, 1*1024*1024);
-  		if(zipFile) {
-	  		// Download the GC DAT
-  			char datFilePath[64];
-	  		sprintf(datFilePath, "%sgc.dat",mountPath);
-	  		u8 *xmlFile = (u8*)memalign(32, 3*1024*1024);
-			if((res = http_request("redump.org","/datfile/gc/", zipFile, (1*1024*1024), 0, 0)) > 0) {
-				PKZIPHEADER pkzip;
-				memcpy(&pkzip, zipFile, sizeof(PKZIPHEADER));
-				if(pkzip.zipid == PKZIPID) {		//PKZIP magic
-					int uncompressedSize = FLIP32(pkzip.uncompressedSize);
-					inflate_init(&pkzip);
-					DrawMessageBox("Checking for updates",NULL,"Extracting GC DAT...",NULL);
-					res = inflate_chunk(xmlFile, zipFile, res, uncompressedSize);
-					remove(datFilePath);
-					FILE *fp = fopen(datFilePath, "wb");
-					if(fp) {
-						DrawMessageBox("Checking for updates",NULL,"Saving GC DAT...",NULL);
-						fwrite(xmlFile, 1, uncompressedSize, fp);
-						fclose(fp);
-						verify_initialized = 0;
-					}
-					else {
-						DrawMessageBox("Checking for updates",NULL,"Failed to save GC DAT...",NULL);
-						sleep(5);
-					}					
-				} else {
-					DrawMessageBox("Checking for updates",NULL,"Invalid ZIP file found",NULL);
-					sleep(5);
-				}
+  		// Download the GC DAT
+		char datFilePath[64];
+  		sprintf(datFilePath, "%sgc.dat",mountPath);
+  		u8 *xmlFile = (u8*)memalign(32, 1*1024*1024);
+		if((res = http_request("www.gc-forever.com","/datfile/gc.dat", xmlFile, (1*1024*1024), 0, 0)) > 0) {
+			remove(datFilePath);
+			FILE *fp = fopen(datFilePath, "wb");
+			if(fp) {
+				DrawMessageBox("Checking for updates",NULL,"Saving GC DAT...",NULL);
+				fwrite(xmlFile, 1, res, fp);
+				fclose(fp);
+				verify_initialized = 0;
 			}
 			else {
-				sprintf(txtbuffer, "Error: %i", res);
-				DrawMessageBox("Checking for updates",NULL,"Couldn't find file on redump.org",txtbuffer);
+				DrawMessageBox("Checking for updates",NULL,"Failed to save GC DAT...",NULL);
 				sleep(5);
 			}
-			// Download the Wii DAT
-  			sprintf(datFilePath, "%swii.dat",mountPath);
-			if((res = http_request("redump.org","/datfile/wii/", zipFile, (1*1024*1024), 0, 0)) > 0) {
-				PKZIPHEADER pkzip;
-				memcpy(&pkzip, zipFile, sizeof(PKZIPHEADER));
-				if(pkzip.zipid == PKZIPID) {		//PKZIP magic
-					int uncompressedSize = FLIP32(pkzip.uncompressedSize);
-					inflate_init(&pkzip);
-					DrawMessageBox("Checking for updates",NULL,"Extracting Wii DAT...",NULL);
-					res = inflate_chunk(xmlFile, zipFile, res, uncompressedSize);
-					remove(datFilePath);
-					FILE *fp = fopen(datFilePath, "wb");
-					if(fp) {
-						DrawMessageBox("Checking for updates",NULL,"Saving Wii DAT...",NULL);
-						fwrite(xmlFile, 1, uncompressedSize, fp);
-						fclose(fp);
-						verify_initialized = 0;
-					}	
-					else {
-						DrawMessageBox("Checking for updates",NULL,"Failed to save Wii DAT...",NULL);
-						sleep(5);
-					}					
-				} else {
-					DrawMessageBox("Checking for updates",NULL,"Invalid ZIP file found",NULL);
-					sleep(5);
-				}
-			}
-			else {
-				sprintf(txtbuffer, "Error: %i", res);
-				DrawMessageBox("Checking for updates",NULL,"Couldn't find file on redump.org",txtbuffer);
-				sleep(5);
-			}
-			free(xmlFile);
-			free(zipFile);
-			dontAskAgain = 1;
-        } 
-         else {
-			DrawMessageBox("Checking for updates",NULL,"Failed to create save buffer!",NULL);
+		}
+		else {
+			sprintf(txtbuffer, "Error: %i", res);
+			DrawMessageBox("Checking for updates",NULL,"Couldn't find file on gc-forever.com",txtbuffer);
 			sleep(5);
-        }
-        
+		}
+		// Download the Wii DAT
+  		sprintf(datFilePath, "%swii.dat",mountPath);
+		if((res = http_request("www.gc-forever.com","/datfile/wii.dat", xmlFile, (1*1024*1024), 0, 0)) > 0) {
+			remove(datFilePath);
+			FILE *fp = fopen(datFilePath, "wb");
+			if(fp) {
+				DrawMessageBox("Checking for updates",NULL,"Saving Wii DAT...",NULL);
+				fwrite(xmlFile, 1, res, fp);
+				fclose(fp);
+				verify_initialized = 0;
+			}	
+			else {
+				DrawMessageBox("Checking for updates",NULL,"Failed to save Wii DAT...",NULL);
+				sleep(5);
+			}					
+		}
+		else {
+			sprintf(txtbuffer, "Error: %i", res);
+			DrawMessageBox("Checking for updates",NULL,"Couldn't find file on redump.org",txtbuffer);
+			sleep(5);
+		}
+		free(xmlFile);
+		dontAskAgain = 1;
 	}
 	else {
 		dontAskAgain = 1;

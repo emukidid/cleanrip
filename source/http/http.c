@@ -240,10 +240,8 @@ char redirect[1024];
  ***************************************************************************/
 int http_request(char *http_host, char *http_path, u8 *buffer, u32 maxsize, bool silent, int retry)
 {
-	int res = 0;
 	u16 http_port;
 
-	http_res result;
 	u32 http_status = 404;
 	u32 sizeread = 0, content_length = 0;
 
@@ -270,7 +268,7 @@ int http_request(char *http_host, char *http_path, u8 *buffer, u32 maxsize, bool
 	r += sprintf(r, "Host: %s\r\n", http_host);
 	r += sprintf(r, "Cache-Control: no-cache\r\n\r\n");
 
-	res = tcp_write(s, (u8 *) request, strlen(request));
+	tcp_write(s, (u8 *) request, strlen(request));
 
 	char line[256];
 	memset(&redirect[0], 0, 1024);
@@ -317,7 +315,7 @@ int http_request(char *http_host, char *http_path, u8 *buffer, u32 maxsize, bool
 	{
 		char txtbuf[256];
 		sprintf(txtbuf, "Downloading %i bytes", content_length);
-		DrawMessageBox("Connected to redump.org",NULL,txtbuf,NULL);
+		DrawMessageBox("Connected to gc-forever.com",NULL,txtbuf,NULL);
 		sizeread = tcp_read(s, buffer, content_length);
 	}
 
@@ -325,11 +323,9 @@ int http_request(char *http_host, char *http_path, u8 *buffer, u32 maxsize, bool
 
 	if (content_length < maxsize && sizeread != content_length)
 	{
-		result = HTTPR_ERR_RECEIVE;
-		return -7;
+		return HTTPR_ERR_RECEIVE;
 	}
 
-	result = HTTPR_OK;
 	return sizeread;
 }
 

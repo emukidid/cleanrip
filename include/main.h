@@ -36,6 +36,7 @@
 #define TYPE_FAT 0
 #define TYPE_NTFS 1
 
+#define READ_SIZE		0x10000
 #define ONE_MEGABYTE    0x000200
 #define ONE_GIGABYTE    0x080000
 
@@ -50,12 +51,10 @@
 #define MAX_WII_OPTIONS 3
 #define MAX_NGC_OPTIONS 3
 
-#define READ_BUFFER 	0x90100000
-
 // Version info
 #define V_MAJOR			1
 #define V_MID			0
-#define V_MINOR			4
+#define V_MINOR			5
 
 /*** 2D Video Globals ***/
 extern GXRModeObj *vmode;	/*** Graphics Mode Object ***/

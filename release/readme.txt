@@ -1,5 +1,14 @@
 CleanRip - Wii/GC Disc Ripper Tool - Version 1.0.4
 
+Whatsnew in 1.0.5:
+- Built with latest libOGC git (as of 30/06/2012)
+- Built with libntfs-2012-1-15 (SVN Rev 13)
+- Async read/write support for faster dumps (tueidj)
+- Fixed time remaining to be accurate (tueidj)
+- Fixed a potential bug when writing next chunk (tueidj)
+- Fixed redump.org DAT file downloads (now re-hosted on gc-forever.com)
+- Use proper DVD init from PPC and kill the starlet DVD IRQ (tueidj)
+
 Whatsnew in 1.0.4:
 - Added redump.org DAT file downloading
 - Added more info to the dumpinfo.txt
