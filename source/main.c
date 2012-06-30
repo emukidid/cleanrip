@@ -854,8 +854,17 @@ void dump_game(int disc_type, int type, int fs) {
 
 	// Work out the chunk size
 	u32 chunk_size_wii = options_map[WII_CHUNK_SIZE];
-	u32 opt_chunk_size = chunk_size_wii == CHUNK_MAX ? (endLBA + (opt_read_size>>11))
-			: ((chunk_size_wii + 1) * ONE_GIGABYTE);
+	u32 opt_chunk_size;
+	if (chunk_size_wii == CHUNK_MAX) {
+		// use 4GB chunks max for FAT drives
+		if (fs == TYPE_FAT) {
+			opt_chunk_size = 4 * ONE_GIGABYTE - (opt_read_size>>11) - 1;
+		} else {
+			opt_chunk_size = endLBA + (opt_read_size>>11);
+		}
+	} else {
+		opt_chunk_size = (chunk_size_wii + 1) * ONE_GIGABYTE;
+	}
 
 	if (disc_type == IS_NGC_DISC) {
 		opt_chunk_size = NGC_DISC_SIZE;
@@ -905,6 +914,19 @@ void dump_game(int disc_type, int type, int fs) {
 	int chunk = 1;
 
 	while (!ret && (startLBA + (opt_read_size>>11)) < endLBA) {
+		MQ_Receive(blockq, (mqmsg_t*)&wmsg, MQ_MSG_BLOCK);
+		if (wmsg==NULL) { // asynchronous write error
+			LWP_JoinThread(writer, NULL);
+			fclose(fp);
+			DrawFrameStart();
+			DrawEmptyBox(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
+			WriteCentre(255, "Write Error!");
+			WriteCentre(315, "Exiting in 10 seconds");
+			DrawFrameFinish();
+			sleep(10);
+			exit(1);
+		}
+
 		if (startLBA > (opt_chunk_size * chunk)) {
 			u64 wait_begin;
 			// wait for writing to finish
@@ -928,18 +950,7 @@ void dump_game(int disc_type, int type, int fs) {
 			MQ_Send(msgq, (mqmsg_t)&msg, MQ_MSG_BLOCK);
 			chunk++;
 		}
-		MQ_Receive(blockq, (mqmsg_t*)&wmsg, MQ_MSG_BLOCK);
-		if (wmsg==NULL) { // asynchronous write error
-			LWP_JoinThread(writer, NULL);
-			fclose(fp);
-			DrawFrameStart();
-			DrawEmptyBox(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
-			WriteCentre(255, "Write Error!");
-			WriteCentre(315, "Exiting in 10 seconds");
-			DrawFrameFinish();
-			sleep(10);
-			exit(1);
-		}
+
 		wmsg->command =  MSG_WRITE;
 		wmsg->data = wmsg+1;
 		wmsg->length = opt_read_size;
@@ -972,10 +983,10 @@ void dump_game(int disc_type, int type, int fs) {
 			u32 etaTime;
 			if(disc_type == IS_NGC_DISC) {
 				// multiply ETA by 3/4 to account for CAV speed increase
-				etaTime = (remainder / bytes_per_msec * 3) / 4000;
+				etaTime = (remainder / bytes_per_msec * 58) / 75000;
 			}
 			else {
-				etaTime = (remainder / bytes_per_msec);
+				etaTime = (remainder / bytes_per_msec) / 1000;
 			}
 			sprintf(txtbuffer, "%dMB %4.0fKB/s - ETA %02d:%02d:%02d",
 					(int) (((u64) ((u64) startLBA << 11)) / (1024* 1024 )),
