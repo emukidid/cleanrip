@@ -37,10 +37,6 @@
 u32 dvd_hard_init = 0;
 static u32 read_cmd = NORMAL;
 
-#ifdef HW_DOL
-#define mfpvr()   ({unsigned int rval; \
-      asm volatile("mfpvr %0" : "=r" (rval)); rval;})
-#endif
 #ifdef HW_RVL
 volatile unsigned long* dvd = (volatile unsigned long*) 0xCD806000;
 #else
@@ -50,20 +46,10 @@ volatile unsigned long* dvd = (volatile unsigned long*)0xCC006000;
 int init_dvd() {
 	// Gamecube Mode
 #ifdef HW_DOL
-	if (mfpvr() != GC_CPU_VERSION) //GC mode on Wii, modchip required
-	{
-		DVD_Reset(DVD_RESETHARD);
-		dvd_read_id();
-		if (!dvd_get_error()) {
-			return 0; //we're ok
-		}
-	} else //GC, no modchip even required :)
-	{
-		DVD_Reset(DVD_RESETHARD);
-		DVD_Mount();
-		if (!dvd_get_error()) {
-			return 0; //we're ok
-		}
+	DVD_Reset(DVD_RESETHARD);
+	dvd_read_id();
+	if (!dvd_get_error()) {
+		return 0; //we're ok
 	}
 	if (dvd_get_error() >> 24) {
 		return NO_DISC;
@@ -126,7 +112,7 @@ int dvd_read_id() {
 	dvd[2] = 0xA8000040;
 	dvd[3] = 0;
 	dvd[4] = 0x20;
-	dvd[5] = 0x80000000;
+	dvd[5] = 0x80000000 & 0x1FFFFFFF;
 	dvd[6] = 0x20;
 	dvd[7] = 3; // enable reading!
 	while (dvd[7] & 1)
@@ -186,7 +172,7 @@ int DVD_LowRead64(void* dst, unsigned int len, uint64_t offset) {
 	dvd[2] = read_cmd;
 	dvd[3] = read_cmd == DVDR ? offset >> 11 : offset >> 2;
 	dvd[4] = read_cmd == DVDR ? len >> 11 : len;
-	dvd[5] = (unsigned long) dst;
+	dvd[5] = (unsigned long) dst & 0x1FFFFFFF;
 	dvd[6] = len;
 	dvd[7] = 3; // enable reading!
 	DCInvalidateRange(dst, len);

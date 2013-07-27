@@ -52,9 +52,9 @@
 #define MAX_NGC_OPTIONS 3
 
 // Version info
-#define V_MAJOR			1
+#define V_MAJOR			2
 #define V_MID			0
-#define V_MINOR			5
+#define V_MINOR			0
 
 /*** 2D Video Globals ***/
 extern GXRModeObj *vmode;	/*** Graphics Mode Object ***/
@@ -65,6 +65,7 @@ extern int verify_in_use;
 extern int verify_disc_type;
 
 u32 get_buttons_pressed();
+void print_gecko(const char* fmt, ...);
 
 enum discTypes
 {

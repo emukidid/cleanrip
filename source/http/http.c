@@ -78,13 +78,18 @@ static s32 tcp_connect(char *host, const u16 port)
 	sa.sin_len = sizeof(struct sockaddr_in);
 	sa.sin_port= htons(port);
 
-	
+#ifdef HW_RVL
 	hp = net_gethostbyname (host);
 	if (!hp || !(hp->h_addrtype == PF_INET)) {
 		return errno;
 	}
 	memcpy((char *) &sa.sin_addr, hp->h_addr_list[0], hp->h_length);
+#endif
 
+#ifdef HW_DOL
+	u32 addr = inet_addr("205.205.224.54");
+	memcpy(&sa.sin_addr, (struct in_addr*)&addr, sizeof(struct in_addr));
+#endif
 	res = net_connect (s, (struct sockaddr *) &sa, sizeof (sa));
 
 	if (res == EINPROGRESS)
@@ -293,7 +298,7 @@ int http_request(char *http_host, char *http_path, u8 *buffer, u32 maxsize, bool
 	{
 		net_close(s);
 		if((http_status == 301 || http_status == 302) && redirect[0] != 0 && retry < 5) {
-			DrawMessageBox("Checking for updates","Redirect!","Downloading...",redirect);
+			DrawMessageBox(D_INFO, "Checking for updates\nRedirect!\nDownloading...");
 			sleep(5);
 			return http_request(&redirect[0], &redirect[10], buffer, maxsize, silent, ++retry);
 		}
@@ -314,8 +319,8 @@ int http_request(char *http_host, char *http_path, u8 *buffer, u32 maxsize, bool
 	if (buffer != NULL)
 	{
 		char txtbuf[256];
-		sprintf(txtbuf, "Downloading %i bytes", content_length);
-		DrawMessageBox("Connected to gc-forever.com",NULL,txtbuf,NULL);
+		sprintf(txtbuf, "Connected to gc-forever.com\nDownloading %i bytes", content_length);
+		DrawMessageBox(D_INFO, txtbuf);
 		sizeread = tcp_read(s, buffer, content_length);
 	}
 

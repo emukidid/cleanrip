@@ -7,7 +7,10 @@ ifeq ($(strip $(DEVKITPPC)),)
 $(error "Please set DEVKITPPC in your environment. export DEVKITPPC=<path to>devkitPPC")
 endif
 
-include $(DEVKITPPC)/wii_rules
+export	LIBOGC_INC	:=	$(DEVKITPRO)/libogc/include
+export	LIBOGC_LIB	:=	$(DEVKITPRO)/libogc/lib/cube
+
+include $(DEVKITPPC)/base_rules
 
 #---------------------------------------------------------------------------------
 # TARGET is the name of the output
@@ -15,7 +18,7 @@ include $(DEVKITPPC)/wii_rules
 # SOURCES is a list of directories containing source code
 # INCLUDES is a list of directories containing extra header files
 #---------------------------------------------------------------------------------
-TARGET		:=	$(notdir $(CURDIR))
+TARGET		:=	cleanrip-gc
 BUILD		:=	build
 SOURCES		:=	images source source/sha1-c source/crc32 source/http
 DATA		:=	data  
@@ -25,8 +28,8 @@ TEXTURES	:=	images
 #---------------------------------------------------------------------------------
 # options for code generation
 #---------------------------------------------------------------------------------
-
-CFLAGS	= -g -O2 -Wall $(MACHDEP) $(INCLUDE) -DHW_RVL
+MACHDEP =  -DGEKKO -mogc -mcpu=750 -meabi -mhard-float
+CFLAGS		= -g -O3 -Wall $(MACHDEP) $(INCLUDE) -DHW_DOL
 CXXFLAGS	=	$(CFLAGS)
 
 LDFLAGS	=	-g $(MACHDEP) -Wl,-Map,$(notdir $@).map
@@ -34,7 +37,7 @@ LDFLAGS	=	-g $(MACHDEP) -Wl,-Map,$(notdir $@).map
 #---------------------------------------------------------------------------------
 # any extra libraries we wish to link with the project
 #---------------------------------------------------------------------------------
-LIBS	:=	-lwiiuse -lbte -lntfs -logc -lfat -lmxml -lm -lz
+LIBS	:=	-lbba -logc -lfat -lmxml -lm -lz -ldb
 
 #---------------------------------------------------------------------------------
 # list of directories containing libraries, this must be the top level containing
@@ -102,7 +105,7 @@ export OUTPUT	:=	$(CURDIR)/$(TARGET)
 #---------------------------------------------------------------------------------
 $(BUILD):
 	@[ -d $@ ] || mkdir -p $@
-	@make --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
+	@make --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile.gc
 
 #---------------------------------------------------------------------------------
 clean:
@@ -111,7 +114,7 @@ clean:
 
 #---------------------------------------------------------------------------------
 run:
-	wiiload $(TARGET).dol
+	usb-load $(TARGET).dol
 
 
 #---------------------------------------------------------------------------------
@@ -134,6 +137,11 @@ $(OUTPUT).elf: $(OFILES)
 	$(bin2o)
 
 #---------------------------------------------------------------------------------
+%.dol: %.elf
+	@echo output ... $(notdir $@)
+	@elf2dol $< $@
+
+#---------------------------------------------------------------------------------
 %.tpl : %.scf
 	@echo $(notdir $<)
 	@gxtexconv -s $< -d $(DEPSDIR)/$*.d -o $@
@@ -142,6 +150,11 @@ $(OUTPUT).elf: $(OFILES)
 %.tpl.o	:	%.tpl
 	@echo $(notdir $<)
 	@$(bin2o)
+	
+#---------------------------------------------------------------------------------
+%.elf:
+	@echo linking ... $(notdir $@)
+	@$(LD)  $^ $(LDFLAGS) $(LIBPATHS) $(LIBS) -o $@
 	
 -include $(DEPENDS)
 
