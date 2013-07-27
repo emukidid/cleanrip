@@ -66,6 +66,7 @@ void verify_init(char *mountPath) {
 		}
 	}
 
+	mxmlSetErrorCallback(print_gecko);
 	FILE *fp = NULL;
 	// Check for the Gamecube Redump.org DAT and read it
 	sprintf(txtbuffer, "%sgc.dat", mountPath);
@@ -109,7 +110,7 @@ void verify_init(char *mountPath) {
 	}
 
 	print_gecko("DAT Files [NGC: %s] [Wii: %s]\r\n", ngcDAT ? "YES":"NO", wiiDAT ? "YES":"NO");
-	verify_initialized = (ngcDAT && wiiDAT);
+	verify_initialized = ((ngcDAT&&ngcXML) && (wiiDAT&&wiiXML));
 }
 
 // If there was some new files obtained, return 1, else 0
@@ -228,7 +229,7 @@ int verify_findMD5Sum(const char * md5orig, int disc_type) {
 				mxml_index_t *iterator = mxmlIndexNew(item, "game", NULL);
 				mxml_node_t *gameElem = NULL;
 
-				print_gecko("Item Pointer OK\r\n");
+				//print_gecko("Item Pointer OK\r\n");
 				// iterate over all the <game> entries
 				while ((gameElem = mxmlIndexEnum(iterator)) != NULL) {
 					// get the md5 and compare it
@@ -242,7 +243,7 @@ int verify_findMD5Sum(const char * md5orig, int disc_type) {
 					memset(&md5[0], 0, 64);
 					strncpy(&md5[0], mxmlElementGetAttr(md5Elem, "md5"), 32);
 
-					print_gecko("Comparing game [%s] and md5 [%s]\r\n",mxmlElementGetAttr(nameElem, "name"),mxmlElementGetAttr(md5Elem, "md5"));
+					//print_gecko("Comparing game [%s] and md5 [%s]\r\n",mxmlElementGetAttr(nameElem, "name"),mxmlElementGetAttr(md5Elem, "md5"));
 					if (!strnicmp(&md5[0], md5orig, 32)) {
 						snprintf(&gameName[0], 128, "%s", mxmlElementGetAttr(
 								nameElem, "name"));
