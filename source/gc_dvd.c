@@ -112,7 +112,7 @@ int dvd_read_id() {
 	dvd[2] = 0xA8000040;
 	dvd[3] = 0;
 	dvd[4] = 0x20;
-	dvd[5] = 0x80000000 & 0x1FFFFFFF;
+	dvd[5] = 0;
 	dvd[6] = 0x20;
 	dvd[7] = 3; // enable reading!
 	while (dvd[7] & 1)
