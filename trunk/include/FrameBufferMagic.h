@@ -44,13 +44,20 @@
 #define PROGRESS_BOX_BARALL COLOR_RED
 #define PROGRESS_BOX_BACK   COLOR_BLUE
 
+enum TextureId
+{
+	TEX_BACKDROP=0,
+	TEX_BTNA,
+	TEX_BTNB
+};
+
+void init_textures();
 void DrawFrameStart();
 void DrawFrameFinish();
 void DrawProgressBar(int percent, char *message);
-void DrawMessageBox(char *l1, char *l2, char *l3, char *l4);
+void DrawMessageBox(int type, char *message);
 void DrawRawFont(int x, int y, char *message);
-void DrawSelectableButton(int x1, int y1, int x2, int y2, char *message,
-		int mode);
+void DrawSelectableButton(int x1, int y1, int x2, int y2, char *message, int mode, u32 color);
 void DrawEmptyBox(int x1, int y1, int x2, int y2, int color);
 void DrawAButton(int x, int y);
 void DrawBButton(int x, int y);

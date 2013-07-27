@@ -26,17 +26,15 @@
 #define back_framewidth vmode->fbWidth
 #define back_frameheight vmode->xfbHeight
 
-void init_font(void);
-void WriteFont(int x, int y, const char *string);
-void WriteFontHL(int x, int y, int sx, int sy, const char *string,
-		unsigned int *lookup);
-int GetTextSizeInPixels(const char *string);
-void WriteCentre(int y, const char *string);
-void WriteCentreHL(int y, const char *string);
-
+extern GXColor defaultColor;
+extern GXColor disabledColor;
 extern char txtbuffer[2048];
-extern unsigned int blit_lookup_inv[4];
-extern unsigned int blit_lookup[4];
-extern unsigned int blit_lookup_norm[4];
+
+void init_font(void);
+void WriteFont(int x, int y, char *string);
+void WriteFontStyled(int x, int y, char *string, float size, bool centered, GXColor color);
+int GetTextSizeInPixels(char *string);
+float GetTextScaleToFitInWidth(char *string, int width);
+void WriteCentre(int y, char *string);
 
 #endif

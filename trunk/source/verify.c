@@ -108,6 +108,7 @@ void verify_init(char *mountPath) {
 		wiiXML = mxmlLoadString(NULL, wiiDAT, MXML_TEXT_CALLBACK);
 	}
 
+	print_gecko("DAT Files [NGC: %s] [Wii: %s]\r\n", ngcDAT ? "YES":"NO", wiiDAT ? "YES":"NO");
 	verify_initialized = (ngcDAT && wiiDAT);
 }
 
@@ -135,22 +136,23 @@ void verify_download(char *mountPath) {
 		// Initialize the network
 		if(!net_initialized) {
 			char ip[16];
-			DrawMessageBox("Checking for DAT updates",NULL,"Initializing Network...",NULL);
+			DrawMessageBox(D_INFO, "Checking for DAT updates\n \nInitializing Network...");
 			res = if_config(ip, NULL, NULL, true);
       		if(res >= 0) {
-	      		sprintf(txtbuffer, "IP: %s", ip);
-	      		DrawMessageBox("Checking for DAT updates","Network Initialized!",NULL,txtbuffer);
+	      		sprintf(txtbuffer, "Checking for DAT updates\nNetwork Initialized!\nIP: %s", ip);
+	      		DrawMessageBox(D_INFO, txtbuffer);
 				net_initialized = 1;
+				print_gecko("Network Initialized!\r\n");
 			}
       		else {
-	      		DrawMessageBox("Checking for DAT updates",NULL,"Network failed to Initialize!",NULL);
+	      		DrawMessageBox(D_FAIL, "Checking for DAT updates\nNetwork failed to Initialize!");
 	      		sleep(5);
         		net_initialized = 0;
+				print_gecko("Network Failed to Initialize!\r\n");
         		return;
       		}
   		}
-  		
-  		
+
   		// Download the GC DAT
 		char datFilePath[64];
   		sprintf(datFilePath, "%sgc.dat",mountPath);
@@ -159,19 +161,21 @@ void verify_download(char *mountPath) {
 			remove(datFilePath);
 			FILE *fp = fopen(datFilePath, "wb");
 			if(fp) {
-				DrawMessageBox("Checking for updates",NULL,"Saving GC DAT...",NULL);
+				DrawMessageBox(D_INFO, "Checking for updates\nSaving GC DAT...");
 				fwrite(xmlFile, 1, res, fp);
 				fclose(fp);
 				verify_initialized = 0;
+				print_gecko("Saved GameCube DAT! %i Bytes\r\n", res);
 			}
 			else {
-				DrawMessageBox("Checking for updates",NULL,"Failed to save GC DAT...",NULL);
+				DrawMessageBox(D_FAIL, "Checking for updates\nFailed to save GC DAT...");
 				sleep(5);
 			}
 		}
 		else {
 			sprintf(txtbuffer, "Error: %i", res);
-			DrawMessageBox("Checking for updates",NULL,"Couldn't find file on gc-forever.com",txtbuffer);
+			print_gecko("Error Saving GC DAT %i\r\n", res);
+			DrawMessageBox(D_FAIL, "Checking for updates\nCouldn't find file on gc-forever.com");
 			sleep(5);
 		}
 		// Download the Wii DAT
@@ -180,19 +184,21 @@ void verify_download(char *mountPath) {
 			remove(datFilePath);
 			FILE *fp = fopen(datFilePath, "wb");
 			if(fp) {
-				DrawMessageBox("Checking for updates",NULL,"Saving Wii DAT...",NULL);
+				DrawMessageBox(D_INFO, "Checking for updates\nSaving Wii DAT...");
 				fwrite(xmlFile, 1, res, fp);
 				fclose(fp);
 				verify_initialized = 0;
+				print_gecko("Saved Wii DAT! %i Bytes\r\n", res);
 			}	
 			else {
-				DrawMessageBox("Checking for updates",NULL,"Failed to save Wii DAT...",NULL);
+				DrawMessageBox(D_FAIL, "Checking for updates\nFailed to save Wii DAT...");
 				sleep(5);
 			}					
 		}
 		else {
 			sprintf(txtbuffer, "Error: %i", res);
-			DrawMessageBox("Checking for updates",NULL,"Couldn't find file on redump.org",txtbuffer);
+			print_gecko("Error Saving Wii DAT %i\r\n", res);
+			DrawMessageBox(D_FAIL, "Checking for updates\nCouldn't find file on gc-forever.com");
 			sleep(5);
 		}
 		free(xmlFile);
@@ -201,26 +207,28 @@ void verify_download(char *mountPath) {
 	else {
 		dontAskAgain = 1;
 	}
-
-	return;
 }
 
 int verify_findMD5Sum(const char * md5orig, int disc_type) {
-	
+
+	print_gecko("Looking for MD5 [%s]\r\n", md5orig);
 	char *xmlPointer = (disc_type == IS_NGC_DISC) ? ngcDAT : wiiDAT;
 	if(xmlPointer) {
 		mxml_node_t *pointer = (disc_type == IS_NGC_DISC)  ? ngcXML : wiiXML;
 		
 		pointer = mxmlLoadString(NULL, xmlPointer, MXML_TEXT_CALLBACK);
-
+		
+		print_gecko("Looking in the %s XML\r\n", pointer == ngcXML ? "GameCube" : "Wii");
 		if (pointer) {
 			// open the <datafile>
 			mxml_node_t *item = mxmlFindElement(pointer, pointer, "datafile", NULL,
 					NULL, MXML_DESCEND);
+			print_gecko("DataFile Pointer OK\r\n");
 			if (item) {
 				mxml_index_t *iterator = mxmlIndexNew(item, "game", NULL);
 				mxml_node_t *gameElem = NULL;
-	
+
+				print_gecko("Item Pointer OK\r\n");
 				// iterate over all the <game> entries
 				while ((gameElem = mxmlIndexEnum(iterator)) != NULL) {
 					// get the md5 and compare it
@@ -229,14 +237,16 @@ int verify_findMD5Sum(const char * md5orig, int disc_type) {
 					// get the name too
 					mxml_node_t *nameElem = mxmlFindElement(gameElem, gameElem,
 							NULL, "name", NULL, MXML_DESCEND);
-	
+
 					char md5[64];
 					memset(&md5[0], 0, 64);
 					strncpy(&md5[0], mxmlElementGetAttr(md5Elem, "md5"), 32);
-					
+
+					print_gecko("Comparing game [%s] and md5 [%s]\r\n",mxmlElementGetAttr(nameElem, "name"),mxmlElementGetAttr(md5Elem, "md5"));
 					if (!strnicmp(&md5[0], md5orig, 32)) {
 						snprintf(&gameName[0], 128, "%s", mxmlElementGetAttr(
 								nameElem, "name"));
+						print_gecko("Found a match!\r\n");
 						return 1;
 					}
 				}
