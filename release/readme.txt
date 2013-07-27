@@ -1,4 +1,13 @@
-CleanRip - Wii/GC Disc Ripper Tool - Version 1.0.5
+CleanRip - Wii/GC Disc Ripper Tool - Version 2.0.0
+
+Whatsnew in 2.0.0:
+- GameCube version integrated into one codebase
+- GX GUI
+- Fix disc dumping on Wii U (Wii discs only of course)
+- Fix ETA calculation on non GC discs
+- Fix fatUnmount
+- Stop larger than 4GB chunks on FAT FS
+- Fix potential issue when read error occurs
 
 Whatsnew in 1.0.5:
 - Built with latest libOGC git (as of 30/06/2012)
