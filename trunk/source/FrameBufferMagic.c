@@ -365,11 +365,12 @@ int DrawYesNoDialog(char *line1, char *line2) {
 	while ((get_buttons_pressed() & PAD_BUTTON_A));
 	while (1) {
 		DrawFrameStart();
+		int xlen = (vmode->fbWidth - 38) - 30;
 		DrawEmptyBox(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
 		WriteCentre(230, line1);
 		WriteCentre(255, line2);
-		DrawSelectableButton(100, 310, -1, 340, "Yes", (selection) ? B_SELECTED : B_NOSELECT, -1);
-		DrawSelectableButton(380, 310, -1, 340, "No", (!selection) ? B_SELECTED : B_NOSELECT, -1);
+		DrawSelectableButton((xlen/3), 310, -1, 340, "Yes", (selection) ? B_SELECTED : B_NOSELECT, -1);
+		DrawSelectableButton((vmode->fbWidth - 38) - (xlen/3), 310, -1, 340, "No", (!selection) ? B_SELECTED : B_NOSELECT, -1);
 		DrawFrameFinish();
 		while (!(get_buttons_pressed() & (PAD_BUTTON_RIGHT | PAD_BUTTON_LEFT
 				| PAD_BUTTON_B | PAD_BUTTON_A)));
