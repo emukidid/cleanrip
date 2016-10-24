@@ -1,0 +1,52 @@
+<?xml version="1.0"?>
+<!DOCTYPE datafile PUBLIC "-//Logiqx//DTD ROM Management Datafile//EN" "http://www.logiqx.com/Dats/datafile.dtd">
+<datafile>
+	<header>
+		<name>Nintendo - GameCube</name>
+		<description>Nintendo - GameCube 20130714 15-46-40</description>
+		<version>20130714 15-46-40</version>
+		<date>20130714 15-46-40</date>
+		<author>redump.org</author>
+		<homepage>redump.org</homepage>
+		<url>http://redump.org/</url>
+	</header>
+	<game name="Datel Advanced Game Port (USA)">
+		<category>Applications</category>
+		<description>Datel Advanced Game Port (USA)</description>
+		<rom name="Datel Advanced Game Port (USA).iso" size="1459978240" crc="5B478075" md5="0F9710ACA393CF6EFDB1094B96386F3F" sha1="BC6DFEA0577A7C5455473C63362330816CAB4792"/>
+		<skipcrc crc100000="B5B5592A" skipfill="00"/>
+		<skip start="00100000" stop="098FFFFF"/>
+		<skip start="09A00000" stop="0A8FFFFF"/>
+		<skip start="0AA00000" stop="0B0FFFFF"/>
+		<skip start="0B200000" stop="0B8FFFFF"/>
+		<skip start="0BA00000" stop="0C0FFFFF"/>
+		<skip start="0C200000" stop="0D8FFFFF"/>
+		<skip start="0DA00000" stop="0E0FFFFF"/>
+		<skip start="0E200000" stop="0E8FFFFF"/>
+		<skip start="0EA00000" stop="0F0FFFFF"/>
+		<skip start="0F200000" stop="0F8FFFFF"/>
+		<skip start="0FA00000" stop="12AFFFFF"/>
+		<skip start="12F00000" stop="4FFFFFFF"/>
+		<skip start="50100000" stop="FFFFFFFF"/>
+	</game>
+	<game name="Datel Action Replay (v1.14A)">
+		<category>Applications</category>
+		<description>Datel Action Replay (v1.14A)</description>
+		<rom name="Datel Action Replay (v1.14A).iso" size="1459978240" crc="1343B270" md5="20CFC5F87ACA12C1E983B23D6145EDAF" sha1="BEA42EE605A7878EEE608AED314432CEBAD20CC6"/>
+		<skipcrc crc100000="9BEEFEEF" skipfill="00"/>
+		<skip start="00100000" stop="4FFFFFFF"/>
+		<skip start="50400000" stop="FFFFFFFF"/>
+	</game>
+	<game name="NHL Hitz 2002 (USA)">
+		<category>Games</category>
+		<description>NHL Hitz 2002 (USA)</description>
+		<rom name="NHL Hitz 2002 (USA).iso" size="1459978240" crc="53f2137a" md5="488d2a15d25da53fa4451a5e8471dfbc" sha1="64d8b607aa2b5fa5fbbb5bfb0be149080781370f"/>
+		<skipcrc crc100000="5D1B4684" skipfill="00"/>
+	</game>
+	<game name="NHL Hitz 2002 (Europe)">
+		<category>Games</category>
+		<description>NHL Hitz 2002 (Europe)</description>
+		<rom name="NHL Hitz 2002 (Europe).iso" size="1459978240" crc="f8f19d9c" md5="9b04a5dadd1de2ef1e428994506370a0" sha1="c3966219b00b3dbd33ef3070427e03cd4f7f721d"/>
+		<skipcrc crc100000="" skipfill="00"/>
+	</game>
+</datafile>

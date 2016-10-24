@@ -38,7 +38,7 @@
 static char *ngcDAT = NULL;
 static char *wiiDAT = NULL;
 static int verify_initialized = 0;
-static int net_initialized = 0;
+int net_initialized = 0;
 static int dontAskAgain = 0;
 
 // XML stuff
