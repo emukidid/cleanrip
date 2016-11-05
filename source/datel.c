@@ -41,7 +41,7 @@ static int datel_initialized = 0;
 static int datelDontAskAgain = 0;
 static int SkipFill = 0;
 static int NumSkips = 0;
-#define MAX_SKIPS (1000)
+#define MAX_SKIPS (0x580)
 static uint64_t SkipStart[MAX_SKIPS];
 static uint64_t SkipStop[MAX_SKIPS];
 
@@ -200,6 +200,8 @@ int datel_findCrcSum(int crcorig) {
 					strncpy(&crc[0], mxmlElementGetAttr(crcElem, "crc100000"), 32);
 
 					int crcval = strtoul(crc, NULL, 16);
+					if (!strncmp(crc, "default", 7))
+						crcval = crcorig;
 
 					memset(&crc[0], 0, 64);
 					strncpy(&crc[0], mxmlElementGetAttr(fillElem, "skipfill"), 32);
@@ -257,14 +259,34 @@ void datel_adjustStartStop(uint64_t* start, int* length, int* fill) {
 	}
 }
 
-char *datel_get_name() {
-	if(strlen(&gameName[0]) > 32) {
-		 gameName[30] = '.';
-		 gameName[31] = '.';
-		 gameName[32] = 0;
-	 }
-	return &gameName[0];
+void datel_addSkip(uint64_t start, int length) {
+	if ((NumSkips > 0) && (start == SkipStop[NumSkips-1] + 1))
+		SkipStop[NumSkips-1] += length;
+	else {
+		SkipStart[NumSkips] = start;
+		SkipStop[NumSkips] = start + length - 1;
+		NumSkips++;
+		if (NumSkips == MAX_SKIPS)
+			NumSkips=0;
+	}
 }
+
+void dump_skips(char *mountPath, int crc100000) {
+	sprintf(txtbuffer, "%s%s.skp", mountPath, get_game_name());
+	FILE *fp = fopen(txtbuffer, "wb");
+	if (fp) {
+		int sk=0;
+		char SkipsInfo[100];
+		sprintf(SkipsInfo, "<skipcrc crc100000=""%08x"" skipfill=""%02x""/>\n", crc100000, SkipFill);
+		fwrite(SkipsInfo, 1, strlen(&SkipsInfo[0]), fp);
+		for (sk=0;sk<NumSkips;sk++) {
+			sprintf(SkipsInfo, "<skip start=""%08x"" stop=""%08x""/>\n", (int)(SkipStart[sk] & 0xFFFFFFFF), (int)(SkipStop[sk] & 0xFFFFFFFF));
+			fwrite(SkipsInfo, 1, strlen(&SkipsInfo[0]), fp);
+		}
+		fclose(fp);
+	}
+}
+
 
 int datel_is_available() {
 	return datelDAT != NULL;

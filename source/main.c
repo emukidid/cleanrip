@@ -64,8 +64,8 @@ const DISC_INTERFACE* usb = NULL;
 #endif
 
 static int calcChecksums = 0;
-static int forceDatel = 0;
-static int isDatel = 0;
+int forceDatel = 0;
+int isDatel = 0;
 static int dumpCounter = 0;
 static char gameName[32];
 static char internalName[512];
@@ -581,6 +581,10 @@ static int identify_disc() {
 	}
 }
 
+const char* const get_game_name() {
+	return gameName;
+}
+
 /* the user must specify the disc type */
 static int force_disc() {
 	int type = IS_NGC_DISC;
@@ -958,6 +962,7 @@ void dump_game(int disc_type, int type, int fs) {
 	md5_byte_t digest[16];
 	SHA1Context sha;
 	u32 crc32 = 0;
+	u32 crc100000 = 0;
 	isDatel = 0;
 	char *buffer;
 	mqbox_t msgq, blockq;
@@ -1104,11 +1109,12 @@ void dump_game(int disc_type, int type, int fs) {
 		}
 
 		if((((u64)startLBA<<11) + opt_read_size == 0x100000)){
-			isDatel = datel_findCrcSum(crc32);
+			crc100000 = crc32;
+			isDatel = datel_findCrcSum(crc100000);
 			if (isDatel || forceDatel){
 				DrawFrameStart();
 				DrawEmptyBox(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
-				sprintf(txtbuffer, "Crc100000=%08x", crc32);
+				sprintf(txtbuffer, "Crc100000=%08x", crc100000);
 				WriteCentre(255, txtbuffer);
 				WriteCentre(315, "Press  A to continue  B to Exit");
 				wait_press_A_exit_B();
@@ -1236,6 +1242,7 @@ void dump_game(int disc_type, int type, int fs) {
 		else {
 			dump_info(NULL, NULL, 0, 0, diff_sec(startTime, gettime()));
 		}
+		dump_skips(&mountPath[0], crc100000);
 		WriteCentre(315,"Press  A to continue  B to Exit");
 		dvd_motor_off();
 		wait_press_A_exit_B();

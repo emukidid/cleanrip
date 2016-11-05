@@ -192,15 +192,23 @@ int DVD_LowRead64(void* dst, unsigned int len, uint64_t offset) {
 	dvd[5] = (unsigned long) dst & 0x1FFFFFFF;
 	dvd[6] = disclen;
 	dvd[7] = 3; // enable reading!
-	DCInvalidateRange(dst, disclen);
+	DCInvalidateRange(dst + discoffset - offset, disclen);
 	while (dvd[7] & 1)
 		LWP_YieldThread();
 	if ((dvd[0] & 0x4) == 0)
 		return 0;
 	}
 
-	if (dvd[0] & 0x4)
-		return 1;
+	if (dvd[0] & 0x4) {
+		if (!forceDatel || isDatel)
+			return 1;
+
+		// Logic assumes READ_SIZE 0x10000
+//		datel_addSkip(offset & 0xFFFF0000, 0x00100000 - (offset & 0x000F0000)); // Test every start 0xXXX00000
+//		datel_addSkip(offset & 0xFFFF0000, 0x01000000 - (offset & 0x00FF0000)); // Test every start 0xXX000000
+		datel_addSkip(offset & 0xFFFF0000, 0x10000000 - (offset & 0x0FFF0000)); // Test every start 0xX0000000
+		memset(dst, fill, len);
+	}
 	return 0;
 }
 

@@ -49,4 +49,11 @@
 		<rom name="NHL Hitz 2002 (Europe).iso" size="1459978240" crc="f8f19d9c" md5="9b04a5dadd1de2ef1e428994506370a0" sha1="c3966219b00b3dbd33ef3070427e03cd4f7f721d"/>
 		<skipcrc crc100000="" skipfill="00"/>
 	</game>
+	<game name="Unknown Datel default">
+		<category>Applications</category>
+		<description>Unknown Datel default</description>
+		<rom name="Unknown Datel default.iso" size="1459978240" crc="00000000" md5="00000000000000000000000000000000" sha1="0000000000000000000000000000000000000000"/>
+		<skipcrc crc100000="default" skipfill="00"/>
+		<skip start="00100000" stop="FFFFFFFF"/>
+	</game>
 </datafile>
