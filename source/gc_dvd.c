@@ -189,7 +189,7 @@ int DVD_LowRead64(void* dst, unsigned int len, uint64_t offset) {
 	dvd[2] = read_cmd;
 	dvd[3] = read_cmd == DVDR ? discoffset >> 11 : discoffset >> 2;
 	dvd[4] = read_cmd == DVDR ? disclen >> 11 : disclen;
-	dvd[5] = (unsigned long) dst & 0x1FFFFFFF;
+	dvd[5] = (unsigned long) ((dst + discoffset - offset) & 0x1FFFFFFF);
 	dvd[6] = disclen;
 	dvd[7] = 3; // enable reading!
 	DCInvalidateRange(dst + discoffset - offset, disclen);
