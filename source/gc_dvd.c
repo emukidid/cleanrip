@@ -204,9 +204,9 @@ int DVD_LowRead64(void* dst, unsigned int len, uint64_t offset) {
 			return 1;
 
 		// Logic assumes READ_SIZE 0x10000
-//		datel_addSkip(offset & 0xFFFF0000, 0x00100000 - (offset & 0x000F0000)); // Test every start 0xXXX00000
+		datel_addSkip(offset & 0xFFFF0000, 0x00100000 - (offset & 0x000F0000)); // Test every start 0xXXX00000
 //		datel_addSkip(offset & 0xFFFF0000, 0x01000000 - (offset & 0x00FF0000)); // Test every start 0xXX000000
-		datel_addSkip(offset & 0xFFFF0000, 0x10000000 - (offset & 0x0FFF0000)); // Test every start 0xX0000000
+//		datel_addSkip(offset & 0xFFFF0000, 0x10000000 - (offset & 0x0FFF0000)); // Test every start 0xX0000000
 		memset(dst, fill, len);
 	}
 	return 0;
