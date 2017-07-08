@@ -138,7 +138,7 @@ void verify_download(char *mountPath) {
 		if(!net_initialized) {
 			char ip[16];
 			DrawMessageBox(D_INFO, "Checking for DAT updates\n \nInitializing Network...");
-			res = if_config(ip, NULL, NULL, true);
+			res = if_config(ip, NULL, NULL, true, 3);
       		if(res >= 0) {
 	      		sprintf(txtbuffer, "Checking for DAT updates\nNetwork Initialized!\nIP: %s", ip);
 	      		DrawMessageBox(D_INFO, txtbuffer);
