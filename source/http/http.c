@@ -289,8 +289,8 @@ int http_request(char *http_host, char *http_path, u8 *buffer, u32 maxsize, bool
 		if (strlen(line) < 1)
 			break;
 
-		sscanf(line, "HTTP/1.%*u %u", &http_status);
-		sscanf(line, "Content-Length: %u", &content_length);
+		sscanf(line, "HTTP/1.%*u %lu", &http_status);
+		sscanf(line, "Content-Length: %lu", &content_length);
 		sscanf(line, "Location: %s", redirect);
 	}
 
@@ -319,7 +319,7 @@ int http_request(char *http_host, char *http_path, u8 *buffer, u32 maxsize, bool
 	if (buffer != NULL)
 	{
 		char txtbuf[256];
-		sprintf(txtbuf, "Connected to gc-forever.com\nDownloading %i bytes", content_length);
+		sprintf(txtbuf, "Connected to gc-forever.com\nDownloading %lu bytes", content_length);
 		DrawMessageBox(D_INFO, txtbuf);
 		sizeread = tcp_read(s, buffer, content_length);
 	}
