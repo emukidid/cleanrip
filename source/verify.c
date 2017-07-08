@@ -244,7 +244,7 @@ int verify_findMD5Sum(const char * md5orig, int disc_type) {
 					strncpy(&md5[0], mxmlElementGetAttr(md5Elem, "md5"), 32);
 
 					//print_gecko("Comparing game [%s] and md5 [%s]\r\n",mxmlElementGetAttr(nameElem, "name"),mxmlElementGetAttr(md5Elem, "md5"));
-					if (!strnicmp(&md5[0], md5orig, 32)) {
+					if (!strncasecmp(&md5[0], md5orig, 32)) {
 						snprintf(&gameName[0], 128, "%s", mxmlElementGetAttr(
 								nameElem, "name"));
 						print_gecko("Found a match!\r\n");
