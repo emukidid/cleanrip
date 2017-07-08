@@ -798,26 +798,26 @@ static void get_settings(int disc_type) {
 		DrawFrameFinish();
 
 		while (!(get_buttons_pressed() & (PAD_BUTTON_RIGHT | PAD_BUTTON_LEFT | PAD_BUTTON_A | PAD_BUTTON_UP | PAD_BUTTON_DOWN)));
-			u32 btns = get_buttons_pressed();
-			if(btns & PAD_BUTTON_RIGHT) {
-				toggleOption(currentSettingPos+((disc_type == IS_WII_DISC)?MAX_NGC_OPTIONS:0), 1);
-			}
-			if(btns & PAD_BUTTON_LEFT) {
-				toggleOption(currentSettingPos+((disc_type == IS_WII_DISC)?MAX_NGC_OPTIONS:0), -1);
-			}
-			if(btns & PAD_BUTTON_UP) {
-				currentSettingPos = (currentSettingPos>0) ? (currentSettingPos-1):maxSettingPos;
-			}
-			if(btns & PAD_BUTTON_DOWN) {
-				currentSettingPos = (currentSettingPos<maxSettingPos) ? (currentSettingPos+1):0;
-			}
-			if(btns & PAD_BUTTON_A) {
-				break;
-			}
-			while (get_buttons_pressed() & (PAD_BUTTON_RIGHT | PAD_BUTTON_LEFT | PAD_BUTTON_A | PAD_BUTTON_UP | PAD_BUTTON_DOWN));
+		u32 btns = get_buttons_pressed();
+		if(btns & PAD_BUTTON_RIGHT) {
+			toggleOption(currentSettingPos+((disc_type == IS_WII_DISC)?MAX_NGC_OPTIONS:0), 1);
 		}
-		while(get_buttons_pressed() & PAD_BUTTON_B);
+		if(btns & PAD_BUTTON_LEFT) {
+			toggleOption(currentSettingPos+((disc_type == IS_WII_DISC)?MAX_NGC_OPTIONS:0), -1);
+		}
+		if(btns & PAD_BUTTON_UP) {
+			currentSettingPos = (currentSettingPos>0) ? (currentSettingPos-1):maxSettingPos;
+		}
+		if(btns & PAD_BUTTON_DOWN) {
+			currentSettingPos = (currentSettingPos<maxSettingPos) ? (currentSettingPos+1):0;
+		}
+		if(btns & PAD_BUTTON_A) {
+			break;
+		}
+		while (get_buttons_pressed() & (PAD_BUTTON_RIGHT | PAD_BUTTON_LEFT | PAD_BUTTON_A | PAD_BUTTON_UP | PAD_BUTTON_DOWN));
 	}
+	while(get_buttons_pressed() & PAD_BUTTON_B);
+}
 
 void prompt_new_file(FILE **fp, int chunk, int type, int fs, int silent) {
 	// Close the file and unmount the fs
