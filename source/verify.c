@@ -66,7 +66,7 @@ void verify_init(char *mountPath) {
 		}
 	}
 
-	mxmlSetErrorCallback(print_gecko);
+	mxmlSetErrorCallback((mxml_error_cb_t)print_gecko);
 	FILE *fp = NULL;
 	// Check for the Gamecube Redump.org DAT and read it
 	sprintf(txtbuffer, "%sgc.dat", mountPath);

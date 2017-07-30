@@ -227,7 +227,7 @@ void _DrawBackdrop() {
 	char iosStr[256];
 	DrawImage(TEX_BACKDROP, 0, 0, 640, 480, 0, 0.0f, 1.0f, 0.0f, 1.0f);
 #ifdef HW_RVL
-	sprintf(iosStr, "IOS %i", iosversion);
+	sprintf(iosStr, "IOS %lu", iosversion);
 	WriteFont(520, 40, iosStr);
 #endif
 #ifdef HW_DOL
