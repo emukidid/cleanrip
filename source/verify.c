@@ -138,7 +138,7 @@ void verify_download(char *mountPath) {
 		if(!net_initialized) {
 			char ip[16];
 			DrawMessageBox(D_INFO, "Checking for DAT updates\n \nInitializing Network...");
-			res = if_config(ip, NULL, NULL, true);
+			res = if_config(ip, NULL, NULL, true, 3);
       		if(res >= 0) {
 	      		sprintf(txtbuffer, "Checking for DAT updates\nNetwork Initialized!\nIP: %s", ip);
 	      		DrawMessageBox(D_INFO, txtbuffer);
@@ -244,7 +244,7 @@ int verify_findMD5Sum(const char * md5orig, int disc_type) {
 					strncpy(&md5[0], mxmlElementGetAttr(md5Elem, "md5"), 32);
 
 					//print_gecko("Comparing game [%s] and md5 [%s]\r\n",mxmlElementGetAttr(nameElem, "name"),mxmlElementGetAttr(md5Elem, "md5"));
-					if (!strnicmp(&md5[0], md5orig, 32)) {
+					if (!strncasecmp(&md5[0], md5orig, 32)) {
 						snprintf(&gameName[0], 128, "%s", mxmlElementGetAttr(
 								nameElem, "name"));
 						print_gecko("Found a match!\r\n");
