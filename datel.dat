@@ -13,7 +13,15 @@
 	<game name="Datel Advanced Game Port (USA)">
 		<category>Applications</category>
 		<description>Datel Advanced Game Port (USA)</description>
-		<rom name="Datel Advanced Game Port (USA).iso" size="1459978240" crc="299B0E92" md5="641A541482216F7ED7787AFE94C8DA55" sha1="5C80BAC589FECDC2085F794B16C7A7120A3AF347"/>
+		<rom name="Datel Advanced Game Port (USA).iso" size="1459978240" crc="A2C19B34" md5="B243F748E5FB3D69A0C179987C40420A" sha1="731BD1FC43D6F9CC2E542C1DD6B280E2AF3EC1DA"/>
+		<skipcrc crc100000="3B60B95A" skipfill="00"/>
+		<skip start="01F00000" stop="4FFFFFFF"/>
+		<skip start="50300000" stop="570FFFFF"/>
+	</game>
+	<game name="Datel Advanced Game Port with Construction Kit (USA)">
+		<category>Applications</category>
+		<description>Datel Advanced Game Port with Construction Kit (USA)</description>
+		<rom name="Datel Advanced Game Port with Construction Kit (USA).iso" size="1459978240" crc="299B0E92" md5="641A541482216F7ED7787AFE94C8DA55" sha1="5C80BAC589FECDC2085F794B16C7A7120A3AF347"/>
 		<skipcrc crc100000="B5B5592A" skipfill="00"/>
 		<skip start="01F00000" stop="088FFFFF"/>
 		<skip start="08A00000" stop="090FFFFF"/>
@@ -37,6 +45,13 @@
 		<skip start="12200000" stop="128FFFFF"/>
 		<skip start="12F00000" stop="4FFFFFFF"/>
 		<skip start="50100000" stop="570FFFFF"/>
+	</game>
+	<game name="Datel Action Replay (v1._)">
+		<category>Applications</category>
+		<description>Datel Action Replay (v1._)</description>
+		<rom name="Datel Action Replay (v1._).iso" size="1459978240" crc="2952CF53" md5="6EFFF79058C348FC9FEFCF4079669C62" sha1="2C61BF8C3B89BBE06CACFFE34161B20027251E56"/>
+		<skipcrc crc100000="082BCA36" skipfill="00"/>
+		<skip start="01F00000" stop="570FFFFF"/>
 	</game>
 	<game name="Datel Action Replay (v1.14A)">
 		<category>Applications</category>
