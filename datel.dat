@@ -18,9 +18,9 @@
 		<skip start="01F00000" stop="4FFFFFFF"/>
 		<skip start="50300000" stop="570FFFFF"/>
 	</game>
-	<game name="Datel Advanced Game Port with Construction Kit (USA)">
+	<game name="Datel Advanced Game Port with Cheat Construction Kit (USA)">
 		<category>Applications</category>
-		<description>Datel Advanced Game Port with Construction Kit (USA)</description>
+		<description>Datel Advanced Game Port with Cheat Construction Kit (USA)</description>
 		<rom name="Datel Advanced Game Port with Construction Kit (USA).iso" size="1459978240" crc="299B0E92" md5="641A541482216F7ED7787AFE94C8DA55" sha1="5C80BAC589FECDC2085F794B16C7A7120A3AF347"/>
 		<skipcrc crc100000="B5B5592A" skipfill="00"/>
 		<skip start="01F00000" stop="088FFFFF"/>
@@ -46,10 +46,10 @@
 		<skip start="12F00000" stop="4FFFFFFF"/>
 		<skip start="50100000" stop="570FFFFF"/>
 	</game>
-	<game name="Datel Action Replay (v1._)">
+	<game name="Datel SD Media Launcher Action Replay (USA)">
 		<category>Applications</category>
-		<description>Datel Action Replay (v1._)</description>
-		<rom name="Datel Action Replay (v1._).iso" size="1459978240" crc="2952CF53" md5="6EFFF79058C348FC9FEFCF4079669C62" sha1="2C61BF8C3B89BBE06CACFFE34161B20027251E56"/>
+		<description>Datel SD Media Launcher Action Replay (USA)</description>
+		<rom name="Datel SD Media Launcher Action Replay (USA).iso" size="1459978240" crc="2952CF53" md5="6EFFF79058C348FC9FEFCF4079669C62" sha1="2C61BF8C3B89BBE06CACFFE34161B20027251E56"/>
 		<skipcrc crc100000="082BCA36" skipfill="00"/>
 		<skip start="01F00000" stop="570FFFFF"/>
 	</game>
@@ -66,12 +66,6 @@
 		<description>NHL Hitz 2002 (USA)</description>
 		<rom name="NHL Hitz 2002 (USA).iso" size="1459978240" crc="53f2137a" md5="488d2a15d25da53fa4451a5e8471dfbc" sha1="64d8b607aa2b5fa5fbbb5bfb0be149080781370f"/>
 		<skipcrc crc100000="5D1B4684" skipfill="00"/>
-	</game>
-	<game name="NHL Hitz 2002 (Europe)">
-		<category>Games</category>
-		<description>NHL Hitz 2002 (Europe)</description>
-		<rom name="NHL Hitz 2002 (Europe).iso" size="1459978240" crc="f8f19d9c" md5="9b04a5dadd1de2ef1e428994506370a0" sha1="c3966219b00b3dbd33ef3070427e03cd4f7f721d"/>
-		<skipcrc crc100000="" skipfill="00"/>
 	</game>
 	<game name="Unknown Datel default">
 		<category>Applications</category>
