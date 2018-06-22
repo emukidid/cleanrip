@@ -53,6 +53,14 @@
 		<skipcrc crc100000="082BCA36" skipfill="00"/>
 		<skip start="01F00000" stop="570FFFFF"/>
 	</game>
+	<game name="Datel SD Media Launcher (Europe)">
+		<category>Applications</category>
+		<description>Datel SD Media Launcher (Europe)</description>
+		<rom name="Datel SD Media Launcher (Europe).iso" size="1459978240" crc="CAE79340" md5="92F09D17BA4859C09C5E1ACC72A84488" sha1="B24CE60308560D888EEC10EF071595AC890F194D"/>
+		<skipcrc crc100000="BAEE06DD" skipfill="00"/>
+		<skip start="01F00000" stop="4FFFFFFF"/>
+		<skip start="50100000" stop="570FFFFF"/>
+	</game>
 	<game name="Datel Action Replay (v1.14A)">
 		<category>Applications</category>
 		<description>Datel Action Replay (v1.14A)</description>
