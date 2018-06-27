@@ -21,6 +21,8 @@
 #ifndef VERIFY_H
 #define VERIFY_H
 
+extern int net_initialized;
+
 void verify_init(char *mountPath);
 int verify_findMD5Sum(const char * md5, int disc_type);
 int verify_is_available(int disc_type);

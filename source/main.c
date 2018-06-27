@@ -35,6 +35,7 @@
 #include "IPLFontWrite.h"
 #include "gc_dvd.h"
 #include "verify.h"
+#include "datel.h"
 #include "main.h"
 #include "crc32.h"
 #include "sha1.h"
@@ -63,6 +64,8 @@ const DISC_INTERFACE* usb = NULL;
 #endif
 
 static int calcChecksums = 0;
+int forceDatel = 0;
+int isDatel = 0;
 static int dumpCounter = 0;
 static char gameName[32];
 static char internalName[512];
@@ -578,6 +581,10 @@ static int identify_disc() {
 	}
 }
 
+const char* const get_game_name() {
+	return gameName;
+}
+
 /* the user must specify the disc type */
 static int force_disc() {
 	int type = IS_NGC_DISC;
@@ -955,6 +962,8 @@ void dump_game(int disc_type, int type, int fs) {
 	md5_byte_t digest[16];
 	SHA1Context sha;
 	u32 crc32 = 0;
+	u32 crc100000 = 0;
+	isDatel = 0;
 	char *buffer;
 	mqbox_t msgq, blockq;
 	lwp_t writer;
@@ -1012,12 +1021,10 @@ void dump_game(int disc_type, int type, int fs) {
 		MQ_Send(blockq, (mqmsg_t)(buffer+i*(opt_read_size+sizeof(writer_msg))), MQ_MSG_BLOCK);
 	}
 
-	if(calcChecksums) {
-		// Reset MD5/SHA-1/CRC
-		md5_init(&state);
-		SHA1Reset(&sha);
-		crc32 = 0;
-	}
+	// Reset MD5/SHA-1/CRC
+	md5_init(&state);
+	SHA1Reset(&sha);
+	crc32 = 0;
 
 	// There will be chunks, name accordingly
 	if (opt_chunk_size < endLBA) {
@@ -1092,13 +1099,26 @@ void dump_game(int disc_type, int type, int fs) {
 		// Read from Disc
 		ret = DVD_LowRead64(wmsg->data, (u32)opt_read_size, (u64)startLBA << 11);
 		MQ_Send(msgq, (mqmsg_t)wmsg, MQ_MSG_BLOCK);
-		if(calcChecksums) {
+		if((calcChecksums) || (forceDatel) || (((u64)startLBA<<11) + opt_read_size <= 0x100000)){
 			// Calculate MD5
 			md5_append(&state, (const md5_byte_t *) (wmsg+1), (u32) opt_read_size);
 			// Calculate SHA-1
 			SHA1Input(&sha, (const unsigned char *) (wmsg+1), (u32) opt_read_size);
 			// Calculate CRC32
 			crc32 = Crc32_ComputeBuf( crc32, wmsg+1, (u32) opt_read_size);
+		}
+
+		if((((u64)startLBA<<11) + opt_read_size == 0x100000)){
+			crc100000 = crc32;
+			isDatel = datel_findCrcSum(crc100000);
+			if (isDatel || forceDatel){
+				DrawFrameStart();
+				DrawEmptyBox(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
+				sprintf(txtbuffer, "Crc100000=%08x", crc100000);
+				WriteCentre(255, txtbuffer);
+				WriteCentre(315, "Press  A to continue  B to Exit");
+				wait_press_A_exit_B();
+			}
 		}
 
 		check_exit_status();
@@ -1222,6 +1242,7 @@ void dump_game(int disc_type, int type, int fs) {
 		else {
 			dump_info(NULL, NULL, 0, 0, diff_sec(startTime, gettime()));
 		}
+		dump_skips(&mountPath[0], crc100000);
 		WriteCentre(315,"Press  A to continue  B to Exit");
 		dvd_motor_off();
 		wait_press_A_exit_B();
@@ -1252,6 +1273,9 @@ int main(int argc, char **argv) {
 	// Ask the user if they want checksum calculations enabled this time?
 	calcChecksums = DrawYesNoDialog("Enable checksum calculations?", 
 									"(Enabling will add about 3 minutes)");
+	// Ask the user if they want to force Datel check this time?
+	forceDatel = DrawYesNoDialog("Force Datel check?", 
+								 "(Will attempt auto-detect if no)");
 
 	while (1) {
 #ifdef HW_RVL
@@ -1279,6 +1303,12 @@ int main(int argc, char **argv) {
 
 			// User might've got some new files.
 			verify_init(&mountPath[0]);
+		}
+		
+		if(calcChecksums) {
+			datel_init(&mountPath[0]);
+			datel_download(&mountPath[0]);
+			datel_init(&mountPath[0]);
 		}
 		
 		// Init the drive and try to detect disc type
