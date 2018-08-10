@@ -528,7 +528,7 @@ static int initialise_device(int type, int fs) {
 			if (mountCount == -1) {
 				sprintf(txtbuffer, "Error whilst mounting devices (%i)", errno);
 			} else {
-				sprintf(txtbuffer, "No NTFS volumes were found and/or mounted");
+				sprintf(txtbuffer, "No NTFS volume(s) were found and/or mounted");
 			}
 			WriteCentre(255, txtbuffer);
 			WriteCentre(315, "Press A to try again  B to exit");
@@ -536,7 +536,7 @@ static int initialise_device(int type, int fs) {
 		} else {
 			sprintf(txtbuffer, "%s Mounted", ntfsGetVolumeName(mounts[0].name));
 			WriteCentre(230, txtbuffer);
-			sprintf(txtbuffer, "%i NTFS volumes(s) mounted!", mountCount);
+			sprintf(txtbuffer, "%i NTFS volume(s) mounted!", mountCount);
 			WriteCentre(255, txtbuffer);
 			WriteCentre(315, "Press  A  to continue");
 			wait_press_A();
