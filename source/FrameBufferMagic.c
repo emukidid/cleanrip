@@ -288,7 +288,7 @@ void DrawProgressBar(int percent, char *message) {
 			(multiplier*percent), 20, 0, progressBarColor, noColor); 
 
 	WriteFontStyled(640/2, middleY, message, scale, true, defaultColor);
-	sprintf(txtbuffer,"%d%% percent complete",percent);
+	sprintf(txtbuffer,"%d %% complete",percent); //
 	WriteFontStyled(640/2, middleY+30, txtbuffer, 1.0f, true, defaultColor);
 }
 
