@@ -6,14 +6,14 @@ Create 1:1 backups of your GC/Wii discs for archival purposes without any requir
 If you have any questions about CleanRip?, please make a thread over at http://www.gc-forever.com/
 
 # Features
-    FAT/NTFS (libntfs-2012-1-15(r13))
-    USB 2.0 support
-    Front SD support
-    BCA Dumping
-    Redump.org Rip Verification (via gc-forever.com) 
+* FAT/NTFS (libntfs-2012-1-15(r13))
+* USB 2.0 support
+* Front SD support
+* BCA Dumping
+* Redump.org Rip Verification (via gc-forever.com) 
 
 # Requirements
-    Wii (or GC)
-    Wii/GC Controller
-    USB or SD storage device (>1.35GB free space)
-    HBC 1.0.8 or greater installed 
+* Wii (or GC)
+* Wii/GC Controller
+* USB or SD storage device (>1.35GB free space)
+* HBC 1.0.8 or greater installed 
