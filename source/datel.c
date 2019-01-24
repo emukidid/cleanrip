@@ -62,7 +62,7 @@ void datel_init(char *mountPath) {
 		free(datelDAT);
 	}
 
-	mxmlSetErrorCallback(print_gecko);
+	mxmlSetErrorCallback((mxml_error_cb_t)print_gecko);
 	FILE *fp = NULL;
 	// Check for the datel DAT and read it
 	sprintf(txtbuffer, "%sdatel.dat", mountPath);
@@ -114,7 +114,7 @@ void datel_download(char *mountPath) {
 		if(!net_initialized) {
 			char ip[16];
 			DrawMessageBox(D_INFO, "Checking for DAT updates\n \nInitializing Network...");
-			res = if_config(ip, NULL, NULL, true);
+			res = if_config(ip, NULL, NULL, true, 3);
       		if(res >= 0) {
 	      		sprintf(txtbuffer, "Checking for DAT updates\nNetwork Initialized!\nIP: %s", ip);
 	      		DrawMessageBox(D_INFO, txtbuffer);
@@ -211,7 +211,6 @@ int datel_findCrcSum(int crcorig) {
 					if (crcval == crcorig) {
 						snprintf(&gameName[0], 128, "%s", mxmlElementGetAttr(
 								nameElem, "name"));
-						DrawYesNoDialog("Found datel crc", gameName);
 						print_gecko("Found a match!\r\n");
 				mxml_index_t *skipiterator = mxmlIndexNew(gameElem, "skip", NULL);
 				mxml_node_t *skipElem = NULL;
@@ -242,7 +241,7 @@ int datel_findCrcSum(int crcorig) {
 	return 0;
 }
 
-void datel_adjustStartStop(uint64_t* start, int* length, int* fill) {
+void datel_adjustStartStop(uint64_t* start, u32* length, u32* fill) {
 	int n=0;
 	*fill = SkipFill;
 	for (n=0; (n<NumSkips) && (*length > 0); n++) {
@@ -259,7 +258,7 @@ void datel_adjustStartStop(uint64_t* start, int* length, int* fill) {
 	}
 }
 
-void datel_addSkip(uint64_t start, int length) {
+void datel_addSkip(uint64_t start, u32 length) {
 	if ((NumSkips > 0) && (start == SkipStop[NumSkips-1] + 1))
 		SkipStop[NumSkips-1] += length;
 	else {
@@ -271,16 +270,16 @@ void datel_addSkip(uint64_t start, int length) {
 	}
 }
 
-void dump_skips(char *mountPath, int crc100000) {
+void dump_skips(char *mountPath, u32 crc100000) {
 	sprintf(txtbuffer, "%s%s.skp", mountPath, get_game_name());
 	FILE *fp = fopen(txtbuffer, "wb");
 	if (fp) {
 		int sk=0;
 		char SkipsInfo[100];
-		sprintf(SkipsInfo, "\t\t<skipcrc crc100000=\"%08X\" skipfill=\"%02X\"/>\n", crc100000, SkipFill);
+		sprintf(SkipsInfo, "\t\t<skipcrc crc100000=\"%08lX\" skipfill=\"%02X\"/>\n", crc100000, SkipFill);
 		fwrite(SkipsInfo, 1, strlen(&SkipsInfo[0]), fp);
 		for (sk=0;sk<NumSkips;sk++) {
-			sprintf(SkipsInfo, "\t\t<skip start=\"%08X\" stop=\"%08X\"/>\n", (int)(SkipStart[sk] & 0xFFFFFFFF), (int)(SkipStop[sk] & 0xFFFFFFFF));
+			sprintf(SkipsInfo, "\t\t<skip start=\"%08lX\" stop=\"%08lX\"/>\n", (u32)(SkipStart[sk] & 0xFFFFFFFF), (u32)(SkipStop[sk] & 0xFFFFFFFF));
 			fwrite(SkipsInfo, 1, strlen(&SkipsInfo[0]), fp);
 		}
 		fclose(fp);

@@ -1,5 +1,5 @@
 /**
- * CleanRip - verify.h
+ * CleanRip - datel.h
  * Copyright (C) 2010 emu_kidid
  *
  * CleanRip homepage: http://code.google.com/p/cleanrip/
@@ -26,9 +26,9 @@ int datel_findCrcSum(int crc);
 int datel_is_available(int disc_type);
 int datel_download(char *mountPath);
 char *datel_get_name();
-void datel_adjustStartStop(uint64_t* start, int* length, int* fill);
-void datel_addSkip(uint64_t start, int length);
-void dump_skips(char *mountPath, int crc100000);
+void datel_adjustStartStop(uint64_t* start, u32* length, u32* fill);
+void datel_addSkip(uint64_t start, u32 length);
+void dump_skips(char *mountPath, u32 crc100000);
 
 #endif
 
