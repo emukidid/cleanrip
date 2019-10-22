@@ -163,7 +163,7 @@ u32 get_wii_buttons_pressed(u32 buttons) {
 		wpadNeedScan = 0;
 	}
 	wiiPad = WPAD_Data(0);
-	
+
 	if (wiiPad->btns_h & WPAD_BUTTON_B) {
 		buttons |= PAD_BUTTON_B;
 	}
@@ -202,7 +202,7 @@ u32 get_buttons_pressed() {
 		PAD_ScanPads();
 		padNeedScan = 0;
 	}
-	
+
 #ifdef HW_RVL
 	buttons = get_wii_buttons_pressed(buttons);
 #endif
@@ -432,7 +432,7 @@ static int initialise_dvd() {
 	DrawEmptyBox(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
 #ifdef HW_DOL
 	WriteCentre(255, "Insert a GameCube DVD Disc");
-#else	
+#else
 	WriteCentre(255, "Insert a GC/Wii DVD Disc");
 #endif
 	WriteCentre(315, "Press  A to continue  B to Exit");
@@ -455,30 +455,42 @@ static int initialise_dvd() {
 }
 
 #ifdef HW_DOL
-int select_slot() {
+const DISC_INTERFACE* select_slot() {
 	int slot = 0;
 	while ((get_buttons_pressed() & PAD_BUTTON_A));
 	while (1) {
 		DrawFrameStart();
 		DrawEmptyBox(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
 		WriteCentre(255, "Please select SDGecko Slot");
-		DrawSelectableButton(100, 310, -1, 340, "Slot A", !slot ? B_SELECTED : B_NOSELECT, -1);
-		DrawSelectableButton(380, 310, -1, 340, "Slot B", slot ? B_SELECTED : B_NOSELECT, -1);
+		DrawSelectableButton(100, 310, -1, 340, "Slot A", slot == 0 ? B_SELECTED : B_NOSELECT, -1);
+		DrawSelectableButton(240, 310, -1, 340, "Slot B", slot == 1 ? B_SELECTED : B_NOSELECT, -1);
+		DrawSelectableButton(380, 310, -1, 340, "SD2SP2", slot == 2 ? B_SELECTED : B_NOSELECT, -1);
 		DrawFrameFinish();
 		while (!(get_buttons_pressed() & (PAD_BUTTON_RIGHT | PAD_BUTTON_LEFT
 				| PAD_BUTTON_B | PAD_BUTTON_A)));
 		u32 btns = get_buttons_pressed();
-		if (btns & PAD_BUTTON_RIGHT)
-			slot ^= 1;
-		if (btns & PAD_BUTTON_LEFT)
-			slot ^= 1;
+		if (btns & PAD_BUTTON_RIGHT) {
+			slot++;
+			if (slot > 2) slot = 0;
+		}
+		if (btns & PAD_BUTTON_LEFT) {
+			slot--;
+			if (slot < 0) slot = 2;
+		}
 		if (btns & PAD_BUTTON_A)
 			break;
 		while ((get_buttons_pressed() & (PAD_BUTTON_RIGHT | PAD_BUTTON_LEFT
 				| PAD_BUTTON_B | PAD_BUTTON_A)));
 	}
 	while ((get_buttons_pressed() & PAD_BUTTON_A));
-	return slot;
+	switch (slot) {
+		case 1:
+			return &__io_gcsdb;
+		case 2:
+			return &__io_gcsd2;
+		default: /* Also handles case 0 */
+			return &__io_gcsda;
+	}
 }
 #endif
 
@@ -491,12 +503,12 @@ static int initialise_device(int type, int fs) {
 #ifdef HW_RVL
 	if (type == TYPE_USB) {
 		WriteCentre(255, "Insert a USB FAT32/NTFS formatted device");
-	} 
-	else 
+	}
+	else
 #endif
 	{
 #ifdef HW_DOL
-		sdcard = select_slot() ? &__io_gcsdb : &__io_gcsda;
+		sdcard = select_slot();
 		DrawFrameStart();
 		DrawEmptyBox(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
 #endif
@@ -516,7 +528,7 @@ static int initialise_device(int type, int fs) {
 			WriteCentre(315, "Press A to try again  B to exit");
 			wait_press_A_exit_B();
 		}
-	} 
+	}
 #ifdef HW_RVL
 	else if (fs == TYPE_NTFS) {
 		fatInitDefault();
@@ -827,7 +839,7 @@ void prompt_new_file(FILE **fp, int chunk, int type, int fs, int silent) {
 			fatUnmount("fat:");
 			if (type == TYPE_SD) {
 				sdcard->shutdown();
-			} 
+			}
 #ifdef HW_RVL
 			else if (type == TYPE_USB) {
 				usb->shutdown();
@@ -862,7 +874,7 @@ void prompt_new_file(FILE **fp, int chunk, int type, int fs, int silent) {
 						break;
 					}
 				}
-			} 
+			}
 #ifdef HW_RVL
 			else if (fs == TYPE_NTFS) {
 				fatInitDefault();
@@ -1176,7 +1188,7 @@ void dump_game(int disc_type, int type, int fs) {
 	free(buffer);
 	MQ_Close(blockq);
 	MQ_Close(msgq);
-	
+
 	if(ret != -61 && ret) {
 		DrawFrameStart();
 		DrawEmptyBox (30,180, vmode->fbWidth-38, 350, COLOR_BLACK);
@@ -1245,12 +1257,12 @@ int main(int argc, char **argv) {
 	print_gecko("Running on IOS ver: %i\r\n", iosversion);
 #endif
 	show_disclaimer();
-#ifdef HW_RVL	
+#ifdef HW_RVL
 	hardware_checks();
 #endif
 
 	// Ask the user if they want checksum calculations enabled this time?
-	calcChecksums = DrawYesNoDialog("Enable checksum calculations?", 
+	calcChecksums = DrawYesNoDialog("Enable checksum calculations?",
 									"(Enabling will add about 3 minutes)");
 
 	while (1) {
@@ -1280,7 +1292,7 @@ int main(int argc, char **argv) {
 			// User might've got some new files.
 			verify_init(&mountPath[0]);
 		}
-		
+
 		// Init the drive and try to detect disc type
 		ret = NO_DISC;
 		do {

@@ -1,0 +1,6 @@
+build/
+.vscode/
+cleanrip-gc.dol
+cleanrip-gc.elf
+cleanrip.dol
+cleanrip.elf
