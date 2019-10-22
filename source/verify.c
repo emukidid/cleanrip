@@ -50,7 +50,7 @@ void verify_init(char *mountPath) {
 	if (verify_initialized) {
 		return;
 	}
-	
+
 	if(ngcDAT) {
 		if(ngcXML) {
 			mxmlDelete(ngcXML);
@@ -79,7 +79,7 @@ void verify_init(char *mountPath) {
 			ngcDAT = (char*) memalign(32, size);
 			if (ngcDAT) {
 				fread(ngcDAT, 1, size, fp);
-			}		
+			}
 		}
 		fclose(fp);
 		fp = NULL;
@@ -97,11 +97,11 @@ void verify_init(char *mountPath) {
 			if (wiiDAT) {
 				fread(wiiDAT, 1, size, fp);
 			}
-		}	
+		}
 		fclose(fp);
 		fp = NULL;
 	}
-	
+
 	if (ngcDAT) {
 		ngcXML = mxmlLoadString(NULL, ngcDAT, MXML_TEXT_CALLBACK);
 	}
@@ -118,7 +118,7 @@ void verify_download(char *mountPath) {
 	if(dontAskAgain) {
 		return;
 	}
-	
+
 	int res = 0;
 	// Ask the user if they want to update from the web
 	if(verify_initialized) {
@@ -131,7 +131,7 @@ void verify_download(char *mountPath) {
 		char *line2 = "Download them now?";
 		res = DrawYesNoDialog(line1, line2);
 	}
-	
+
 	// If yes, lets download an update
 	if(res) {
 		// Initialize the network
@@ -157,8 +157,8 @@ void verify_download(char *mountPath) {
   		// Download the GC DAT
 		char datFilePath[64];
   		sprintf(datFilePath, "%sgc.dat",mountPath);
-  		u8 *xmlFile = (u8*)memalign(32, 1*1024*1024);
-		if((res = http_request("www.gc-forever.com","/datfile/gc.dat", xmlFile, (1*1024*1024), 0, 0)) > 0) {
+  		u8 *xmlFile = (u8*)memalign(32, 3*1024*1024);
+		if((res = http_request("www.gc-forever.com","/datfile/gc.dat", xmlFile, (3*1024*1024), 0, 0)) > 0) {
 			remove(datFilePath);
 			FILE *fp = fopen(datFilePath, "wb");
 			if(fp) {
@@ -181,7 +181,7 @@ void verify_download(char *mountPath) {
 		}
 		// Download the Wii DAT
   		sprintf(datFilePath, "%swii.dat",mountPath);
-		if((res = http_request("www.gc-forever.com","/datfile/wii.dat", xmlFile, (1*1024*1024), 0, 0)) > 0) {
+		if((res = http_request("www.gc-forever.com","/datfile/wii.dat", xmlFile, (3*1024*1024), 0, 0)) > 0) {
 			remove(datFilePath);
 			FILE *fp = fopen(datFilePath, "wb");
 			if(fp) {
@@ -190,11 +190,11 @@ void verify_download(char *mountPath) {
 				fclose(fp);
 				verify_initialized = 0;
 				print_gecko("Saved Wii DAT! %i Bytes\r\n", res);
-			}	
+			}
 			else {
 				DrawMessageBox(D_FAIL, "Checking for updates\nFailed to save Wii DAT...");
 				sleep(5);
-			}					
+			}
 		}
 		else {
 			sprintf(txtbuffer, "Error: %i", res);
@@ -216,9 +216,9 @@ int verify_findMD5Sum(const char * md5orig, int disc_type) {
 	char *xmlPointer = (disc_type == IS_NGC_DISC) ? ngcDAT : wiiDAT;
 	if(xmlPointer) {
 		mxml_node_t *pointer = (disc_type == IS_NGC_DISC)  ? ngcXML : wiiXML;
-		
+
 		pointer = mxmlLoadString(NULL, xmlPointer, MXML_TEXT_CALLBACK);
-		
+
 		print_gecko("Looking in the %s XML\r\n", pointer == ngcXML ? "GameCube" : "Wii");
 		if (pointer) {
 			// open the <datafile>
