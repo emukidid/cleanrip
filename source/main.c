@@ -562,7 +562,7 @@ static int identify_disc() {
 		gameName[6] = 0;
 		// Multi Disc identifier support
 		if (readbuf[6]) {
-			size_t lastPos = strlen(gameName) - 1;
+			size_t lastPos = strlen(gameName);
 			sprintf(&gameName[lastPos], "-disc%i", (readbuf[6]) + 1);
 		}
 		strncpy(&internalName[0],&readbuf[32],512);
