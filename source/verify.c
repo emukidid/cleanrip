@@ -103,10 +103,10 @@ void verify_init(char *mountPath) {
 	}
 	
 	if (ngcDAT) {
-		ngcXML = mxmlLoadString(NULL, ngcDAT, MXML_TEXT_CALLBACK);
+		ngcXML = mxmlLoadString(NULL, ngcDAT, MXML_OPAQUE_CALLBACK);
 	}
 	if (wiiDAT) {
-		wiiXML = mxmlLoadString(NULL, wiiDAT, MXML_TEXT_CALLBACK);
+		wiiXML = mxmlLoadString(NULL, wiiDAT, MXML_OPAQUE_CALLBACK);
 	}
 
 	print_gecko("DAT Files [NGC: %s] [Wii: %s]\r\n", ngcDAT ? "YES":"NO", wiiDAT ? "YES":"NO");
@@ -214,49 +214,34 @@ int verify_findMD5Sum(const char * md5orig, int disc_type) {
 
 	print_gecko("Looking for MD5 [%s]\r\n", md5orig);
 	char *xmlPointer = (disc_type == IS_NGC_DISC) ? ngcDAT : wiiDAT;
-	if(xmlPointer) {
-		mxml_node_t *pointer = (disc_type == IS_NGC_DISC)  ? ngcXML : wiiXML;
-		
-		pointer = mxmlLoadString(NULL, xmlPointer, MXML_TEXT_CALLBACK);
-		
-		print_gecko("Looking in the %s XML\r\n", pointer == ngcXML ? "GameCube" : "Wii");
-		if (pointer) {
-			// open the <datafile>
-			mxml_node_t *item = mxmlFindElement(pointer, pointer, "datafile", NULL,
-					NULL, MXML_DESCEND);
-			print_gecko("DataFile Pointer OK\r\n");
-			if (item) {
-				mxml_index_t *iterator = mxmlIndexNew(item, "game", NULL);
-				mxml_node_t *gameElem = NULL;
+	if (!xmlPointer)
+		return 0;
 
-				//print_gecko("Item Pointer OK\r\n");
-				// iterate over all the <game> entries
-				while ((gameElem = mxmlIndexEnum(iterator)) != NULL) {
-					// get the md5 and compare it
-					mxml_node_t *md5Elem = mxmlFindElement(gameElem, gameElem,
-							NULL, "md5", NULL, MXML_DESCEND);
-					// get the name too
-					mxml_node_t *nameElem = mxmlFindElement(gameElem, gameElem,
-							NULL, "name", NULL, MXML_DESCEND);
-					if (!md5Elem || !nameElem)
-						continue;
+	mxml_node_t *pointer = (disc_type == IS_NGC_DISC)  ? ngcXML : wiiXML;
+	if (!pointer)
+		return 0;
 
-					char md5[64];
-					memset(&md5[0], 0, 64);
-					strncpy(&md5[0], mxmlElementGetAttr(md5Elem, "md5"), 32);
+	print_gecko("Looking in the %s XML\r\n", pointer == ngcXML ? "GameCube" : "Wii");
 
-					//print_gecko("Comparing game [%s] and md5 [%s]\r\n",mxmlElementGetAttr(nameElem, "name"),mxmlElementGetAttr(md5Elem, "md5"));
-					if (!strncasecmp(&md5[0], md5orig, 32)) {
-						snprintf(&gameName[0], 128, "%s", mxmlElementGetAttr(
-								nameElem, "name"));
-						print_gecko("Found a match!\r\n");
-						return 1;
-					}
-				}
-			}
-		}
-	}
-	return 0;
+	// open the <datafile>
+	mxml_node_t *item = mxmlFindElement(pointer, pointer, "datafile", NULL, NULL, MXML_DESCEND);
+	print_gecko("DataFile Pointer OK\r\n");
+	if (!item)
+		return 0;
+
+	// look for md5 in xml directly
+	mxml_node_t *md5Elem = mxmlFindElement(item, pointer, NULL, "md5", md5orig, MXML_DESCEND);
+	if (!md5Elem)
+		return 0; // We didnt find the md5 in the data file
+
+	// we found our md5 in the dat file, look up info about parent node
+	mxml_node_t *gameElem = mxmlGetParent(md5Elem);
+	if (!gameElem)
+		return 0;
+
+	snprintf(&gameName[0], 128, "%s", mxmlElementGetAttr(gameElem, "name"));
+	print_gecko("Found a match!\r\n");
+	return 1;
 }
 
 char *verify_get_name() {
