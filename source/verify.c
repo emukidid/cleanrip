@@ -157,7 +157,7 @@ void verify_download(char *mountPath) {
   		// Download the GC DAT
 		char datFilePath[64];
   		sprintf(datFilePath, "%sgc.dat",mountPath);
-		const u32 maxDatFileSize = 4 * 1024 * 1024; // hopfully 4MB will be large enough forever. Current sizes are 644KB (GC) and 1.2MB (WII)
+		const u32 maxDatFileSize = 2 * 1024 * 1024; // hopfully 2MB will be large enough forever. Current sizes are 644KB (GC) and 1.2MB (WII)
   		u8 *xmlFile = (u8*)memalign(32, maxDatFileSize);
 		if((res = http_request("www.gc-forever.com","/datfile/gc.dat", xmlFile, maxDatFileSize, 0, 0)) > 0) {
 			remove(datFilePath);
@@ -239,6 +239,8 @@ int verify_findMD5Sum(const char * md5orig, int disc_type) {
 					// get the name too
 					mxml_node_t *nameElem = mxmlFindElement(gameElem, gameElem,
 							NULL, "name", NULL, MXML_DESCEND);
+					if (!md5Elem || !nameElem)
+						continue;
 
 					char md5[64];
 					memset(&md5[0], 0, 64);
