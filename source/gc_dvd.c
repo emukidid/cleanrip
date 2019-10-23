@@ -32,15 +32,16 @@
 #include <ogc/machine/processor.h>
 #include "gc_dvd.h"
 #include "main.h"
+#include "datel.h"
 
 /* DVD Stuff */
 u32 dvd_hard_init = 0;
 static u32 read_cmd = NORMAL;
 
 #ifdef HW_RVL
-volatile unsigned long* dvd = (volatile unsigned long*) 0xCD806000;
+volatile u32* dvd = (volatile u32*) 0xCD806000;
 #else
-volatile unsigned long* dvd = (volatile unsigned long*)0xCC006000;
+volatile u32* dvd = (volatile u32*)0xCC006000;
 #endif
 
 int init_dvd() {
@@ -60,7 +61,7 @@ int init_dvd() {
 	// Wii (Wii mode)
 #ifdef HW_RVL
 	STACK_ALIGN(u8,id,32,32);
-	unsigned int error;
+	u32 error;
 
 	// enable GPIO for spin-up on drive reset (active low)
 	mask32(0x0D8000E0, 0x10, 0);
@@ -133,12 +134,11 @@ void dvd_read_bca(void* dst)
 }
 
 
-unsigned int dvd_get_error(void) {
+u32 dvd_get_error(void) {
 	dvd[2] = 0xE0000000;
 	dvd[8] = 0;
 	dvd[7] = 1; // IMM
-	while (dvd[7] & 1)
-		;
+	while (dvd[7] & 1);
 	return dvd[8];
 }
 
@@ -151,8 +151,7 @@ void dvd_motor_off() {
 	dvd[5] = 0;
 	dvd[6] = 0;
 	dvd[7] = 1; // IMM
-	while (dvd[7] & 1)
-		;
+	while (dvd[7] & 1);
 }
 
 /*
@@ -162,17 +161,17 @@ void dvd_motor_off() {
  Synchronous function.
  return -1 if offset is out of range
  */
-int DVD_LowRead64(void* dst, unsigned int len, uint64_t offset) {
+int DVD_LowRead64(void* dst, u32 len, uint64_t offset) {
 	if (offset >> 2 > 0xFFFFFFFF)
 		return -1;
 
-	if ((((int) dst) & 0xC0000000) == 0x80000000) // cached?
+	if ((((u32) dst) & 0xC0000000) == 0x80000000) // cached?
 		dvd[0] = 0x2E;
 	dvd[1] = 0;
 	dvd[2] = read_cmd;
 	dvd[3] = read_cmd == DVDR ? offset >> 11 : offset >> 2;
 	dvd[4] = read_cmd == DVDR ? len >> 11 : len;
-	dvd[5] = (unsigned long) dst & 0x1FFFFFFF;
+	dvd[5] = (u32) dst & 0x1FFFFFFF;
 	dvd[6] = len;
 	dvd[7] = 3; // enable reading!
 	DCInvalidateRange(dst, len);
@@ -184,9 +183,56 @@ int DVD_LowRead64(void* dst, unsigned int len, uint64_t offset) {
 	return 0;
 }
 
+int DVD_LowRead64Datel(void* dst, u32 len, uint64_t offset, int isKnownDatel) {
+	if (offset >> 2 > 0xFFFFFFFF)
+		return -1;
+
+	uint64_t discoffset = offset;
+	u32 disclen = len;
+	u32 fill = 0;
+	datel_adjustStartStop(&discoffset, &disclen, &fill);
+	if ((discoffset != offset) || (disclen != len))
+		memset(dst, fill, len);
+	if (disclen == 0) {
+		return 0;
+	}
+		
+	int try = 0;
+	for (try = 0; try < 2; try++) {
+		// This or Stop motor when skipping to prevent error.
+		if (try > 0) 
+			init_dvd();
+		
+		if ((((u32) dst) & 0xC0000000) == 0x80000000) // cached?
+			dvd[0] = 0x2E;
+		dvd[1] = 0;
+		dvd[2] = read_cmd;
+		dvd[3] = read_cmd == DVDR ? discoffset >> 11 : discoffset >> 2;
+		dvd[4] = read_cmd == DVDR ? disclen >> 11 : disclen;
+		dvd[5] = (u32) ((((u32)dst) + discoffset - offset) & 0x1FFFFFFF);
+		dvd[6] = disclen;
+		dvd[7] = 3; // enable reading!
+		DCInvalidateRange(dst + discoffset - offset, disclen);
+		while (dvd[7] & 1)
+			LWP_YieldThread();
+		if ((dvd[0] & 0x4) == 0)
+			return 0;
+	}
+
+	if (dvd[0] & 0x4) {
+		if (isKnownDatel)
+			return 1;
+
+		// Logic assumes READ_SIZE 0x10000
+		datel_addSkip(offset & 0xFFFF0000, 0x00100000 - (offset & 0x000F0000)); // Test every start 0xXXX00000
+		memset(dst, fill, len);
+	}
+	return 0;
+}
+
 static char error_str[256];
 char *dvd_error_str() {
-	unsigned int err = dvd_get_error();
+	u32 err = dvd_get_error();
 	if (!err)
 		return "OK";
 
