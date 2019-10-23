@@ -35,6 +35,7 @@
 #include "IPLFontWrite.h"
 #include "gc_dvd.h"
 #include "verify.h"
+#include "datel.h"
 #include "main.h"
 #include "crc32.h"
 #include "sha1.h"
@@ -568,21 +569,24 @@ static int identify_disc() {
 	} else {
 		sprintf(&gameName[0], "disc%i", dumpCounter);
 	}
-	if ((*(volatile unsigned int*) (readbuf+0x1C)) == NGC_MAGIC) {
+	if ((*(volatile u32*) (readbuf+0x1C)) == NGC_MAGIC) {
 		return IS_NGC_DISC;
 	}
-	if ((*(volatile unsigned int*) (readbuf+0x18)) == WII_MAGIC) {
+	if ((*(volatile u32*) (readbuf+0x18)) == WII_MAGIC) {
 		return IS_WII_DISC;
 	} else {
 		return IS_UNK_DISC;
 	}
 }
 
+const char* const get_game_name() {
+	return gameName;
+}
+
 /* the user must specify the disc type */
 static int force_disc() {
 	int type = IS_NGC_DISC;
-	while ((get_buttons_pressed() & PAD_BUTTON_A))
-		;
+	while ((get_buttons_pressed() & PAD_BUTTON_A));
 	while (1) {
 		DrawFrameStart();
 		DrawEmptyBox(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
@@ -955,6 +959,7 @@ void dump_game(int disc_type, int type, int fs) {
 	md5_byte_t digest[16];
 	SHA1Context sha;
 	u32 crc32 = 0;
+	u32 crc100000 = 0;
 	char *buffer;
 	mqbox_t msgq, blockq;
 	lwp_t writer;
@@ -974,10 +979,10 @@ void dump_game(int disc_type, int type, int fs) {
 	int silent = options_map[WII_NEWFILE];
 
 	// The read size
-	int opt_read_size = READ_SIZE;
+	u32 opt_read_size = READ_SIZE;
 
 	u32 startLBA = 0;
-	u32 endLBA = disc_type == IS_NGC_DISC ? NGC_DISC_SIZE
+	u32 endLBA = (disc_type == IS_NGC_DISC || disc_type == IS_DATEL_DISC) ? NGC_DISC_SIZE
 			: (options_map[WII_DUAL_LAYER] == DUAL_LAYER ? WII_D9_SIZE
 					: WII_D5_SIZE);
 
@@ -995,15 +1000,13 @@ void dump_game(int disc_type, int type, int fs) {
 		opt_chunk_size = (chunk_size_wii + 1) * ONE_GIGABYTE;
 	}
 
-	if (disc_type == IS_NGC_DISC) {
+	if (disc_type == IS_NGC_DISC || disc_type == IS_DATEL_DISC) {
 		opt_chunk_size = NGC_DISC_SIZE;
 	}
 
 	// Dump the BCA for Nintendo discs
 #ifdef HW_RVL
-	if (disc_type == IS_WII_DISC || disc_type == IS_NGC_DISC) {
-		dump_bca();
-	}
+	dump_bca();
 #endif
 
 	// Create the read buffers
@@ -1012,12 +1015,10 @@ void dump_game(int disc_type, int type, int fs) {
 		MQ_Send(blockq, (mqmsg_t)(buffer+i*(opt_read_size+sizeof(writer_msg))), MQ_MSG_BLOCK);
 	}
 
-	if(calcChecksums) {
-		// Reset MD5/SHA-1/CRC
-		md5_init(&state);
-		SHA1Reset(&sha);
-		crc32 = 0;
-	}
+	// Reset MD5/SHA-1/CRC
+	md5_init(&state);
+	SHA1Reset(&sha);
+	crc32 = 0;
 
 	// There will be chunks, name accordingly
 	if (opt_chunk_size < endLBA) {
@@ -1045,7 +1046,8 @@ void dump_game(int disc_type, int type, int fs) {
 	u64 copyTime = gettime();
 	u64 startTime = gettime();
 	int chunk = 1;
-
+	int isKnownDatel = 0;
+	
 	while (!ret && (startLBA + (opt_read_size>>11)) < endLBA) {
 		MQ_Receive(blockq, (mqmsg_t*)&wmsg, MQ_MSG_BLOCK);
 		if (wmsg==NULL) { // asynchronous write error
@@ -1090,7 +1092,10 @@ void dump_game(int disc_type, int type, int fs) {
 		wmsg->ret_box = blockq;
 
 		// Read from Disc
-		ret = DVD_LowRead64(wmsg->data, (u32)opt_read_size, (u64)startLBA << 11);
+		if(disc_type == IS_DATEL_DISC)
+			ret = DVD_LowRead64Datel(wmsg->data, (u32)opt_read_size, (u64)startLBA << 11, isKnownDatel);
+		else
+			ret = DVD_LowRead64(wmsg->data, (u32)opt_read_size, (u64)startLBA << 11);
 		MQ_Send(msgq, (mqmsg_t)wmsg, MQ_MSG_BLOCK);
 		if(calcChecksums) {
 			// Calculate MD5
@@ -1099,6 +1104,22 @@ void dump_game(int disc_type, int type, int fs) {
 			SHA1Input(&sha, (const unsigned char *) (wmsg+1), (u32) opt_read_size);
 			// Calculate CRC32
 			crc32 = Crc32_ComputeBuf( crc32, wmsg+1, (u32) opt_read_size);
+		}
+		
+		if(disc_type == IS_DATEL_DISC && (((u64)startLBA<<11) + opt_read_size == 0x100000)){
+			crc100000 = crc32;
+			isKnownDatel = datel_findCrcSum(crc100000);
+			DrawFrameStart();
+			DrawEmptyBox(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
+			if(!isKnownDatel) {
+				WriteCentre(215, "(Warning: This disc will take a while to dump!)");
+			}
+			sprintf(txtbuffer, "%s CRC100000=%08lX", (isKnownDatel ? "Known":"Unknown"), crc100000);
+			WriteCentre(255, txtbuffer);
+			WriteCentre(315, "Press  A to continue  B to Exit");
+			u64 waitTimeStart = gettime();
+			wait_press_A_exit_B();
+			startTime += (gettime() - waitTimeStart);	// Don't throw time off because we'd paused here
 		}
 
 		check_exit_status();
@@ -1109,14 +1130,14 @@ void dump_game(int disc_type, int type, int fs) {
 		// Update status every second
 
 		u64 curTime = gettime();
-		int timePassed = diff_msec(copyTime, curTime);
+		s32 timePassed = diff_msec(copyTime, curTime);
 		if (timePassed >= 1000) {
 			u64 totalTime = diff_msec(startTime, curTime);
 			u32 bytes_per_msec = (((u64)startLBA<<11) + opt_read_size) / totalTime;
 			u64 remainder = (((u64)endLBA - startLBA)<<11) - opt_read_size;
 
 			u32 etaTime;
-			if(disc_type == IS_NGC_DISC) {
+			if(disc_type == IS_NGC_DISC || disc_type == IS_DATEL_DISC) {
 				// multiply ETA by 3/4 to account for CAV speed increase
 				etaTime = (remainder / bytes_per_msec * 58) / 75000;
 			}
@@ -1153,7 +1174,10 @@ void dump_game(int disc_type, int type, int fs) {
 		wmsg->length = (u32)((endLBA-startLBA)<<11);
 		wmsg->ret_box = blockq;
 
-		ret = DVD_LowRead64(wmsg->data, wmsg->length, (u64)startLBA << 11);
+		if(disc_type == IS_DATEL_DISC)
+			ret = DVD_LowRead64Datel(wmsg->data, wmsg->length, (u64)startLBA << 11, isKnownDatel);
+		else
+			ret = DVD_LowRead64(wmsg->data, wmsg->length, (u64)startLBA << 11);
 		MQ_Send(msgq, (mqmsg_t)wmsg, MQ_MSG_BLOCK);
 		if(calcChecksums) {
 			// Calculate MD5
@@ -1222,6 +1246,7 @@ void dump_game(int disc_type, int type, int fs) {
 		else {
 			dump_info(NULL, NULL, 0, 0, diff_sec(startTime, gettime()));
 		}
+		dump_skips(&mountPath[0], crc100000);
 		WriteCentre(315,"Press  A to continue  B to Exit");
 		dvd_motor_off();
 		wait_press_A_exit_B();
@@ -1280,7 +1305,7 @@ int main(int argc, char **argv) {
 			// User might've got some new files.
 			verify_init(&mountPath[0]);
 		}
-		
+				
 		// Init the drive and try to detect disc type
 		ret = NO_DISC;
 		do {
@@ -1295,6 +1320,18 @@ int main(int argc, char **argv) {
 
 		if (disc_type == IS_WII_DISC) {
 			get_settings(disc_type);
+		}
+		
+		// Ask the user if they want to force Datel check this time?
+		if(disc_type == IS_NGC_DISC) {
+			if(DrawYesNoDialog("Is this a unlicensed datel disc?", 
+								 "(Will attempt auto-detect if no)")) {
+				disc_type = IS_DATEL_DISC;
+				datel_init(&mountPath[0]);
+				datel_download(&mountPath[0]);
+				datel_init(&mountPath[0]);
+				calcChecksums = 1;
+			}
 		}
 
 		verify_in_use = verify_is_available(disc_type);

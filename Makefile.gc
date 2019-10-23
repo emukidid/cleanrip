@@ -7,10 +7,7 @@ ifeq ($(strip $(DEVKITPPC)),)
 $(error "Please set DEVKITPPC in your environment. export DEVKITPPC=<path to>devkitPPC")
 endif
 
-export	LIBOGC_INC	:=	$(DEVKITPRO)/libogc/include
-export	LIBOGC_LIB	:=	$(DEVKITPRO)/libogc/lib/cube
-
-include $(DEVKITPPC)/base_rules
+include $(DEVKITPPC)/gamecube_rules
 
 #---------------------------------------------------------------------------------
 # TARGET is the name of the output
@@ -28,8 +25,8 @@ TEXTURES	:=	images
 #---------------------------------------------------------------------------------
 # options for code generation
 #---------------------------------------------------------------------------------
-MACHDEP =  -DGEKKO -mogc -mcpu=750 -meabi -mhard-float
-CFLAGS		= -g -O3 -Wall $(MACHDEP) $(INCLUDE) -DHW_DOL
+
+CFLAGS	= -g -O2 -Wall $(MACHDEP) $(INCLUDE) -DHW_DOL
 CXXFLAGS	=	$(CFLAGS)
 
 LDFLAGS	=	-g $(MACHDEP) -Wl,-Map,$(notdir $@).map
@@ -137,11 +134,6 @@ $(OUTPUT).elf: $(OFILES)
 	$(bin2o)
 
 #---------------------------------------------------------------------------------
-%.dol: %.elf
-	@echo output ... $(notdir $@)
-	@elf2dol $< $@
-
-#---------------------------------------------------------------------------------
 %.tpl : %.scf
 	@echo $(notdir $<)
 	@gxtexconv -s $< -d $(DEPSDIR)/$*.d -o $@
@@ -150,11 +142,6 @@ $(OUTPUT).elf: $(OFILES)
 %.tpl.o	:	%.tpl
 	@echo $(notdir $<)
 	@$(bin2o)
-	
-#---------------------------------------------------------------------------------
-%.elf:
-	@echo linking ... $(notdir $@)
-	@$(LD)  $^ $(LDFLAGS) $(LIBPATHS) $(LIBS) -o $@
 	
 -include $(DEPENDS)
 
