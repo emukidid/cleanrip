@@ -85,6 +85,11 @@ void verify_init(char *mountPath) {
 		fp = NULL;
 	}
 
+	if (ngcDAT) {
+		ngcXML = mxmlLoadString(NULL, ngcDAT, MXML_OPAQUE_CALLBACK);
+	}
+
+#ifdef HW_RVL
 	// Check for the Wii Redump.org DAT and read it
 	sprintf(txtbuffer, "%swii.dat", mountPath);
 	fp = fopen(txtbuffer, "rb");
@@ -102,15 +107,17 @@ void verify_init(char *mountPath) {
 		fp = NULL;
 	}
 	
-	if (ngcDAT) {
-		ngcXML = mxmlLoadString(NULL, ngcDAT, MXML_OPAQUE_CALLBACK);
-	}
 	if (wiiDAT) {
 		wiiXML = mxmlLoadString(NULL, wiiDAT, MXML_OPAQUE_CALLBACK);
 	}
+#endif // #ifdef HW_RVL
 
 	print_gecko("DAT Files [NGC: %s] [Wii: %s]\r\n", ngcDAT ? "YES":"NO", wiiDAT ? "YES":"NO");
-	verify_initialized = ((ngcDAT&&ngcXML) && (wiiDAT&&wiiXML));
+	verify_initialized = ((ngcDAT&&ngcXML)
+#ifdef HW_RVL
+		&& (wiiDAT&&wiiXML)
+#endif // #ifdef HW_RVL
+		);
 }
 
 // If there was some new files obtained, return 1, else 0
@@ -179,6 +186,8 @@ void verify_download(char *mountPath) {
 			DrawMessageBox(D_FAIL, "Checking for updates\nCouldn't find file on gc-forever.com");
 			sleep(5);
 		}
+
+#ifdef HW_RVL
 		// Download the Wii DAT
   		sprintf(datFilePath, "%swii.dat",mountPath);
 		if((res = http_request("www.gc-forever.com","/datfile/wii.dat", xmlFile, (3*1024*1024), 0, 0)) > 0) {
@@ -202,6 +211,7 @@ void verify_download(char *mountPath) {
 			DrawMessageBox(D_FAIL, "Checking for updates\nCouldn't find file on gc-forever.com");
 			sleep(5);
 		}
+#endif // #ifdef HW_RVL
 		free(xmlFile);
 		dontAskAgain = 1;
 	}
