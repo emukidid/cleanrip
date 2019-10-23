@@ -1,0 +1,85 @@
+<?xml version="1.0"?>
+<!DOCTYPE datafile PUBLIC "-//Logiqx//DTD ROM Management Datafile//EN" "http://www.logiqx.com/Dats/datafile.dtd">
+<datafile>
+	<header>
+		<name>Nintendo - GameCube</name>
+		<description>Nintendo - GameCube 20130714 15-46-40</description>
+		<version>20130714 15-46-40</version>
+		<date>20130714 15-46-40</date>
+		<author>redump.org</author>
+		<homepage>redump.org</homepage>
+		<url>http://redump.org/</url>
+	</header>
+	<game name="Datel Advanced Game Port (USA)">
+		<category>Applications</category>
+		<description>Datel Advanced Game Port (USA)</description>
+		<rom name="Datel Advanced Game Port (USA).iso" size="1459978240" crc="A2C19B34" md5="B243F748E5FB3D69A0C179987C40420A" sha1="731BD1FC43D6F9CC2E542C1DD6B280E2AF3EC1DA"/>
+		<skipcrc crc100000="3B60B95A" skipfill="00"/>
+		<skip start="01F00000" stop="4FFFFFFF"/>
+		<skip start="50300000" stop="570FFFFF"/>
+	</game>
+	<game name="Datel Advanced Game Port with Cheat Construction Kit (USA)">
+		<category>Applications</category>
+		<description>Datel Advanced Game Port with Cheat Construction Kit (USA)</description>
+		<rom name="Datel Advanced Game Port with Construction Kit (USA).iso" size="1459978240" crc="299B0E92" md5="641A541482216F7ED7787AFE94C8DA55" sha1="5C80BAC589FECDC2085F794B16C7A7120A3AF347"/>
+		<skipcrc crc100000="B5B5592A" skipfill="00"/>
+		<skip start="01F00000" stop="088FFFFF"/>
+		<skip start="08A00000" stop="090FFFFF"/>
+		<skip start="09200000" stop="098FFFFF"/>
+		<skip start="09A00000" stop="0A0FFFFF"/>
+		<skip start="0A200000" stop="0A8FFFFF"/>
+		<skip start="0AA00000" stop="0B0FFFFF"/>
+		<skip start="0B200000" stop="0B8FFFFF"/>
+		<skip start="0BA00000" stop="0C0FFFFF"/>
+		<skip start="0C200000" stop="0C8FFFFF"/>
+		<skip start="0CA00000" stop="0D8FFFFF"/>
+		<skip start="0DA00000" stop="0E0FFFFF"/>
+		<skip start="0E200000" stop="0E8FFFFF"/>
+		<skip start="0EA00000" stop="0F0FFFFF"/>
+		<skip start="0F200000" stop="0F8FFFFF"/>
+		<skip start="0FA00000" stop="100FFFFF"/>
+		<skip start="10200000" stop="108FFFFF"/>
+		<skip start="10A00000" stop="110FFFFF"/>
+		<skip start="11300000" stop="118FFFFF"/>
+		<skip start="11A00000" stop="120FFFFF"/>
+		<skip start="12200000" stop="128FFFFF"/>
+		<skip start="12F00000" stop="4FFFFFFF"/>
+		<skip start="50100000" stop="570FFFFF"/>
+	</game>
+	<game name="Datel SD Media Launcher Action Replay (USA)">
+		<category>Applications</category>
+		<description>Datel SD Media Launcher Action Replay (USA)</description>
+		<rom name="Datel SD Media Launcher Action Replay (USA).iso" size="1459978240" crc="2952CF53" md5="6EFFF79058C348FC9FEFCF4079669C62" sha1="2C61BF8C3B89BBE06CACFFE34161B20027251E56"/>
+		<skipcrc crc100000="082BCA36" skipfill="00"/>
+		<skip start="01F00000" stop="570FFFFF"/>
+	</game>
+	<game name="Datel SD Media Launcher (Europe)">
+		<category>Applications</category>
+		<description>Datel SD Media Launcher (Europe)</description>
+		<rom name="Datel SD Media Launcher (Europe).iso" size="1459978240" crc="CAE79340" md5="92F09D17BA4859C09C5E1ACC72A84488" sha1="B24CE60308560D888EEC10EF071595AC890F194D"/>
+		<skipcrc crc100000="BAEE06DD" skipfill="00"/>
+		<skip start="01F00000" stop="4FFFFFFF"/>
+		<skip start="50100000" stop="570FFFFF"/>
+	</game>
+	<game name="Datel Action Replay (v1.14A)">
+		<category>Applications</category>
+		<description>Datel Action Replay (v1.14A)</description>
+		<rom name="Datel Action Replay (v1.14A).iso" size="1459978240" crc="39867DCE" md5="D3106B297344D84C0210908803E61D05" sha1="B6109D56ED5F34EA2C15AE2312BF36A20091464E"/>
+		<skipcrc crc100000="9BEEFEEF" skipfill="00"/>
+		<skip start="01F00000" stop="4FFFFFFF"/>
+		<skip start="50400000" stop="570FFFFF"/>
+	</game>
+	<game name="NHL Hitz 2002 (USA)">
+		<category>Games</category>
+		<description>NHL Hitz 2002 (USA)</description>
+		<rom name="NHL Hitz 2002 (USA).iso" size="1459978240" crc="53f2137a" md5="488d2a15d25da53fa4451a5e8471dfbc" sha1="64d8b607aa2b5fa5fbbb5bfb0be149080781370f"/>
+		<skipcrc crc100000="5D1B4684" skipfill="00"/>
+	</game>
+	<game name="Unknown Datel default">
+		<category>Applications</category>
+		<description>Unknown Datel default</description>
+		<rom name="Unknown Datel default.iso" size="1459978240" crc="00000000" md5="00000000000000000000000000000000" sha1="0000000000000000000000000000000000000000"/>
+		<skipcrc crc100000="default" skipfill="00"/>
+		<skip start="00100000" stop="FFFFFFFF"/>
+	</game>
+</datafile>

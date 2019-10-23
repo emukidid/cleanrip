@@ -38,7 +38,7 @@
 static char *ngcDAT = NULL;
 static char *wiiDAT = NULL;
 static int verify_initialized = 0;
-static int net_initialized = 0;
+int net_initialized = 0;
 static int dontAskAgain = 0;
 
 // XML stuff
@@ -122,12 +122,12 @@ void verify_download(char *mountPath) {
 	int res = 0;
 	// Ask the user if they want to update from the web
 	if(verify_initialized) {
-		char *line1 = "Redump.org DAT files found";
+		char *line1 = "redump.org DAT files found";
 		char *line2 = "Check for updated DAT files?";
 		res = DrawYesNoDialog(line1, line2);
 	}
 	else {
-		char *line1 = "Redump.org DAT files not found";
+		char *line1 = "redump.org DAT files not found";
 		char *line2 = "Download them now?";
 		res = DrawYesNoDialog(line1, line2);
 	}
@@ -157,9 +157,8 @@ void verify_download(char *mountPath) {
   		// Download the GC DAT
 		char datFilePath[64];
   		sprintf(datFilePath, "%sgc.dat",mountPath);
-		const u32 maxDatFileSize = 2 * 1024 * 1024; // hopfully 2MB will be large enough forever. Current sizes are 644KB (GC) and 1.2MB (WII)
-  		u8 *xmlFile = (u8*)memalign(32, maxDatFileSize);
-		if((res = http_request("www.gc-forever.com","/datfile/gc.dat", xmlFile, maxDatFileSize, 0, 0)) > 0) {
+  		u8 *xmlFile = (u8*)memalign(32, 3*1024*1024);
+		if((res = http_request("www.gc-forever.com","/datfile/gc.dat", xmlFile, (3*1024*1024), 0, 0)) > 0) {
 			remove(datFilePath);
 			FILE *fp = fopen(datFilePath, "wb");
 			if(fp) {
@@ -182,7 +181,7 @@ void verify_download(char *mountPath) {
 		}
 		// Download the Wii DAT
   		sprintf(datFilePath, "%swii.dat",mountPath);
-		if((res = http_request("www.gc-forever.com","/datfile/wii.dat", xmlFile, maxDatFileSize, 0, 0)) > 0) {
+		if((res = http_request("www.gc-forever.com","/datfile/wii.dat", xmlFile, (3*1024*1024), 0, 0)) > 0) {
 			remove(datFilePath);
 			FILE *fp = fopen(datFilePath, "wb");
 			if(fp) {

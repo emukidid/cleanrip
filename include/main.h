@@ -63,14 +63,17 @@ extern int whichfb;			/*** Frame buffer toggle ***/
 extern u32 iosversion;
 extern int verify_in_use;
 extern int verify_disc_type;
+extern int forceDatel;
 
 u32 get_buttons_pressed();
 void print_gecko(const char* fmt, ...);
+const char* const get_game_name();
 
 enum discTypes
 {
 	IS_NGC_DISC=0,
 	IS_WII_DISC,
+	IS_DATEL_DISC,
 	IS_UNK_DISC
 };
 
