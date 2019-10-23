@@ -1205,9 +1205,9 @@ void dump_game(int disc_type, int type, int fs) {
 			char sha1sum[64];
 			memset(&md5sum[0], 0, 64);
 			memset(&sha1sum[0], 0, 64);
-			int i; for (i=0; i<16; i++) sprintf(&md5sum[0],"%s%02X",&md5sum[0],digest[i]);
+			int i; for (i=0; i<16; i++) sprintf(&md5sum[i*2],"%02X",digest[i]);
 			if(SHA1Result(&sha)) {
-				for (i=0; i<5; i++) sprintf(&sha1sum[0],"%s%08X",&sha1sum[0],sha.Message_Digest[i]);
+				for (i=0; i<5; i++) sprintf(&sha1sum[i*8],"%08X",sha.Message_Digest[i]);
 			}
 			else {
 				sprintf(sha1sum, "Error computing SHA-1");
