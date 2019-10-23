@@ -565,6 +565,7 @@ static int identify_disc() {
 			sprintf(&gameName[lastPos], "-disc%i", (readbuf[6]) + 1);
 		}
 		strncpy(&internalName[0],&readbuf[32],512);
+		internalName[511] = '\0';
 	} else {
 		sprintf(&gameName[0], "disc%i", dumpCounter);
 	}
