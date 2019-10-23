@@ -225,9 +225,10 @@ int verify_findMD5Sum(const char * md5orig, int disc_type) {
 
 	// open the <datafile>
 	mxml_node_t *item = mxmlFindElement(pointer, pointer, "datafile", NULL, NULL, MXML_DESCEND);
-	print_gecko("DataFile Pointer OK\r\n");
 	if (!item)
 		return 0;
+	
+	print_gecko("DataFile Pointer OK\r\n");
 
 	// look for md5 in xml directly
 	mxml_node_t *md5Elem = mxmlFindElement(item, pointer, NULL, "md5", md5orig, MXML_DESCEND);
