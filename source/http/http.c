@@ -63,7 +63,6 @@ static s32 tcp_socket(void)
 
 static s32 tcp_connect(char *host, const u16 port)
 {
-	struct hostent *hp;
 	struct sockaddr_in sa;
 	fd_set myset;
 	struct timeval tv;
@@ -79,7 +78,7 @@ static s32 tcp_connect(char *host, const u16 port)
 	sa.sin_port= htons(port);
 
 #ifdef HW_RVL
-	hp = net_gethostbyname (host);
+	struct hostent* hp = net_gethostbyname (host);
 	if (!hp || !(hp->h_addrtype == PF_INET)) {
 		return errno;
 	}

@@ -1115,7 +1115,7 @@ void dump_game(int disc_type, int type, int fs) {
 			if(!isKnownDatel) {
 				WriteCentre(215, "(Warning: This disc will take a while to dump!)");
 			}
-			sprintf(txtbuffer, "%s CRC100000=%08lX", (isKnownDatel ? "Known":"Unknown"), crc100000);
+			sprintf(txtbuffer, "%s CRC100000=%08X", (isKnownDatel ? "Known":"Unknown"), crc100000);
 			WriteCentre(255, txtbuffer);
 			WriteCentre(315, "Press  A to continue  B to Exit");
 			u64 waitTimeStart = gettime();
