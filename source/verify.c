@@ -157,8 +157,9 @@ void verify_download(char *mountPath) {
   		// Download the GC DAT
 		char datFilePath[64];
   		sprintf(datFilePath, "%sgc.dat",mountPath);
-  		u8 *xmlFile = (u8*)memalign(32, 1*1024*1024);
-		if((res = http_request("www.gc-forever.com","/datfile/gc.dat", xmlFile, (1*1024*1024), 0, 0)) > 0) {
+		const u32 maxDatFileSize = 4 * 1024 * 1024; // hopfully 4MB will be large enough forever. Current sizes are 644KB (GC) and 1.2MB (WII)
+  		u8 *xmlFile = (u8*)memalign(32, maxDatFileSize);
+		if((res = http_request("www.gc-forever.com","/datfile/gc.dat", xmlFile, maxDatFileSize, 0, 0)) > 0) {
 			remove(datFilePath);
 			FILE *fp = fopen(datFilePath, "wb");
 			if(fp) {
@@ -181,7 +182,7 @@ void verify_download(char *mountPath) {
 		}
 		// Download the Wii DAT
   		sprintf(datFilePath, "%swii.dat",mountPath);
-		if((res = http_request("www.gc-forever.com","/datfile/wii.dat", xmlFile, (1*1024*1024), 0, 0)) > 0) {
+		if((res = http_request("www.gc-forever.com","/datfile/wii.dat", xmlFile, maxDatFileSize, 0, 0)) > 0) {
 			remove(datFilePath);
 			FILE *fp = fopen(datFilePath, "wb");
 			if(fp) {
