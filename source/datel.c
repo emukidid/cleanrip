@@ -98,12 +98,12 @@ void datel_download(char *mountPath) {
 	int res = 0;
 	// Ask the user if they want to update from the web
 	if(datel_initialized) {
-		char *line1 = "GitHUB.org DAT file found";
+		char *line1 = "gc-forever Datel DAT file found";
 		char *line2 = "Check for updated DAT file?";
 		res = DrawYesNoDialog(line1, line2);
 	}
 	else {
-		char *line1 = "GitHUB.org DAT files not found";
+		char *line1 = "gc-forever Datel DAT files not found";
 		char *line2 = "Download them now?";
 		res = DrawYesNoDialog(line1, line2);
 	}

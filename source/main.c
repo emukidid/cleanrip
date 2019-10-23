@@ -1324,7 +1324,7 @@ int main(int argc, char **argv) {
 		
 		// Ask the user if they want to force Datel check this time?
 		if(disc_type == IS_NGC_DISC) {
-			if(DrawYesNoDialog("Is this a unlicensed disc?", 
+			if(DrawYesNoDialog("Is this a unlicensed datel disc?", 
 								 "(Will attempt auto-detect if no)")) {
 				disc_type = IS_DATEL_DISC;
 				datel_init(&mountPath[0]);
