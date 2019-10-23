@@ -157,8 +157,8 @@ void verify_download(char *mountPath) {
   		// Download the GC DAT
 		char datFilePath[64];
   		sprintf(datFilePath, "%sgc.dat",mountPath);
-  		u8 *xmlFile = (u8*)memalign(32, 1*1024*1024);
-		if((res = http_request("www.gc-forever.com","/datfile/gc.dat", xmlFile, (1*1024*1024), 0, 0)) > 0) {
+  		u8 *xmlFile = (u8*)memalign(32, 3*1024*1024);
+		if((res = http_request("www.gc-forever.com","/datfile/gc.dat", xmlFile, (3*1024*1024), 0, 0)) > 0) {
 			remove(datFilePath);
 			FILE *fp = fopen(datFilePath, "wb");
 			if(fp) {
