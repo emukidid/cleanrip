@@ -223,9 +223,6 @@ void verify_download(char *mountPath) {
 int verify_findMD5Sum(const char * md5orig, int disc_type) {
 
 	print_gecko("Looking for MD5 [%s]\r\n", md5orig);
-	char *xmlPointer = (disc_type == IS_NGC_DISC) ? ngcDAT : wiiDAT;
-	if (!xmlPointer)
-		return 0;
 
 	mxml_node_t *pointer = (disc_type == IS_NGC_DISC)  ? ngcXML : wiiXML;
 	if (!pointer)
