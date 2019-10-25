@@ -1,0 +1,6 @@
+
+build/
+cleanrip.elf
+cleanrip.dol
+cleanrip-gc.dol
+cleanrip-gc.elf

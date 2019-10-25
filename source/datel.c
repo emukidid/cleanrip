@@ -276,10 +276,10 @@ void dump_skips(char *mountPath, u32 crc100000) {
 	if (fp) {
 		int sk=0;
 		char SkipsInfo[100];
-		sprintf(SkipsInfo, "\t\t<skipcrc crc100000=\"%08lX\" skipfill=\"%02X\"/>\n", crc100000, SkipFill);
+		sprintf(SkipsInfo, "\t\t<skipcrc crc100000=\"%08X\" skipfill=\"%02X\"/>\n", crc100000, SkipFill);
 		fwrite(SkipsInfo, 1, strlen(&SkipsInfo[0]), fp);
 		for (sk=0;sk<NumSkips;sk++) {
-			sprintf(SkipsInfo, "\t\t<skip start=\"%08lX\" stop=\"%08lX\"/>\n", (u32)(SkipStart[sk] & 0xFFFFFFFF), (u32)(SkipStop[sk] & 0xFFFFFFFF));
+			sprintf(SkipsInfo, "\t\t<skip start=\"%08X\" stop=\"%08X\"/>\n", (u32)(SkipStart[sk] & 0xFFFFFFFF), (u32)(SkipStop[sk] & 0xFFFFFFFF));
 			fwrite(SkipsInfo, 1, strlen(&SkipsInfo[0]), fp);
 		}
 		fclose(fp);
