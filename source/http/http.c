@@ -63,7 +63,6 @@ static s32 tcp_socket(void)
 
 static s32 tcp_connect(char *host, const u16 port)
 {
-	struct hostent *hp;
 	struct sockaddr_in sa;
 	fd_set myset;
 	struct timeval tv;
@@ -79,7 +78,7 @@ static s32 tcp_connect(char *host, const u16 port)
 	sa.sin_port= htons(port);
 
 #ifdef HW_RVL
-	hp = net_gethostbyname (host);
+	struct hostent* hp = net_gethostbyname (host);
 	if (!hp || !(hp->h_addrtype == PF_INET)) {
 		return errno;
 	}
@@ -289,8 +288,8 @@ int http_request(char *http_host, char *http_path, u8 *buffer, u32 maxsize, bool
 		if (strlen(line) < 1)
 			break;
 
-		sscanf(line, "HTTP/1.%*u %lu", &http_status);
-		sscanf(line, "Content-Length: %lu", &content_length);
+		sscanf(line, "HTTP/1.%*u %u", &http_status);
+		sscanf(line, "Content-Length: %u", &content_length);
 		sscanf(line, "Location: %s", redirect);
 	}
 
@@ -319,7 +318,7 @@ int http_request(char *http_host, char *http_path, u8 *buffer, u32 maxsize, bool
 	if (buffer != NULL)
 	{
 		char txtbuf[256];
-		sprintf(txtbuf, "Connected to gc-forever.com\nDownloading %lu bytes", content_length);
+		sprintf(txtbuf, "Connected to gc-forever.com\nDownloading %u bytes", content_length);
 		DrawMessageBox(D_INFO, txtbuf);
 		sizeread = tcp_read(s, buffer, content_length);
 	}
