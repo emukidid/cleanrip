@@ -18,7 +18,7 @@ include $(DEVKITPPC)/wii_rules
 TARGET		:=	$(notdir $(CURDIR))
 BUILD		:=	build
 SOURCES		:=	images source source/sha1-c source/crc32 source/http
-DATA		:=	data  
+DATA		:=	data
 INCLUDES	:=	include source/sha1-c source/crc32 source/http
 TEXTURES	:=	images
 
@@ -34,7 +34,7 @@ LDFLAGS	=	-g $(MACHDEP) -Wl,-Map,$(notdir $@).map
 #---------------------------------------------------------------------------------
 # any extra libraries we wish to link with the project
 #---------------------------------------------------------------------------------
-LIBS	:=	-lwiiuse -lbte -lntfs -logc -lfat -lmxml -lm -lz
+LIBS	:=	-lwiiuse -lbte -lntfs -logc -lfat -lmxml -lm
 
 #---------------------------------------------------------------------------------
 # list of directories containing libraries, this must be the top level containing
@@ -142,7 +142,7 @@ $(OUTPUT).elf: $(OFILES)
 %.tpl.o	:	%.tpl
 	@echo $(notdir $<)
 	@$(bin2o)
-	
+
 -include $(DEPENDS)
 
 #---------------------------------------------------------------------------------
