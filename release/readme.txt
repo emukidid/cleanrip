@@ -1,5 +1,13 @@
 CleanRip - Wii/GC Disc Ripper Tool - Version 2.0.0
 
+Whatsnew in 2.1.0:
+- Fix DAT downloading issue (Wii DAT is > 1MB)
+- Fix crash on verify and other small issues
+- Fix build issues/warnings with latest devKitPPC
+- Add Datel disc dumping support
+- Add SD2SP2 (GameCube Serial Port 2) support
+- Disable DAT downloading from GameCube (no DNS support)
+
 Whatsnew in 2.0.0:
 - GameCube version integrated into one codebase
 - GX GUI
