@@ -303,6 +303,7 @@ void DrawMessageBox(int type, char *message)
   	GXColor fillColor = (GXColor) {0,0,0,GUI_MSGBOX_ALPHA}; //black
 	GXColor borderColor = (GXColor) {200,200,200,GUI_MSGBOX_ALPHA}; //silver
 	
+	DrawFrameStart();
 	DrawSimpleBox( x1, y1, x2-x1, y2-y1, 0, fillColor, borderColor); 
 
 	char *tok = strtok(message,"\n");
@@ -311,6 +312,7 @@ void DrawMessageBox(int type, char *message)
 		tok = strtok(NULL,"\n");
 		middleY+=24;
 	}
+	DrawFrameFinish();
 }
 
 void DrawRawFont(int x, int y, char *message) {
