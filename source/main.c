@@ -1259,7 +1259,9 @@ void dump_game(int disc_type, int type, int fs) {
 		else {
 			dump_info(NULL, NULL, 0, 0, diff_sec(startTime, gettime()));
 		}
-		dump_skips(&mountPath[0], crc100000);
+		if((disc_type == IS_DATEL_DISC)) {
+			dump_skips(&mountPath[0], crc100000);
+		}
 		WriteCentre(315,"Press  A to continue  B to Exit");
 		dvd_motor_off();
 		wait_press_A_exit_B();
