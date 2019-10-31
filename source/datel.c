@@ -38,12 +38,14 @@
 // Pointers to the file
 static char *datelDAT = NULL;
 static int datel_initialized = 0;
-static int datelDontAskAgain = 0;
 static int SkipFill = 0;
 static int NumSkips = 0;
 #define MAX_SKIPS (0x580)
 static uint64_t SkipStart[MAX_SKIPS];
 static uint64_t SkipStop[MAX_SKIPS];
+#ifdef HW_RVL
+static int datelDontAskAgain = 0;
+#endif
 
 // XML stuff
 static mxml_node_t *datelXML = NULL;
@@ -89,6 +91,7 @@ void datel_init(char *mountPath) {
 	datel_initialized = (datelDAT&&datelXML);
 }
 
+#ifdef HW_RVL
 // If there was some new files obtained, return 1, else 0
 void datel_download(char *mountPath) {
 	if(datelDontAskAgain) {
@@ -162,6 +165,7 @@ void datel_download(char *mountPath) {
 		datelDontAskAgain = 1;
 	}
 }
+#endif
 
 int datel_findCrcSum(int crcorig) {
 

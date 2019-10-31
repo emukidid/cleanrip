@@ -36,14 +36,18 @@
 
 // Pointers to the two files
 static char *ngcDAT = NULL;
+#ifdef HW_RVL
 static char *wiiDAT = NULL;
-static int verify_initialized = 0;
 int net_initialized = 0;
 static int dontAskAgain = 0;
+#endif
+static int verify_initialized = 0;
 
 // XML stuff
 static mxml_node_t *ngcXML = NULL;
+#ifdef HW_RVL
 static mxml_node_t *wiiXML = NULL;
+#endif
 static char gameName[256];
 
 void verify_init(char *mountPath) {
@@ -58,6 +62,7 @@ void verify_init(char *mountPath) {
 		}
 		free(ngcDAT);
 	}
+#ifdef HW_RVL
 	if(wiiDAT) {
 		free(wiiDAT);
 		if(wiiXML) {
@@ -65,6 +70,7 @@ void verify_init(char *mountPath) {
 			free(wiiXML);
 		}
 	}
+#endif
 
 	mxmlSetErrorCallback((mxml_error_cb_t)print_gecko);
 	FILE *fp = NULL;
@@ -112,14 +118,16 @@ void verify_init(char *mountPath) {
 	}
 #endif // #ifdef HW_RVL
 
-	print_gecko("DAT Files [NGC: %s] [Wii: %s]\r\n", ngcDAT ? "YES":"NO", wiiDAT ? "YES":"NO");
-	verify_initialized = ((ngcDAT&&ngcXML)
 #ifdef HW_RVL
-		&& (wiiDAT&&wiiXML)
-#endif // #ifdef HW_RVL
-		);
+	print_gecko("DAT Files [NGC: %s] [Wii: %s]\r\n", ngcDAT ? "YES":"NO", wiiDAT ? "YES":"NO");
+	verify_initialized = ((ngcDAT&&ngcXML) && (wiiDAT&&wiiXML));
+#else
+	print_gecko("DAT Files [NGC: %s]\r\n", ngcDAT ? "YES":"NO");
+	verify_initialized = (ngcDAT&&ngcXML);
+#endif
 }
 
+#ifdef HW_RVL
 // If there was some new files obtained, return 1, else 0
 void verify_download(char *mountPath) {
 	if(dontAskAgain) {
@@ -187,7 +195,6 @@ void verify_download(char *mountPath) {
 			sleep(5);
 		}
 
-#ifdef HW_RVL
 		// Download the Wii DAT
   		sprintf(datFilePath, "%swii.dat",mountPath);
 		if((res = http_request("www.gc-forever.com","/datfile/wii.dat", xmlFile, (3*1024*1024), 0, 0)) > 0) {
@@ -211,7 +218,6 @@ void verify_download(char *mountPath) {
 			DrawMessageBox(D_FAIL, "Checking for updates\nCouldn't find file on gc-forever.com");
 			sleep(5);
 		}
-#endif // #ifdef HW_RVL
 		free(xmlFile);
 		dontAskAgain = 1;
 	}
@@ -219,12 +225,17 @@ void verify_download(char *mountPath) {
 		dontAskAgain = 1;
 	}
 }
+#endif
 
 int verify_findMD5Sum(const char * md5orig, int disc_type) {
 
 	print_gecko("Looking for MD5 [%s]\r\n", md5orig);
 
+#ifdef HW_RVL
 	mxml_node_t *pointer = (disc_type == IS_NGC_DISC)  ? ngcXML : wiiXML;
+#else
+	mxml_node_t *pointer = (disc_type == IS_NGC_DISC)  ? ngcXML : NULL;
+#endif
 	if (!pointer)
 		return 0;
 
@@ -262,5 +273,9 @@ char *verify_get_name() {
 }
 
 int verify_is_available(int disc_type) {
+#ifdef HW_RVL
 	return (disc_type == IS_NGC_DISC) ? (ngcDAT != NULL) : (wiiDAT != NULL);
+#else
+	return (disc_type == IS_NGC_DISC) ? (ngcDAT != NULL) : 0;
+#endif
 }

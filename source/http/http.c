@@ -8,6 +8,7 @@
  * HTTP operations
  * Written by dhewg/bushing, modified by Tantric
  ***************************************************************************/
+#ifdef HW_RVL
 
 #include <malloc.h>
 #include <string.h>
@@ -333,3 +334,4 @@ int http_request(char *http_host, char *http_path, u8 *buffer, u32 maxsize, bool
 	return sizeread;
 }
 
+#endif

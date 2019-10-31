@@ -1311,12 +1311,13 @@ int main(int argc, char **argv) {
 		if(calcChecksums) {
 			// Try to load up redump.org dat files
 			verify_init(&mountPath[0]);
-
+#ifdef HW_RVL
 			// Ask the user if they want to download new ones
 			verify_download(&mountPath[0]);
 
 			// User might've got some new files.
 			verify_init(&mountPath[0]);
+#endif
 		}
 
 		// Init the drive and try to detect disc type
@@ -1341,8 +1342,10 @@ int main(int argc, char **argv) {
 								 "(Will attempt auto-detect if no)")) {
 				disc_type = IS_DATEL_DISC;
 				datel_init(&mountPath[0]);
+#ifdef HW_RVL
 				datel_download(&mountPath[0]);
 				datel_init(&mountPath[0]);
+#endif
 				calcChecksums = 1;
 			}
 		}
