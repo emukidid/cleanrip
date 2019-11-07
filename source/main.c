@@ -966,7 +966,7 @@ void dump_info(char *md5, char *sha1, u32 crc32, int verified, u32 seconds) {
 #define MSG_COUNT 8
 #define THREAD_PRIO 128
 
-void dump_game(int disc_type, int type, int fs) {
+int dump_game(int disc_type, int type, int fs) {
 
 	md5_state_t state;
 	md5_byte_t digest[16];
@@ -1222,6 +1222,7 @@ void dump_game(int disc_type, int type, int fs) {
 		WriteCentre(315,"Press  A  to continue");
 		dvd_motor_off();
 		wait_press_A();
+		return 0;
 	}
 	else if (ret == -61) {
 		DrawFrameStart();
@@ -1231,6 +1232,7 @@ void dump_game(int disc_type, int type, int fs) {
 		WriteCentre(315,"Press  A  to continue");
 		dvd_motor_off();
 		wait_press_A();
+		return 0;
 	}
 	else {
 		sprintf(txtbuffer,"Copy completed in %u mins. Press A",diff_sec(startTime, gettime())/60);
@@ -1266,6 +1268,7 @@ void dump_game(int disc_type, int type, int fs) {
 		dvd_motor_off();
 		wait_press_A_exit_B();
 	}
+	return 1;
 }
 
 int main(int argc, char **argv) {
@@ -1293,22 +1296,26 @@ int main(int argc, char **argv) {
 	calcChecksums = DrawYesNoDialog("Enable checksum calculations?",
 									"(Enabling will add about 3 minutes)");
 
+	int reuseSettings = NOT_ASKED;
 	while (1) {
+		int type, fs, ret;
+		if(reuseSettings == NOT_ASKED || reuseSettings == ANSWER_NO) {
 #ifdef HW_RVL
-		int type = device_type();
+			type = device_type();
 #else
-		int type = TYPE_SD;
+			type = TYPE_SD;
 #endif
-		int fs = TYPE_FAT;
+			fs = TYPE_FAT;
 
-		if (type == TYPE_USB) {
-			fs = filesystem_type();
+			if (type == TYPE_USB) {
+				fs = filesystem_type();
+			}
+
+			ret = -1;
+			do {
+				ret = initialise_device(type, fs);
+			} while (ret != 1);
 		}
-
-		int ret = -1;
-		do {
-			ret = initialise_device(type, fs);
-		} while (ret != 1);
 
 		if(calcChecksums) {
 			// Try to load up redump.org dat files
@@ -1337,28 +1344,44 @@ int main(int argc, char **argv) {
 		if (disc_type == IS_WII_DISC) {
 			get_settings(disc_type);
 		}
-
-		// Ask the user if they want to force Datel check this time?
-		if(disc_type == IS_NGC_DISC) {
-			if(DrawYesNoDialog("Is this a unlicensed datel disc?",
-								 "(Will attempt auto-detect if no)")) {
-				disc_type = IS_DATEL_DISC;
-				datel_init(&mountPath[0]);
+		
+		if(reuseSettings == NOT_ASKED || reuseSettings == ANSWER_NO) {
+			// Ask the user if they want to force Datel check this time?
+			if(disc_type == IS_NGC_DISC) {
+				if(DrawYesNoDialog("Is this a unlicensed datel disc?",
+									 "(Will attempt auto-detect if no)")) {
+					disc_type = IS_DATEL_DISC;
+					datel_init(&mountPath[0]);
 #ifdef HW_RVL
-				datel_download(&mountPath[0]);
-				datel_init(&mountPath[0]);
+					datel_download(&mountPath[0]);
+					datel_init(&mountPath[0]);
 #endif
-				calcChecksums = 1;
+					calcChecksums = 1;
+				}
+			}
+		}
+		
+		if(reuseSettings == NOT_ASKED) {
+			if(DrawYesNoDialog("Remember settings?",
+								 "Will only ask again next session")) {
+				reuseSettings = ANSWER_YES;
 			}
 		}
 
 		verify_in_use = verify_is_available(disc_type);
 		verify_disc_type = disc_type;
 
-		dump_game(disc_type, type, fs);
-
+		ret = dump_game(disc_type, type, fs);
 		verify_in_use = 0;
-		dumpCounter++;
+		dumpCounter += (ret ? 1 : 0);
+		
+		DrawFrameStart();
+		DrawEmptyBox(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
+		sprintf(txtbuffer, "%i disc(s) dumped", dumpCounter);
+		WriteCentre(190, txtbuffer);
+		WriteCentre(255, "Dump another disc?");
+		WriteCentre(315, "Press  A to continue  B to Exit");
+		wait_press_A_exit_B();
 	}
 
 	return 0;

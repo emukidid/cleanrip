@@ -133,5 +133,12 @@ enum newFileOptions
   NEWFILE_DELIM
 };
 
+enum settingsAskStatus
+{
+	NOT_ASKED,
+	ANSWER_YES,
+	ANSWER_NO
+};
+
 #endif
 
