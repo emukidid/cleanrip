@@ -50,6 +50,7 @@ int init_dvd() {
 	DVD_Reset(DVD_RESETHARD);
 	dvd_read_id();
 	if (!dvd_get_error()) {
+		xeno_disable();
 		return 0; //we're ok
 	}
 	if (dvd_get_error() >> 24) {
@@ -228,6 +229,18 @@ int DVD_LowRead64Datel(void* dst, u32 len, uint64_t offset, int isKnownDatel) {
 		memset(dst, fill, len);
 	}
 	return 0;
+}
+
+// Disable XenoGC patching by reading a few sections that it will attempt to patch once
+void xeno_disable() {
+  char *readBuf = (char*)memalign(32,64*1024);
+  if(!readBuf) {
+    return;
+  }
+  DVD_LowRead64(readBuf, 64*1024, 0);           //xeno GC enable patching
+  DVD_LowRead64(readBuf, 64*1024, 0x8000);   	//xeno GC disable patching
+  DVD_LowRead64(readBuf, 64*1024, 0x1000000);   //xeno GC disable patching
+  free(readBuf);
 }
 
 static char error_str[256];
