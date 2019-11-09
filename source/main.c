@@ -59,6 +59,8 @@ static char rawNTFSMount[512];
 #endif
 #ifdef HW_DOL
 #include <sdcard/gcsd.h>
+#include <sdcard/card_cmn.h>
+#include <sdcard/card_io.h>
 const DISC_INTERFACE* sdcard = &__io_gcsda;
 const DISC_INTERFACE* usb = NULL;
 #endif
@@ -529,6 +531,9 @@ static int initialise_device(int type, int fs) {
 			WriteCentre(315, "Press A to try again  B to exit");
 			wait_press_A_exit_B();
 		}
+#ifdef HW_DOL
+		sdgecko_setSpeed(EXI_SPEED32MHZ);
+#endif
 	}
 #ifdef HW_RVL
 	else if (fs == TYPE_NTFS) {
