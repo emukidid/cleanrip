@@ -17,3 +17,6 @@ If you have any questions about CleanRip?, please make a thread over at http://w
 * Wii/GC Controller
 * USB or SD storage device (>1.35GB free space)
 * HBC 1.0.8 or greater installed 
+
+# Device Compatibility
+Please note that the Wii can be picky about particular USB drives/storage devices. It's recommended to use a Y cable for hard drives that fail to power up from one USB port alone. If USB flash storage doesn't want to work, try a different brand/size. SD cards on GameCube will potentially have similar issues, it's best to have a few different brands/sizes/types at your disposal.
