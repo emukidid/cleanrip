@@ -1061,12 +1061,13 @@ int dump_game(int disc_type, int type, int fs) {
 	MQ_Send(msgq, (mqmsg_t)&msg, MQ_MSG_BLOCK);
 
 	int ret = 0;
-	u64 copyTime = gettime();
+	u32 lastLBA = 0;
+	u64 lastCheckedTime = gettime();
 	u64 startTime = gettime();
 	int chunk = 1;
 	int isKnownDatel = 0;
 
-	while (!ret && (startLBA + (opt_read_size>>11)) < endLBA) {
+	while (!ret && (startLBA < endLBA)) {
 		MQ_Receive(blockq, (mqmsg_t*)&wmsg, MQ_MSG_BLOCK);
 		if (wmsg==NULL) { // asynchronous write error
 			LWP_JoinThread(writer, NULL);
@@ -1081,7 +1082,6 @@ int dump_game(int disc_type, int type, int fs) {
 		}
 
 		if (startLBA > (opt_chunk_size * chunk)) {
-			u64 wait_begin;
 			// wait for writing to finish
 			vu32 sema = 0;
 			msg.command = MSG_FLUSH;
@@ -1091,11 +1091,10 @@ int dump_game(int disc_type, int type, int fs) {
 				LWP_YieldThread();
 
 			// open new file
-			wait_begin = gettime();
+			u64 wait_begin = gettime();
 			prompt_new_file(&fp, chunk, type, fs, silent);
-			copyTime = gettime();
 			// pretend the wait didn't happen
-			startTime += copyTime - wait_begin;
+			startTime -= (gettime() - wait_begin);
 
 			// set writing file
 			msg.command = MSG_SETFILE;
@@ -1103,6 +1102,8 @@ int dump_game(int disc_type, int type, int fs) {
 			MQ_Send(msgq, (mqmsg_t)&msg, MQ_MSG_BLOCK);
 			chunk++;
 		}
+
+		opt_read_size = (startLBA + (opt_read_size>>11)) <= endLBA ? opt_read_size : ((u32)((endLBA-startLBA)<<11));
 
 		wmsg->command =  MSG_WRITE;
 		wmsg->data = wmsg+1;
@@ -1146,65 +1147,24 @@ int dump_game(int disc_type, int type, int fs) {
 			ret = -61;
 		}
 		// Update status every second
-
 		u64 curTime = gettime();
-		s32 timePassed = diff_msec(copyTime, curTime);
+		s32 timePassed = diff_msec(lastCheckedTime, curTime);
 		if (timePassed >= 1000) {
-			u64 totalTime = diff_msec(startTime, curTime);
-			u32 bytes_per_msec = (((u64)startLBA<<11) + opt_read_size) / totalTime;
+			u32 bytes_since_last_read = (u32)(((startLBA - lastLBA)<<11) * (1000.0f/timePassed));
 			u64 remainder = (((u64)endLBA - startLBA)<<11) - opt_read_size;
 
-			u32 etaTime;
-			if(disc_type == IS_NGC_DISC || disc_type == IS_DATEL_DISC) {
-				// multiply ETA by 3/4 to account for CAV speed increase
-				etaTime = (remainder / bytes_per_msec * 58) / 75000;
-			}
-			else {
-				etaTime = (remainder / bytes_per_msec) / 1000;
-			}
-			sprintf(txtbuffer, "%dMB %4.0fKB/s - ETA %02d:%02d:%02d",
-					(int) (((u64) ((u64) startLBA << 11)) / (1024* 1024 )),
-				(float)bytes_per_msec*1000/1024,
-				(int)((etaTime/60/60)%60),(int)((etaTime/60)%60),(int)(etaTime%60));
+			u32 etaTime = (remainder / bytes_since_last_read);
+			sprintf(txtbuffer, "%dMB %4.2fKB/s - ETA %02d:%02d:%02d",
+					(int) (((u64) ((u64) startLBA << 11)) / (1024*1024)),
+				(float)bytes_since_last_read/1024.0f,
+				(int)((etaTime/3600)%60),(int)((etaTime/60)%60),(int)(etaTime%60));
 			DrawFrameStart();
 			DrawProgressBar((int)((float)((float)startLBA/(float)endLBA)*100), txtbuffer);
       		DrawFrameFinish();
-  			copyTime = curTime;
+  			lastCheckedTime = curTime;
+			lastLBA = startLBA;
 		}
 		startLBA+=opt_read_size>>11;
-	}
-	// Remainder of data
-	if(!ret && startLBA < endLBA) {
-		MQ_Receive(blockq, (mqmsg_t*)&wmsg, MQ_MSG_BLOCK);
-		if (wmsg==NULL) { // asynchronous write error
-			LWP_JoinThread(writer, NULL);
-			fclose(fp);
-			DrawFrameStart();
-			DrawEmptyBox (30,180, vmode->fbWidth-38, 350, COLOR_BLACK);
-			WriteCentre(255,"Write Error!");
-			WriteCentre(315,"Exiting in 10 seconds");
-			DrawFrameFinish();
-			sleep(10);
-			exit(1);
-		}
-		wmsg->command =  MSG_WRITE;
-		wmsg->data = wmsg+1;
-		wmsg->length = (u32)((endLBA-startLBA)<<11);
-		wmsg->ret_box = blockq;
-
-		if(disc_type == IS_DATEL_DISC)
-			ret = DVD_LowRead64Datel(wmsg->data, wmsg->length, (u64)startLBA << 11, isKnownDatel);
-		else
-			ret = DVD_LowRead64(wmsg->data, wmsg->length, (u64)startLBA << 11);
-		MQ_Send(msgq, (mqmsg_t)wmsg, MQ_MSG_BLOCK);
-		if(calcChecksums) {
-			// Calculate MD5
-			md5_append(&state, (const md5_byte_t*)(wmsg+1), wmsg->length);
-			// Calculate SHA-1
-			SHA1Input(&sha, (const unsigned char*)(wmsg+1), wmsg->length);
-			// Calculate CRC32
-			crc32 = Crc32_ComputeBuf( crc32, wmsg+1, wmsg->length);
-		}
 	}
 	if(calcChecksums) {
 		md5_finish(&state, digest);
