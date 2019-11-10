@@ -1306,11 +1306,11 @@ int main(int argc, char **argv) {
 			disc_type = force_disc();
 		}
 
-		if (disc_type == IS_WII_DISC) {
-			get_settings(disc_type);
-		}
-		
 		if(reuseSettings == NOT_ASKED || reuseSettings == ANSWER_NO) {
+			if (disc_type == IS_WII_DISC) {
+				get_settings(disc_type);
+			}
+		
 			// Ask the user if they want to force Datel check this time?
 			if(disc_type == IS_NGC_DISC) {
 				if(DrawYesNoDialog("Is this a unlicensed datel disc?",

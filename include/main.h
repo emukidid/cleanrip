@@ -54,7 +54,7 @@
 // Version info
 #define V_MAJOR			2
 #define V_MID			1
-#define V_MINOR			0
+#define V_MINOR			1
 
 /*** 2D Video Globals ***/
 extern GXRModeObj *vmode;	/*** Graphics Mode Object ***/
