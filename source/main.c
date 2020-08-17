@@ -811,12 +811,10 @@ static void get_settings(int disc_type) {
 		}
 		// Wii Settings
 		else if(disc_type == IS_WII_DISC) {
-			// WriteFont(80, 160+(32*1), "Dual Layer");
-			// DrawSelectableButton(vmode->fbWidth-220, 160+(32*1), -1, 160+(32*1)+30, getDualLayerOption(), (!currentSettingPos) ? B_SELECTED:B_NOSELECT, -1);
-			WriteFont(80, 160+(32*2), "Chunk Size");
-			DrawSelectableButton(vmode->fbWidth-220, 160+(32*2), -1, 160+(32*2)+30, getChunkSizeOption(), (currentSettingPos==1) ? B_SELECTED:B_NOSELECT, -1);
-			WriteFont(80, 160+(32*3), "New device per chunk");
-			DrawSelectableButton(vmode->fbWidth-220, 160+(32*3), -1, 160+(32*3)+30, getNewFileOption(), (currentSettingPos==2) ? B_SELECTED:B_NOSELECT, -1);
+			WriteFont(80, 160+(32*1), "Chunk Size");
+			DrawSelectableButton(vmode->fbWidth-220, 160+(32*1), -1, 160+(32*1)+30, getChunkSizeOption(), (!currentSettingPos) ? B_SELECTED:B_NOSELECT, -1);
+			WriteFont(80, 160+(32*2), "New device per chunk");
+			DrawSelectableButton(vmode->fbWidth-220, 160+(32*2), -1, 160+(32*2)+30, getNewFileOption(), (currentSettingPos==1) ? B_SELECTED:B_NOSELECT, -1);
 		}
 		WriteCentre(370,"Press  A  to continue");
 		DrawAButton(265,360);
@@ -825,10 +823,10 @@ static void get_settings(int disc_type) {
 		while (!(get_buttons_pressed() & (PAD_BUTTON_RIGHT | PAD_BUTTON_LEFT | PAD_BUTTON_A | PAD_BUTTON_UP | PAD_BUTTON_DOWN)));
 		u32 btns = get_buttons_pressed();
 		if(btns & PAD_BUTTON_RIGHT) {
-			toggleOption(currentSettingPos+((disc_type == IS_WII_DISC)?MAX_NGC_OPTIONS:0), 1);
+			toggleOption(currentSettingPos+((disc_type == IS_WII_DISC)?MAX_NGC_OPTIONS + 1:0), 1);
 		}
 		if(btns & PAD_BUTTON_LEFT) {
-			toggleOption(currentSettingPos+((disc_type == IS_WII_DISC)?MAX_NGC_OPTIONS:0), -1);
+			toggleOption(currentSettingPos+((disc_type == IS_WII_DISC)?MAX_NGC_OPTIONS + 1:0), -1);
 		}
 		if(btns & PAD_BUTTON_UP) {
 			currentSettingPos = (currentSettingPos>0) ? (currentSettingPos-1):maxSettingPos;
