@@ -48,7 +48,7 @@
 #define HW_ARMIRQMASK 	(HW_REG_BASE + 0x03c)
 #define HW_ARMIRQFLAG 	(HW_REG_BASE + 0x038)
 
-#define MAX_WII_OPTIONS 3
+#define MAX_WII_OPTIONS 2
 #define MAX_NGC_OPTIONS 3
 
 // Version info
@@ -108,13 +108,6 @@ enum alignBoundaryOptions
   ALIGN_2,
   ALIGN_512,
   ALIGNB_DELIM
-};
-
-enum dualOptions
-{
-  SINGLE_LAYER=0,
-  DUAL_LAYER,
-  DUAL_DELIM
 };
 
 enum chunkOptions

@@ -56,7 +56,6 @@ static ntfs_md *mounts = NULL;
 const DISC_INTERFACE* sdcard = &__io_wiisd;
 const DISC_INTERFACE* usb = &__io_usbstorage;
 static char rawNTFSMount[512];
-static int isDuallayerDisc;
 #endif
 #ifdef HW_DOL
 #include <sdcard/gcsd.h>
@@ -70,6 +69,7 @@ static int calcChecksums = 0;
 static int dumpCounter = 0;
 static char gameName[32];
 static char internalName[512];
+static int isDuallayerDisc;
 static char mountPath[512];
 static char wpadNeedScan = 0;
 static char padNeedScan = 0;
@@ -737,15 +737,6 @@ char *getAlignmentBoundaryOption() {
 	return 0;
 }
 
-char *getDualLayerOption() {
-	int opt = options_map[WII_DUAL_LAYER];
-	if (opt == SINGLE_LAYER)
-		return "No";
-	else if (opt == DUAL_LAYER)
-		return "Yes";
-	return 0;
-}
-
 char *getNewFileOption() {
 	int opt = options_map[WII_NEWFILE];
 	if (opt == ASK_USER)
@@ -770,8 +761,6 @@ char *getChunkSizeOption() {
 
 int getMaxPos(int option_pos) {
 	switch (option_pos) {
-	case WII_DUAL_LAYER:
-		return DUAL_DELIM;
 	case WII_CHUNK_SIZE:
 		return CHUNK_DELIM;
 	case NGC_ALIGN_BOUNDARY:
@@ -822,8 +811,8 @@ static void get_settings(int disc_type) {
 		}
 		// Wii Settings
 		else if(disc_type == IS_WII_DISC) {
-			WriteFont(80, 160+(32*1), "Dual Layer");
-			DrawSelectableButton(vmode->fbWidth-220, 160+(32*1), -1, 160+(32*1)+30, getDualLayerOption(), (!currentSettingPos) ? B_SELECTED:B_NOSELECT, -1);
+			// WriteFont(80, 160+(32*1), "Dual Layer");
+			// DrawSelectableButton(vmode->fbWidth-220, 160+(32*1), -1, 160+(32*1)+30, getDualLayerOption(), (!currentSettingPos) ? B_SELECTED:B_NOSELECT, -1);
 			WriteFont(80, 160+(32*2), "Chunk Size");
 			DrawSelectableButton(vmode->fbWidth-220, 160+(32*2), -1, 160+(32*2)+30, getChunkSizeOption(), (currentSettingPos==1) ? B_SELECTED:B_NOSELECT, -1);
 			WriteFont(80, 160+(32*3), "New device per chunk");
@@ -1015,8 +1004,7 @@ int dump_game(int disc_type, int type, int fs) {
 
 	u32 startLBA = 0;
 	u32 endLBA = (disc_type == IS_NGC_DISC || disc_type == IS_DATEL_DISC) ? NGC_DISC_SIZE
-			: (options_map[WII_DUAL_LAYER] == DUAL_LAYER ? WII_D9_SIZE
-					: WII_D5_SIZE);
+			: (isDuallayerDisc ? WII_D9_SIZE : WII_D5_SIZE);
 
 	// Work out the chunk size
 	u32 chunk_size_wii = options_map[WII_CHUNK_SIZE];
