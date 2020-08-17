@@ -56,6 +56,7 @@ static ntfs_md *mounts = NULL;
 const DISC_INTERFACE* sdcard = &__io_wiisd;
 const DISC_INTERFACE* usb = &__io_usbstorage;
 static char rawNTFSMount[512];
+static int isDuallayerDisc;
 #endif
 #ifdef HW_DOL
 #include <sdcard/gcsd.h>
@@ -632,6 +633,19 @@ static int force_disc() {
 	while ((get_buttons_pressed() & PAD_BUTTON_A))
 		;
 	return type;
+}
+
+/* detect if a dual layer disc was inserted based on the gameID */
+int detect_duallayer_disc() {
+    // list of gameIDs from here: https://wiki.dolphin-emu.org/index.php?title=Category:Dual_Layer_Disc_games
+    if (strstr(gameName, "SQI") != NULL || strstr(gameName, "R3O") != NULL || strstr(gameName, "R3M") != NULL ||
+        strstr(gameName, "RXM") != NULL || strstr(gameName, "SR5") != NULL || strstr(gameName, "SAK") != NULL ||
+        strstr(gameName, "S59") != NULL || strstr(gameName, "S5Q") != NULL || strstr(gameName, "RSB") != NULL ||
+        strstr(gameName, "SOU") != NULL || strstr(gameName, "SLS") != NULL || strstr(gameName, "SX4") != NULL ||
+        strstr(gameName, "SZ3") != NULL) {
+        return 1;
+    }
+    return 0;
 }
 
 /* the user must specify the device type */
@@ -1305,6 +1319,10 @@ int main(int argc, char **argv) {
 		if (disc_type == IS_UNK_DISC) {
 			disc_type = force_disc();
 		}
+
+#ifdef HW_RVL
+        isDuallayerDisc = detect_duallayer_disc();
+#endif
 
 		if(reuseSettings == NOT_ASKED || reuseSettings == ANSWER_NO) {
 			if (disc_type == IS_WII_DISC) {
