@@ -69,7 +69,7 @@ static int calcChecksums = 0;
 static int dumpCounter = 0;
 static char gameName[32];
 static char internalName[512];
-static int isDuallayerDisc;
+static int isDuallayerDisc = 0;
 static char mountPath[512];
 static char wpadNeedScan = 0;
 static char padNeedScan = 0;
