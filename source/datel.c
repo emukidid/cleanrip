@@ -274,8 +274,8 @@ void datel_addSkip(uint64_t start, u32 length) {
 	}
 }
 
-void dump_skips(char *mountPath, u32 crc100000) {
-	sprintf(txtbuffer, "%s%s.skp", mountPath, get_game_name());
+void dump_skips(char *pathToCurrentGameDir, u32 crc100000) {
+	sprintf(txtbuffer, "%s%s.skp", pathToCurrentGameDir, get_game_name());
 	FILE *fp = fopen(txtbuffer, "wb");
 	if (fp) {
 		int sk=0;

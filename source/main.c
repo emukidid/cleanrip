@@ -23,12 +23,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <gccore.h>
 #include <errno.h>
 #include <math.h>
 #include <unistd.h>
 #include <malloc.h>
 #include <stdarg.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 #include <ogc/lwp_watchdog.h>
 #include <ogc/machine/processor.h>
 #include "FrameBufferMagic.h"
@@ -70,6 +73,7 @@ static int dumpCounter = 0;
 static char gameName[32];
 static char internalName[512];
 static char mountPath[512];
+static char currentGameDirName[520];
 static char wpadNeedScan = 0;
 static char padNeedScan = 0;
 int print_usb = 0;
@@ -707,6 +711,34 @@ int filesystem_type() {
 	return type;
 }
 
+/* create folder structure on the mounted device "/cleanrip-dumps/gamename" */
+int create_folder_structure(int generateGameDirName) {
+	char folderPath[1050];
+	struct stat st = {0};
+	// when we dump a new game we want to generate a new name for the folder
+	if (generateGameDirName) {
+		int rnd = rand()%1000;
+		sprintf(currentGameDirName, "%s-%d", &internalName[0], rnd);
+	}
+	
+	sprintf(folderPath, "%scleanrip-dumps", &mountPath[0]);
+	strcat(folderPath, "/");
+	strcat(folderPath, currentGameDirName);
+	if (stat(folderPath, &st) == -1) {
+		if (mkdir(folderPath, 0755) != 0) {
+			DrawFrameStart();
+			DrawEmptyBox(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
+			WriteCentre(230, "Failed to create folder:");
+			WriteCentre(255, folderPath);
+			WriteCentre(315, "Exiting in 5 seconds");
+			DrawFrameFinish();
+			sleep(5);
+			exit(0);
+		}
+	}
+	return 0;
+}
+
 char *getShrinkOption() {
 	int opt = options_map[NGC_SHRINK_ISO];
 	if (opt == SHRINK_ALL)
@@ -927,8 +959,10 @@ void prompt_new_file(FILE **fp, int chunk, int type, int fs, int silent) {
 		} while (ret != 1);
 	}
 
+	create_folder_structure(0);
+
 	*fp = NULL;
-	sprintf(txtbuffer, "%s%s.part%i.iso", &mountPath[0], &gameName[0], chunk);
+	sprintf(txtbuffer, "%scleanrip-dumps/%s/%s.part%i.iso", &mountPath[0], &currentGameDirName[0], &gameName[0], chunk);
 	remove(&txtbuffer[0]);
 	*fp = fopen(&txtbuffer[0], "wb");
 	if (*fp == NULL) {
@@ -947,7 +981,7 @@ void prompt_new_file(FILE **fp, int chunk, int type, int fs, int silent) {
 }
 
 void dump_bca() {
-	sprintf(txtbuffer, "%s%s.bca", &mountPath[0], &gameName[0]);
+	sprintf(txtbuffer, "%scleanrip-dumps/%s/%s.bca", &mountPath[0], &currentGameDirName[0], &gameName[0]);
 	remove(&txtbuffer[0]);
 	FILE *fp = fopen(txtbuffer, "wb");
 	if (fp) {
@@ -976,7 +1010,7 @@ void dump_info(char *md5, char *sha1, u32 crc32, int verified, u32 seconds) {
 						  "Version: 1.0%i\r\nChecksum calculations disabled\r\nDuration: %u min. %u sec.\r\n",
 				V_MAJOR,V_MID,V_MINOR,&gameName[0],&internalName[0], *(u8*)0x80000007, seconds/60, seconds%60);
 	}
-	sprintf(txtbuffer, "%s%s-dumpinfo.txt", &mountPath[0], &gameName[0]);
+	sprintf(txtbuffer, "%scleanrip-dumps/%s/%s-dumpinfo.txt", &mountPath[0], &currentGameDirName[0], &gameName[0]);
 	remove(&txtbuffer[0]);
 	FILE *fp = fopen(txtbuffer, "wb");
 	if (fp) {
@@ -1058,9 +1092,9 @@ int dump_game(int disc_type, int type, int fs) {
 
 	// There will be chunks, name accordingly
 	if (opt_chunk_size < endLBA) {
-		sprintf(txtbuffer, "%s%s.part0.iso", &mountPath[0], &gameName[0]);
+		sprintf(txtbuffer, "%scleanrip-dumps/%s/%s.part0.iso", &mountPath[0], &currentGameDirName[0], &gameName[0]);
 	} else {
-		sprintf(txtbuffer, "%s%s.iso", &mountPath[0], &gameName[0]);
+		sprintf(txtbuffer, "%scleanrip-dumps/%s/%s.iso", &mountPath[0], &currentGameDirName[0], &gameName[0]);
 	}
 	remove(&txtbuffer[0]);
 	FILE *fp = fopen(&txtbuffer[0], "wb");
@@ -1245,7 +1279,9 @@ int dump_game(int disc_type, int type, int fs) {
 			dump_info(NULL, NULL, 0, 0, diff_sec(startTime, gettime()));
 		}
 		if((disc_type == IS_DATEL_DISC)) {
-			dump_skips(&mountPath[0], crc100000);
+			char pathToGameDir[1050];
+			sprintf(pathToGameDir, "%scleanrip-dumps/%s/", &mountPath[0], &currentGameDirName[0]);
+			dump_skips(&pathToGameDir[0], crc100000);
 		}
 		WriteCentre(315,"Press  A to continue  B to Exit");
 		dvd_motor_off();
@@ -1278,6 +1314,8 @@ int main(int argc, char **argv) {
 	// Ask the user if they want checksum calculations enabled this time?
 	calcChecksums = DrawYesNoDialog("Enable checksum calculations?",
 									"(Enabling will add about 3 minutes)");
+	// Intialize RNG
+	srand(time(NULL));
 
 	int reuseSettings = NOT_ASKED;
 	while (1) {
@@ -1343,6 +1381,8 @@ int main(int argc, char **argv) {
 				}
 			}
 		}
+
+		create_folder_structure(1);
 		
 		if(reuseSettings == NOT_ASKED) {
 			if(DrawYesNoDialog("Remember settings?",
