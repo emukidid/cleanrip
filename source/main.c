@@ -634,6 +634,21 @@ static int force_disc() {
 	return type;
 }
 
+/*
+ Detect if a dual-layer disc was inserted by checking if reading from sectors
+ on the second layer is succesful or not. Returns the correct disc size.
+*/
+int detect_duallayer_disc() {
+	char *readBuf = (char*)memalign(32,64);
+	uint64_t offsetToSecondLayer = (uint64_t)WII_D5_SIZE << 11;
+	int ret = WII_D5_SIZE;
+	if (DVD_LowRead64(readBuf, 64, offsetToSecondLayer) == 0) {
+		ret = WII_D9_SIZE;
+	}
+	free(readBuf);
+	return ret;
+}
+
 /* the user must specify the device type */
 int device_type() {
 	int type = TYPE_USB;
@@ -725,7 +740,9 @@ char *getAlignmentBoundaryOption() {
 
 char *getDualLayerOption() {
 	int opt = options_map[WII_DUAL_LAYER];
-	if (opt == SINGLE_LAYER)
+	if (opt == AUTO_DETECT)
+		return "Auto";
+	else if (opt == SINGLE_LAYER)
 		return "No";
 	else if (opt == DUAL_LAYER)
 		return "Yes";
@@ -1001,8 +1018,9 @@ int dump_game(int disc_type, int type, int fs) {
 
 	u32 startLBA = 0;
 	u32 endLBA = (disc_type == IS_NGC_DISC || disc_type == IS_DATEL_DISC) ? NGC_DISC_SIZE
-			: (options_map[WII_DUAL_LAYER] == DUAL_LAYER ? WII_D9_SIZE
-					: WII_D5_SIZE);
+			: (options_map[WII_DUAL_LAYER] == AUTO_DETECT ? detect_duallayer_disc()
+				: (options_map[WII_DUAL_LAYER] == DUAL_LAYER ? WII_D9_SIZE 
+					: WII_D5_SIZE));
 
 	// Work out the chunk size
 	u32 chunk_size_wii = options_map[WII_CHUNK_SIZE];

@@ -112,7 +112,8 @@ enum alignBoundaryOptions
 
 enum dualOptions
 {
-  SINGLE_LAYER=0,
+  AUTO_DETECT=0,
+  SINGLE_LAYER,
   DUAL_LAYER,
   DUAL_DELIM
 };
