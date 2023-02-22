@@ -1330,17 +1330,15 @@ int main(int argc, char **argv) {
 			}
 		
 			// Ask the user if they want to force Datel check this time?
-			if(disc_type == IS_NGC_DISC) {
-				if(DrawYesNoDialog("Is this a unlicensed datel disc?",
-									 "(Will attempt auto-detect if no)")) {
-					disc_type = IS_DATEL_DISC;
-					datel_init(&mountPath[0]);
+			if(DrawYesNoDialog("Is this a unlicensed datel disc?",
+								 "(Will attempt auto-detect if no)")) {
+				disc_type = IS_DATEL_DISC;
+				datel_init(&mountPath[0]);
 #ifdef HW_RVL
-					datel_download(&mountPath[0]);
-					datel_init(&mountPath[0]);
+				datel_download(&mountPath[0]);
+				datel_init(&mountPath[0]);
 #endif
-					calcChecksums = 1;
-				}
+				calcChecksums = 1;
 			}
 		}
 		
