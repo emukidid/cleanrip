@@ -20,3 +20,5 @@ If you have any questions about CleanRip?, please make a thread over at http://w
 
 # Device Compatibility
 Please note that the Wii can be picky about particular USB drives/storage devices. It's recommended to use a Y cable for hard drives that fail to power up from one USB port alone. If USB flash storage doesn't want to work, try a different brand/size. SD cards on GameCube will potentially have similar issues, it's best to have a few different brands/sizes/types at your disposal.
+
+CleanRip for GC is also compatible with M.2 SSDs via M.2 Loader.
