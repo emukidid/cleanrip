@@ -61,6 +61,7 @@ static char rawNTFSMount[512];
 #include <sdcard/gcsd.h>
 #include <sdcard/card_cmn.h>
 #include <sdcard/card_io.h>
+static int sdcard_slot = 0;
 const DISC_INTERFACE* sdcard = &__io_gcsda;
 const DISC_INTERFACE* usb = NULL;
 #endif
@@ -458,7 +459,7 @@ static int initialise_dvd() {
 }
 
 #ifdef HW_DOL
-const DISC_INTERFACE* select_slot() {
+int select_sd_gecko_slot() {
 	int slot = 0;
 	while ((get_buttons_pressed() & PAD_BUTTON_A));
 	while (1) {
@@ -486,6 +487,11 @@ const DISC_INTERFACE* select_slot() {
 				| PAD_BUTTON_B | PAD_BUTTON_A)));
 	}
 	while ((get_buttons_pressed() & PAD_BUTTON_A));
+
+	return slot;
+}
+
+const DISC_INTERFACE* get_sd_card_handler(int slot) {
 	switch (slot) {
 		case 1:
 			return &__io_gcsdb;
@@ -511,7 +517,9 @@ static int initialise_device(int type, int fs) {
 #endif
 	{
 #ifdef HW_DOL
-		sdcard = select_slot();
+		sdcard_slot = select_sd_gecko_slot();
+		sdcard = get_sd_card_handler(sdcard_slot);
+		
 		DrawFrameStart();
 		DrawEmptyBox(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
 #endif
@@ -532,7 +540,7 @@ static int initialise_device(int type, int fs) {
 			wait_press_A_exit_B();
 		}
 #ifdef HW_DOL
-		sdgecko_setSpeed(EXI_SPEED32MHZ);
+		sdgecko_setSpeed(sdcard_slot, EXI_SPEED32MHZ);
 #endif
 	}
 #ifdef HW_RVL
