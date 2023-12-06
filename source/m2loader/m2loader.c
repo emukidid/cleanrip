@@ -281,20 +281,6 @@ u32 _M2Loader_DriveIdentify()
     _M2Loader_PrintHddSector((u32 *)&buffer);
 #endif
 
-#ifdef _M2LDR_DEBUG
-    int unlockStatus = M2Loader_Unlock(1, "password\0", ATA_CMD_UNLOCK);
-    print_gecko("Unlock Status was: %i\r\n", unlockStatus);
-#else
-    M2Loader_Unlock(1, "password\0", ATA_CMD_UNLOCK);
-#endif
-
-#ifdef _M2LDR_DEBUG
-    unlockStatus = M2Loader_Unlock(1, "password\0", ATA_CMD_SECURITY_DISABLE);
-    print_gecko("Disable Status was: %i\r\n", unlockStatus);
-#else
-    M2Loader_Unlock(1, "password\0", ATA_CMD_SECURITY_DISABLE);
-#endif
-
     return 0;
 }
 
@@ -592,7 +578,7 @@ int _M2Loader_WriteSectors(u64 sector, unsigned int numSectors, unsigned char *s
     return 0;
 }
 
-bool M2Loader_IsDriveInserted()
+bool M2Loader_IsDriveInserted() 
 {
     if (M2Loader_DriveInserted)
     {
@@ -623,7 +609,7 @@ static bool __m2ldr_startup(void)
 
 static bool __m2ldr_isInserted(void)
 {
-    return M2Loader_IsDriveInserted();
+    return M2Loader_IsInserted() && M2Loader_IsDriveInserted();
 }
 
 static bool __m2ldr_readSectors(sec_t sector, sec_t numSectors, void *buffer)

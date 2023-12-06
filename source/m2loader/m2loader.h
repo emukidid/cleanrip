@@ -15,6 +15,7 @@
 #include <ogc/disc_io.h>
 
 #define EXI_M2LOADER_ID 0x49444533 // IDE3
+// #define EXI_M2LOADER_ID 0x49444532 // IDE2
 #define DEVICE_TYPE_GC_M2LOADER (('M' << 24) | ('2' << 16) | ('L' << 8) | 'R')
 
 extern const DISC_INTERFACE __io_m2ldr;
@@ -104,7 +105,6 @@ typedef struct
 extern typeDriveInfo M2LoaderDriveInfo;
 
 // Main SDK
-int M2Loader_DriveInit();
 int M2Loader_Unlock(int useMaster, char *password, int command);
 int M2Loader_ReadSectors(u64 sector, unsigned int numSectors, unsigned char *dest);
 int M2Loader_WriteSectors(u64 sector, unsigned int numSectors, unsigned char *src);
