@@ -14,8 +14,7 @@
 #include <gccore.h>
 #include <ogc/disc_io.h>
 
-#define EXI_M2LOADER_ID 0x49444533 // IDE3
-// #define EXI_M2LOADER_ID 0x49444532 // IDE2
+#define EXI_M2LOADER_ID 0x49444533
 #define DEVICE_TYPE_GC_M2LOADER (('M' << 24) | ('2' << 16) | ('L' << 8) | 'R')
 
 extern const DISC_INTERFACE __io_m2ldr;
