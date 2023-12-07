@@ -41,6 +41,7 @@
 #include "sha1.h"
 #include "md5.h"
 #include <fat.h>
+#include "m2loader/m2loader.h"
 
 #define DEFAULT_FIFO_SIZE    (256*1024)//(64*1024) minimum
 
@@ -63,6 +64,7 @@ static char rawNTFSMount[512];
 #include <sdcard/card_io.h>
 static int sdcard_slot = 0;
 const DISC_INTERFACE* sdcard = &__io_gcsda;
+const DISC_INTERFACE* m2loader = &__io_m2ldr;
 const DISC_INTERFACE* usb = NULL;
 #endif
 
@@ -517,19 +519,31 @@ static int initialise_device(int type, int fs) {
 #endif
 	{
 #ifdef HW_DOL
-		sdcard_slot = select_sd_gecko_slot();
-		sdcard = get_sd_card_handler(sdcard_slot);
-		
+		if (type == TYPE_SD) {
+			sdcard_slot = select_sd_gecko_slot();
+sdcard = get_sd_card_handler(sdcard_slot);
+		}
 		DrawFrameStart();
 		DrawEmptyBox(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
 #endif
-		WriteCentre(255, "Insert a SD FAT32 formatted device");
+		WriteCentre(255, "Insert a FAT32 formatted device");
 	}
 	WriteCentre(315, "Press  A to continue  B to Exit");
 	wait_press_A_exit_B();
 
 	if (fs == TYPE_FAT) {
-		ret = fatMountSimple("fat", type == TYPE_USB ? usb : sdcard);
+		switch(type) {
+			case TYPE_M2LOADER:
+				ret = fatMountSimple("fat", m2loader);
+				break;
+			case TYPE_USB:
+				ret = fatMountSimple("fat", usb);
+				break;
+			default: // use SD card
+				ret = fatMountSimple("fat", sdcard);
+				break;
+		}
+
 		sprintf(&mountPath[0], "fat:/");
 		if (ret != 1) {
 			DrawFrameStart();
@@ -540,7 +554,9 @@ static int initialise_device(int type, int fs) {
 			wait_press_A_exit_B();
 		}
 #ifdef HW_DOL
-		sdgecko_setSpeed(sdcard_slot, EXI_SPEED32MHZ);
+		if (type == TYPE_SD) {
+			sdgecko_setSpeed(sdcard_slot, EXI_SPEED32MHZ);
+}
 #endif
 	}
 #ifdef HW_RVL
@@ -659,31 +675,47 @@ int detect_duallayer_disc() {
 
 /* the user must specify the device type */
 int device_type() {
-	int type = TYPE_USB;
-	while ((get_buttons_pressed() & PAD_BUTTON_A));
+	int selected_type = 0;
 	while (1) {
 		DrawFrameStart();
 		DrawEmptyBox(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
 		WriteCentre(255, "Please select the device type");
+#ifdef HW_DOL
+		DrawSelectableButton(140, 310, -1, 340, "SD Card",
+				(selected_type == 0) ? B_SELECTED : B_NOSELECT, -1);
+		DrawSelectableButton(380, 310, -1, 340, "M.2 Loader",
+				(selected_type == 1) ? B_SELECTED : B_NOSELECT, -1);
+#endif
+#ifdef HW_RVL
 		DrawSelectableButton(100, 310, -1, 340, "USB",
-				(type == TYPE_USB) ? B_SELECTED : B_NOSELECT, -1);
+				(selected_type == 0) ? B_SELECTED : B_NOSELECT, -1);
 		DrawSelectableButton(380, 310, -1, 340, "Front SD",
-				(type == TYPE_SD) ? B_SELECTED : B_NOSELECT, -1);
+				(selected_type == 1) ? B_SELECTED : B_NOSELECT, -1);
+#endif
 		DrawFrameFinish();
 		while (!(get_buttons_pressed() & (PAD_BUTTON_RIGHT | PAD_BUTTON_LEFT
 				| PAD_BUTTON_B | PAD_BUTTON_A)));
 		u32 btns = get_buttons_pressed();
+
 		if (btns & PAD_BUTTON_RIGHT)
-			type ^= 1;
+			selected_type ^= 1;
 		if (btns & PAD_BUTTON_LEFT)
-			type ^= 1;
+			selected_type ^= 1;
+
 		if (btns & PAD_BUTTON_A)
 			break;
+
 		while ((get_buttons_pressed() & (PAD_BUTTON_RIGHT | PAD_BUTTON_LEFT
 				| PAD_BUTTON_B | PAD_BUTTON_A)));
 	}
 	while ((get_buttons_pressed() & PAD_BUTTON_A));
-	return type;
+
+#ifdef HW_DOL
+	return selected_type == 0 ? TYPE_SD : TYPE_M2LOADER;
+#endif
+#ifdef HW_RVL
+	return selected_type == 0 ? TYPE_USB : TYPE_SD;
+#endif
 }
 
 /* the user must specify the file system type */
@@ -1291,11 +1323,7 @@ int main(int argc, char **argv) {
 	while (1) {
 		int type, fs, ret;
 		if(reuseSettings == NOT_ASKED || reuseSettings == ANSWER_NO) {
-#ifdef HW_RVL
 			type = device_type();
-#else
-			type = TYPE_SD;
-#endif
 			fs = TYPE_FAT;
 
 			if (type == TYPE_USB) {

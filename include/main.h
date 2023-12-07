@@ -32,6 +32,7 @@
 
 #define TYPE_USB 0
 #define TYPE_SD 1
+#define TYPE_M2LOADER 2
 
 #define TYPE_FAT 0
 #define TYPE_NTFS 1
