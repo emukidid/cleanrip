@@ -6,7 +6,7 @@ Create 1:1 backups of your GC/Wii discs for archival purposes without any requir
 If you have any questions about CleanRip?, please make a thread over at http://www.gc-forever.com/
 
 # Features
-* FAT/NTFS (libntfs-2012-1-15(r13))
+* FAT/NTFS
 * USB 2.0 support
 * Front SD support
 * BCA Dumping
@@ -21,4 +21,4 @@ If you have any questions about CleanRip?, please make a thread over at http://w
 # Device Compatibility
 Please note that the Wii can be picky about particular USB drives/storage devices. It's recommended to use a Y cable for hard drives that fail to power up from one USB port alone. If USB flash storage doesn't want to work, try a different brand/size. SD cards on GameCube will potentially have similar issues, it's best to have a few different brands/sizes/types at your disposal.
 
-CleanRip for GC is also compatible with M.2 SSDs via M.2 Loader.
+CleanRip for GC is also compatible with M.2 SSDs via M.2 Loader - remember to use MBR and not GPT partition table.

@@ -1,4 +1,6 @@
-CleanRip - Wii/GC Disc Ripper Tool - Version 2.0.0
+CleanRip - Wii/GC Disc Ripper Tool
+
+Whatsnew has moved to github releases: https://github.com/emukidid/cleanrip/releases
 
 Whatsnew in 2.1.0:
 - Fix DAT downloading issue (Wii DAT is > 1MB)
