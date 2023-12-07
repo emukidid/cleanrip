@@ -383,7 +383,7 @@ static void hardware_checks() {
 		WriteCentre(190, "AHBPROT check failed");
 		WriteCentre(255, "Please install the latest HBC");
 		WriteCentre(280, "Check the FAQ for more info");
-		WriteCentre(315, "Press A to Exit");
+		WriteCentre(315, "Press A to exit");
 		wait_press_A();
 		exit(0);
 	}
@@ -396,7 +396,7 @@ static void hardware_checks() {
 		WriteCentre(190, "IOS Version check failed");
 		WriteCentre(255, "IOS 58 exists but is not in use");
 		WriteCentre(280, "Dumping to USB will be SLOW!");
-		WriteCentre(315, "Press  A to continue  B to Exit");
+		WriteCentre(315, "Press  A to continue  B to exit");
 		wait_press_A_exit_B();
 	}
 	if (!ios58exists) {
@@ -405,7 +405,7 @@ static void hardware_checks() {
 		WriteCentre(190, "IOS Version check failed");
 		WriteCentre(255, "Please install IOS58");
 		WriteCentre(280, "Dumping to USB will be SLOW!");
-		WriteCentre(315, "Press  A to continue  B to Exit");
+		WriteCentre(315, "Press  A to continue  B to exit");
 		wait_press_A_exit_B();
 	}
 }
@@ -427,7 +427,7 @@ static void show_disclaimer() {
 	WriteCentre(230, "The author is not responsible for any");
 	WriteCentre(255, "damages that could occur to any");
 	WriteCentre(280, "removable device used within this program");
-	WriteCentre(315, "Press  A to continue  B to Exit");
+	WriteCentre(315, "Press  A to continue  B to exit");
 	sleep(5);
 	wait_press_A_exit_B();
 }
@@ -441,7 +441,7 @@ static int initialise_dvd() {
 #else
 	WriteCentre(255, "Insert a GC/Wii DVD Disc");
 #endif
-	WriteCentre(315, "Press  A to continue  B to Exit");
+	WriteCentre(315, "Press  A to continue  B to exit");
 	wait_press_A_exit_B();
 
 	DrawFrameStart();
@@ -528,17 +528,20 @@ sdcard = get_sd_card_handler(sdcard_slot);
 #endif
 		WriteCentre(255, "Insert a FAT32 formatted device");
 	}
-	WriteCentre(315, "Press  A to continue  B to Exit");
+	WriteCentre(315, "Press  A to continue  B to exit");
 	wait_press_A_exit_B();
 
 	if (fs == TYPE_FAT) {
 		switch(type) {
+#ifndef HW_RVL
 			case TYPE_M2LOADER:
 				ret = fatMountSimple("fat", m2loader);
 				break;
+#else
 			case TYPE_USB:
 				ret = fatMountSimple("fat", usb);
 				break;
+#endif
 			default: // use SD card
 				ret = fatMountSimple("fat", sdcard);
 				break;
@@ -930,7 +933,7 @@ void prompt_new_file(FILE **fp, int chunk, int type, int fs, int silent) {
 				DrawFrameStart();
 				DrawEmptyBox(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
 				WriteCentre(255, "Insert a device for the next chunk");
-				WriteCentre(315, "Press  A to continue  B to Exit");
+				WriteCentre(315, "Press  A to continue  B to exit");
 				wait_press_A_exit_B();
 
 			if (fs == TYPE_FAT) {
@@ -1193,7 +1196,7 @@ int dump_game(int disc_type, int type, int fs) {
 			}
 			sprintf(txtbuffer, "%s CRC100000=%08X", (isKnownDatel ? "Known":"Unknown"), crc100000);
 			WriteCentre(255, txtbuffer);
-			WriteCentre(315, "Press  A to continue  B to Exit");
+			WriteCentre(315, "Press  A to continue  B to exit");
 			u64 waitTimeStart = gettime();
 			wait_press_A_exit_B();
 			startTime += (gettime() - waitTimeStart);	// Don't throw time off because we'd paused here
@@ -1287,7 +1290,7 @@ int dump_game(int disc_type, int type, int fs) {
 		if((disc_type == IS_DATEL_DISC)) {
 			dump_skips(&mountPath[0], crc100000);
 		}
-		WriteCentre(315,"Press  A to continue  B to Exit");
+		WriteCentre(315,"Press  A to continue  B to exit");
 		dvd_motor_off();
 		wait_press_A_exit_B();
 	}
@@ -1397,7 +1400,7 @@ int main(int argc, char **argv) {
 		sprintf(txtbuffer, "%i disc(s) dumped", dumpCounter);
 		WriteCentre(190, txtbuffer);
 		WriteCentre(255, "Dump another disc?");
-		WriteCentre(315, "Press  A to continue  B to Exit");
+		WriteCentre(315, "Press  A to continue  B to exit");
 		wait_press_A_exit_B();
 	}
 
