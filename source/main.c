@@ -49,14 +49,14 @@
 #include <ogc/usbstorage.h>
 #include <sdcard/wiisd_io.h>
 #include <wiiuse/wpad.h>
-#include <ntfs.h>
 #endif
 
-#ifdef HW_RVL
+#include <ntfs.h>
 static ntfs_md *mounts = NULL;
+
+#ifdef HW_RVL
 const DISC_INTERFACE* sdcard = &__io_wiisd;
 const DISC_INTERFACE* usb = &__io_usbstorage;
-static char rawNTFSMount[512];
 #endif
 #ifdef HW_DOL
 #include <sdcard/gcsd.h>
@@ -511,29 +511,34 @@ static int initialise_device(int type, int fs) {
 
 	DrawFrameStart();
 	DrawEmptyBox(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
-#ifdef HW_RVL
-	if (type == TYPE_USB) {
-		WriteCentre(255, "Insert a USB FAT32/NTFS formatted device");
-	}
-	else
-#endif
-	{
+	if (type == TYPE_SD) {
 #ifdef HW_DOL
-		if (type == TYPE_SD) {
-			sdcard_slot = select_sd_gecko_slot();
-sdcard = get_sd_card_handler(sdcard_slot);
-		}
+		sdcard_slot = select_sd_gecko_slot();
+		sdcard = get_sd_card_handler(sdcard_slot);
+
 		DrawFrameStart();
 		DrawEmptyBox(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
 #endif
-		WriteCentre(255, "Insert a FAT32 formatted device");
+		WriteCentre(255, "Insert a SD FAT32/NTFS formatted device");
 	}
+#ifdef HW_DOL
+	else if (type == TYPE_M2LOADER) {
+		WriteCentre(255, "Insert a M.2 FAT32/NTFS formatted device");
+	}
+#else
+	else if (type == TYPE_USB) {
+		WriteCentre(255, "Insert a USB FAT32/NTFS formatted device");
+	}
+#endif
 	WriteCentre(315, "Press  A to continue  B to exit");
 	wait_press_A_exit_B();
 
 	if (fs == TYPE_FAT) {
-		switch(type) {
-#ifndef HW_RVL
+		switch (type) {
+			case TYPE_SD:
+				ret = fatMountSimple("fat", sdcard);
+				break;
+#ifdef HW_DOL
 			case TYPE_M2LOADER:
 				ret = fatMountSimple("fat", m2loader);
 				break;
@@ -542,12 +547,7 @@ sdcard = get_sd_card_handler(sdcard_slot);
 				ret = fatMountSimple("fat", usb);
 				break;
 #endif
-			default: // use SD card
-				ret = fatMountSimple("fat", sdcard);
-				break;
 		}
-
-		sprintf(&mountPath[0], "fat:/");
 		if (ret != 1) {
 			DrawFrameStart();
 			DrawEmptyBox(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
@@ -556,17 +556,25 @@ sdcard = get_sd_card_handler(sdcard_slot);
 			WriteCentre(315, "Press A to try again  B to exit");
 			wait_press_A_exit_B();
 		}
-#ifdef HW_DOL
-		if (type == TYPE_SD) {
-			sdgecko_setSpeed(sdcard_slot, EXI_SPEED32MHZ);
-}
-#endif
+		sprintf(&mountPath[0], "fat:/");
 	}
-#ifdef HW_RVL
 	else if (fs == TYPE_NTFS) {
-		fatInitDefault();
-		int mountCount = ntfsMountDevice(usb, &mounts, (NTFS_DEFAULT
-				| NTFS_RECOVER) | (NTFS_SU));
+		int mountCount = 0;
+		switch (type) {
+			case TYPE_SD:
+				mountCount = ntfsMountDevice(sdcard, &mounts, NTFS_DEFAULT | NTFS_RECOVER);
+				break;
+#ifdef HW_DOL
+			case TYPE_M2LOADER:
+				mountCount = ntfsMountDevice(m2loader, &mounts, NTFS_DEFAULT | NTFS_RECOVER);
+				break;
+#else
+			case TYPE_USB:
+				mountCount = ntfsMountDevice(usb, &mounts, NTFS_DEFAULT | NTFS_RECOVER);
+				break;
+#endif
+		}
+
 		DrawFrameStart();
 		DrawEmptyBox(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
 		if (!mountCount || mountCount == -1) {
@@ -586,9 +594,12 @@ sdcard = get_sd_card_handler(sdcard_slot);
 			WriteCentre(315, "Press  A  to continue");
 			wait_press_A();
 			sprintf(&mountPath[0], "%s:/", mounts[0].name);
-			sprintf(&rawNTFSMount[0], "%s", mounts[0].name);
 			ret = 1;
 		}
+	}
+#ifdef HW_DOL
+	if (type == TYPE_SD) {
+		sdgecko_setSpeed(sdcard_slot, EXI_SPEED32MHZ);
 	}
 #endif
 	return ret;
@@ -910,19 +921,32 @@ void prompt_new_file(FILE **fp, int chunk, int type, int fs, int silent) {
 			if (type == TYPE_SD) {
 				sdcard->shutdown();
 			}
-#ifdef HW_RVL
+#ifdef HW_DOL
+			else if (type == TYPE_M2LOADER) {
+				m2loader->shutdown();
+			}
+#else
 			else if (type == TYPE_USB) {
 				usb->shutdown();
 			}
 #endif
 		}
-#ifdef HW_RVL
-		if (fs == TYPE_NTFS) {
-			ntfsUnmount(&rawNTFSMount[0], true);
+		else if (fs == TYPE_NTFS) {
+			ntfsUnmount(mounts[0].name, true);
 			free(mounts);
-			usb->shutdown();
-		}
+			if (type == TYPE_SD) {
+				sdcard->shutdown();
+			}
+#ifdef HW_DOL
+			else if (type == TYPE_M2LOADER) {
+				m2loader->shutdown();
+			}
+#else
+			else if (type == TYPE_USB) {
+				usb->shutdown();
+			}
 #endif
+		}
 		// Stop the disc if we're going to wait on the user
 		dvd_motor_off();
 	}
@@ -945,12 +969,9 @@ void prompt_new_file(FILE **fp, int chunk, int type, int fs, int silent) {
 					}
 				}
 			}
-#ifdef HW_RVL
 			else if (fs == TYPE_NTFS) {
-				fatInitDefault();
-				ntfs_md *mounts = NULL;
-				int mountCount = ntfsMountDevice(usb, &mounts, (NTFS_DEFAULT
-						| NTFS_RECOVER) | (NTFS_SU));
+				int mountCount = ntfsMountDevice(type == TYPE_USB ? usb : sdcard,
+						&mounts, NTFS_DEFAULT | NTFS_RECOVER);
 				if (mountCount && mountCount != -1) {
 					sprintf(&mountPath[0], "%s:/", mounts[0].name);
 					ret = 1;
@@ -958,7 +979,6 @@ void prompt_new_file(FILE **fp, int chunk, int type, int fs, int silent) {
 					ret = -1;
 				}
 			}
-#endif
 			if (ret != 1) {
 				DrawFrameStart();
 				DrawEmptyBox(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
@@ -1327,11 +1347,7 @@ int main(int argc, char **argv) {
 		int type, fs, ret;
 		if(reuseSettings == NOT_ASKED || reuseSettings == ANSWER_NO) {
 			type = device_type();
-			fs = TYPE_FAT;
-
-			if (type == TYPE_USB) {
-				fs = filesystem_type();
-			}
+			fs = filesystem_type();
 
 			ret = -1;
 			do {
