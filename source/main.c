@@ -68,13 +68,13 @@ const DISC_INTERFACE* m2loader = &__io_m2ldr;
 const DISC_INTERFACE* usb = NULL;
 #endif
 
-static int calcChecksums = 0;
-static int dumpCounter = 0;
-static char gameName[32];
-static char internalName[512];
-static char mountPath[512];
-static char wpadNeedScan = 0;
-static char padNeedScan = 0;
+static int calculate_checksums = 0;
+static int dump_counter = 0;
+static char game_name[32];
+static char internal_name[512];
+static char mount_path[512];
+static char wpad_need_scan = 0;
+static char pad_need_scan = 0;
 int print_usb = 0;
 int shutdown = 0;
 int whichfb = 0;
@@ -145,7 +145,7 @@ void print_gecko(const char* fmt, ...)
 }
 
 
-void check_exit_status() {
+void check_exit_status(void) {
 #ifdef HW_DOL
 	if(shutdown == 1 || shutdown == 2)
 		exit(0);
@@ -163,90 +163,90 @@ void check_exit_status() {
 
 #ifdef HW_RVL
 u32 get_wii_buttons_pressed(u32 buttons) {
-	WPADData *wiiPad;
-	if (wpadNeedScan) {
+	WPADData *wii_pad;
+	if (wpad_need_scan) {
 		WPAD_ScanPads();
-		wpadNeedScan = 0;
+		wpad_need_scan = 0;
 	}
-	wiiPad = WPAD_Data(0);
+	wii_pad = WPAD_Data(0);
 
-	if (wiiPad->btns_h & WPAD_BUTTON_B) {
+	if (wii_pad->btns_h & WPAD_BUTTON_B) {
 		buttons |= PAD_BUTTON_B;
 	}
 
-	if (wiiPad->btns_h & WPAD_BUTTON_A) {
+	if (wii_pad->btns_h & WPAD_BUTTON_A) {
 		buttons |= PAD_BUTTON_A;
 	}
 
-	if (wiiPad->btns_h & WPAD_BUTTON_LEFT) {
+	if (wii_pad->btns_h & WPAD_BUTTON_LEFT) {
 		buttons |= PAD_BUTTON_LEFT;
 	}
 
-	if (wiiPad->btns_h & WPAD_BUTTON_RIGHT) {
+	if (wii_pad->btns_h & WPAD_BUTTON_RIGHT) {
 		buttons |= PAD_BUTTON_RIGHT;
 	}
 
-	if (wiiPad->btns_h & WPAD_BUTTON_UP) {
+	if (wii_pad->btns_h & WPAD_BUTTON_UP) {
 		buttons |= PAD_BUTTON_UP;
 	}
 
-	if (wiiPad->btns_h & WPAD_BUTTON_DOWN) {
+	if (wii_pad->btns_h & WPAD_BUTTON_DOWN) {
 		buttons |= PAD_BUTTON_DOWN;
 	}
 
-	if (wiiPad->btns_h & WPAD_BUTTON_HOME) {
+	if (wii_pad->btns_h & WPAD_BUTTON_HOME) {
 		shutdown = 2;
 	}
 	return buttons;
 }
 #endif
 
-u32 get_buttons_pressed() {
+u32 get_buttons_pressed(void) {
 	u32 buttons = 0;
 
-	if (padNeedScan) {
+	if (pad_need_scan) {
 		PAD_ScanPads();
-		padNeedScan = 0;
+		pad_need_scan = 0;
 	}
 
 #ifdef HW_RVL
 	buttons = get_wii_buttons_pressed(buttons);
 #endif
 
-	u16 gcPad = PAD_ButtonsDown(0);
+	u16 gc_pad = PAD_ButtonsDown(0);
 
-	if (gcPad & PAD_BUTTON_B) {
+	if (gc_pad & PAD_BUTTON_B) {
 		buttons |= PAD_BUTTON_B;
 	}
 
-	if (gcPad & PAD_BUTTON_A) {
+	if (gc_pad & PAD_BUTTON_A) {
 		buttons |= PAD_BUTTON_A;
 	}
 
-	if (gcPad & PAD_BUTTON_LEFT) {
+	if (gc_pad & PAD_BUTTON_LEFT) {
 		buttons |= PAD_BUTTON_LEFT;
 	}
 
-	if (gcPad & PAD_BUTTON_RIGHT) {
+	if (gc_pad & PAD_BUTTON_RIGHT) {
 		buttons |= PAD_BUTTON_RIGHT;
 	}
 
-	if (gcPad & PAD_BUTTON_UP) {
+	if (gc_pad & PAD_BUTTON_UP) {
 		buttons |= PAD_BUTTON_UP;
 	}
 
-	if (gcPad & PAD_BUTTON_DOWN) {
+	if (gc_pad & PAD_BUTTON_DOWN) {
 		buttons |= PAD_BUTTON_DOWN;
 	}
 
-	if (gcPad & PAD_TRIGGER_Z) {
+	if (gc_pad & PAD_TRIGGER_Z) {
 		shutdown = 2;
 	}
 	check_exit_status();
 	return buttons;
 }
 
-void wait_press_A() {
+void wait_press_A(void) {
 	// Draw the A button
 	DrawAButton(265, 310);
 	DrawFrameFinish();
@@ -254,7 +254,7 @@ void wait_press_A() {
 	while (!(get_buttons_pressed() & PAD_BUTTON_A));
 }
 
-void wait_press_A_exit_B() {
+void wait_press_A_exit_B(void) {
 	// Draw the A and B buttons
 	DrawAButton(195, 310);
 	DrawBButton(390, 310);
@@ -270,12 +270,12 @@ void wait_press_A_exit_B() {
 	}
 }
 
-static void InvalidatePADS() {
-	padNeedScan = wpadNeedScan = 1;
+static void invalidate_pads(void) {
+	pad_need_scan = wpad_need_scan = 1;
 }
 
 /* check for ahbprot */
-int have_hw_access() {
+int have_hw_access(void) {
 	if (read32(HW_ARMIRQMASK) && read32(HW_ARMIRQFLAG)) {
 		// disable DVD irq for starlet
 		mask32(HW_ARMIRQMASK, 1<<18, 0);
@@ -285,23 +285,24 @@ int have_hw_access() {
 	return 0;
 }
 
-void ShutdownWii() {
+void shutdown_wii(void) {
 	shutdown = 1;
 }
 
 /* start up the GameCube/Wii */
-static void Initialise() {
+static void initialise(void) {
 	// Initialise the video system
 	VIDEO_Init();
 
 	// This function initialises the attached controllers
 	PAD_Init();
+
 #ifdef HW_RVL
 	CONF_Init();
 	WPAD_Init();
 	WPAD_SetIdleTimeout(120);
-	WPAD_SetPowerButtonCallback((WPADShutdownCallback) ShutdownWii);
-	SYS_SetPowerCallback(ShutdownWii);
+	WPAD_SetPowerButtonCallback((WPADShutdownCallback) shutdown_wii);
+	SYS_SetPowerCallback(shutdown_wii);
 #endif
 
 	vmode = VIDEO_GetPreferredMode(NULL);
@@ -311,7 +312,7 @@ static void Initialise() {
 	VIDEO_ClearFrameBuffer(vmode, xfb[0], COLOR_BLACK);
 	VIDEO_ClearFrameBuffer(vmode, xfb[1], COLOR_BLACK);
 	VIDEO_SetNextFramebuffer(xfb[0]);
-	VIDEO_SetPostRetraceCallback(InvalidatePADS);
+	VIDEO_SetPostRetraceCallback(invalidate_pads);
 	VIDEO_SetBlack(FALSE);
 	VIDEO_Flush();
 	VIDEO_WaitVSync();
@@ -340,8 +341,8 @@ static void Initialise() {
 }
 
 #ifdef HW_RVL
-/* FindIOS - borrwed from Tantric */
-static int FindIOS(u32 ios) {
+/* find_ios - borrwed from Tantric */
+static int find_ios(u32 ios) {
 	s32 ret;
 	u32 n;
 
@@ -376,7 +377,7 @@ static int FindIOS(u32 ios) {
 }
 
 /* check for AHBPROT & IOS58 */
-static void hardware_checks() {
+static void hardware_checks(void) {
 	if (!have_hw_access()) {
 		DrawFrameStart();
 		DrawEmptyBox(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
@@ -388,9 +389,9 @@ static void hardware_checks() {
 		exit(0);
 	}
 
-	int ios58exists = FindIOS(58);
-	print_gecko("IOS 58 Exists: %s\r\n", ios58exists ? "YES":"NO");
-	if (ios58exists && iosversion != 58) {
+	int has_ios_58 = find_ios(58);
+	print_gecko("IOS 58 Exists: %s\r\n", has_ios_58 ? "YES":"NO");
+	if (has_ios_58 && iosversion != 58) {
 		DrawFrameStart();
 		DrawEmptyBox(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
 		WriteCentre(190, "IOS Version check failed");
@@ -399,7 +400,7 @@ static void hardware_checks() {
 		WriteCentre(315, "Press  A to continue  B to exit");
 		wait_press_A_exit_B();
 	}
-	if (!ios58exists) {
+	if (!has_ios_58) {
 		DrawFrameStart();
 		DrawEmptyBox(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
 		WriteCentre(190, "IOS Version check failed");
@@ -411,8 +412,7 @@ static void hardware_checks() {
 }
 #endif
 
-/* show the disclaimer */
-static void show_disclaimer() {
+static void show_disclaimer(void) {
 	DrawFrameStart();
 	DrawEmptyBox(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
 	WriteCentre(190, "Disclaimer");
@@ -432,8 +432,7 @@ static void show_disclaimer() {
 	wait_press_A_exit_B();
 }
 
-/* Initialise the dvd drive + disc */
-static int initialise_dvd() {
+static int initialise_dvd(void) {
 	DrawFrameStart();
 	DrawEmptyBox(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
 #ifdef HW_DOL
@@ -474,16 +473,16 @@ int select_sd_gecko_slot() {
 		DrawFrameFinish();
 		while (!(get_buttons_pressed() & (PAD_BUTTON_RIGHT | PAD_BUTTON_LEFT
 				| PAD_BUTTON_B | PAD_BUTTON_A)));
-		u32 btns = get_buttons_pressed();
-		if (btns & PAD_BUTTON_RIGHT) {
+		u32 buttons = get_buttons_pressed();
+		if (buttons & PAD_BUTTON_RIGHT) {
 			slot++;
 			if (slot > 2) slot = 0;
 		}
-		if (btns & PAD_BUTTON_LEFT) {
+		if (buttons & PAD_BUTTON_LEFT) {
 			slot--;
 			if (slot < 0) slot = 2;
 		}
-		if (btns & PAD_BUTTON_A)
+		if (buttons & PAD_BUTTON_A)
 			break;
 		while ((get_buttons_pressed() & (PAD_BUTTON_RIGHT | PAD_BUTTON_LEFT
 				| PAD_BUTTON_B | PAD_BUTTON_A)));
@@ -505,8 +504,7 @@ const DISC_INTERFACE* get_sd_card_handler(int slot) {
 }
 #endif
 
-/* Initialise the device */
-static int initialise_device(int type, int fs) {
+static int initialise_storage_device(int type, int fs) {
 	int ret = 0;
 
 	DrawFrameStart();
@@ -556,29 +554,29 @@ static int initialise_device(int type, int fs) {
 			WriteCentre(315, "Press A to try again  B to exit");
 			wait_press_A_exit_B();
 		}
-		sprintf(&mountPath[0], "fat:/");
+		sprintf(&mount_path[0], "fat:/");
 	}
 	else if (fs == TYPE_NTFS) {
-		int mountCount = 0;
+		int num_mount = 0;
 		switch (type) {
 			case TYPE_SD:
-				mountCount = ntfsMountDevice(sdcard, &mounts, NTFS_DEFAULT | NTFS_RECOVER);
+				num_mount = ntfsMountDevice(sdcard, &mounts, NTFS_DEFAULT | NTFS_RECOVER);
 				break;
 #ifdef HW_DOL
 			case TYPE_M2LOADER:
-				mountCount = ntfsMountDevice(m2loader, &mounts, NTFS_DEFAULT | NTFS_RECOVER);
+				num_mount = ntfsMountDevice(m2loader, &mounts, NTFS_DEFAULT | NTFS_RECOVER);
 				break;
 #else
 			case TYPE_USB:
-				mountCount = ntfsMountDevice(usb, &mounts, NTFS_DEFAULT | NTFS_RECOVER);
+				num_mount = ntfsMountDevice(usb, &mounts, NTFS_DEFAULT | NTFS_RECOVER);
 				break;
 #endif
 		}
 
 		DrawFrameStart();
 		DrawEmptyBox(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
-		if (!mountCount || mountCount == -1) {
-			if (mountCount == -1) {
+		if (!num_mount || num_mount == -1) {
+			if (num_mount == -1) {
 				sprintf(txtbuffer, "Error whilst mounting devices (%i)", errno);
 			} else {
 				sprintf(txtbuffer, "No NTFS volume(s) were found and/or mounted");
@@ -589,11 +587,11 @@ static int initialise_device(int type, int fs) {
 		} else {
 			sprintf(txtbuffer, "%s Mounted", ntfsGetVolumeName(mounts[0].name));
 			WriteCentre(230, txtbuffer);
-			sprintf(txtbuffer, "%i NTFS volume(s) mounted!", mountCount);
+			sprintf(txtbuffer, "%i NTFS volume(s) mounted!", num_mount);
 			WriteCentre(255, txtbuffer);
 			WriteCentre(315, "Press  A  to continue");
 			wait_press_A();
-			sprintf(&mountPath[0], "%s:/", mounts[0].name);
+			sprintf(&mount_path[0], "%s:/", mounts[0].name);
 			ret = 1;
 		}
 	}
@@ -606,41 +604,41 @@ static int initialise_device(int type, int fs) {
 }
 
 /* identify whether this disc is a Gamecube or Wii disc */
-static int identify_disc() {
-	char readbuf[2048] __attribute__((aligned(32)));
+static int identify_disc(void) {
+	char read_buf[2048] __attribute__((aligned(32)));
 
-	memset(&internalName[0],0,512);
+	memset(&internal_name[0],0,512);
 	// Read the header
-	DVD_LowRead64(readbuf, 2048, 0ULL);
-	if (readbuf[0]) {
-		strncpy(&gameName[0], readbuf, 6);
-		gameName[6] = 0;
+	DVD_LowRead64(read_buf, 2048, 0ULL);
+	if (read_buf[0]) {
+		strncpy(&game_name[0], read_buf, 6);
+		game_name[6] = 0;
 		// Multi Disc identifier support
-		if (readbuf[6]) {
-			size_t lastPos = strlen(gameName);
-			sprintf(&gameName[lastPos], "-disc%i", (readbuf[6]) + 1);
+		if (read_buf[6]) {
+			size_t lastPos = strlen(game_name);
+			sprintf(&game_name[lastPos], "-disc%i", (read_buf[6]) + 1);
 		}
-		strncpy(&internalName[0],&readbuf[32],512);
-		internalName[511] = '\0';
+		strncpy(&internal_name[0],&read_buf[32],512);
+		internal_name[511] = '\0';
 	} else {
-		sprintf(&gameName[0], "disc%i", dumpCounter);
+		sprintf(&game_name[0], "disc%i", dump_counter);
 	}
-	if ((*(volatile u32*) (readbuf+0x1C)) == NGC_MAGIC) {
+	if ((*(volatile u32*) (read_buf+0x1C)) == NGC_MAGIC) {
 		return IS_NGC_DISC;
 	}
-	if ((*(volatile u32*) (readbuf+0x18)) == WII_MAGIC) {
+	if ((*(volatile u32*) (read_buf+0x18)) == WII_MAGIC) {
 		return IS_WII_DISC;
 	} else {
 		return IS_UNK_DISC;
 	}
 }
 
-const char* const get_game_name() {
-	return gameName;
+const char* const get_game_name(void) {
+	return game_name;
 }
 
 /* the user must specify the disc type */
-static int force_disc() {
+static int force_disc(void) {
 	int type = IS_NGC_DISC;
 	while ((get_buttons_pressed() & PAD_BUTTON_A));
 	while (1) {
@@ -674,21 +672,20 @@ static int force_disc() {
 
 /*
  Detect if a dual-layer disc was inserted by checking if reading from sectors
- on the second layer is succesful or not. Returns the correct disc size.
+ on the second layer is successful or not. Returns the correct disc size.
 */
-int detect_duallayer_disc() {
-	char *readBuf = (char*)memalign(32,64);
-	uint64_t offsetToSecondLayer = (uint64_t)WII_D5_SIZE << 11;
-	int ret = WII_D5_SIZE;
-	if (DVD_LowRead64(readBuf, 64, offsetToSecondLayer) == 0) {
-		ret = WII_D9_SIZE;
+int detect_duallayer_disc(void) {
+	char read_buf[64] __attribute__((aligned(32)));
+	uint64_t offset_to_second_layer = (uint64_t)WII_D5_SIZE << 11;
+	int disc_size = WII_D5_SIZE;
+	if (DVD_LowRead64(read_buf, 64, offset_to_second_layer) == 0) {
+		disc_size = WII_D9_SIZE;
 	}
-	free(readBuf);
-	return ret;
+	return disc_size;
 }
 
 /* the user must specify the device type */
-int device_type() {
+int select_storage_device_type(void) {
 	int selected_type = 0;
 	while (1) {
 		DrawFrameStart();
@@ -733,7 +730,7 @@ int device_type() {
 }
 
 /* the user must specify the file system type */
-int filesystem_type() {
+int select_filesystem_type() {
 	int type = TYPE_FAT;
 	while ((get_buttons_pressed() & PAD_BUTTON_A));
 	while (1) {
@@ -761,7 +758,7 @@ int filesystem_type() {
 	return type;
 }
 
-char *getShrinkOption() {
+char *get_shrink_option(void) {
 	int opt = options_map[NGC_SHRINK_ISO];
 	if (opt == SHRINK_ALL)
 		return "Shrink All";
@@ -772,7 +769,7 @@ char *getShrinkOption() {
 	return 0;
 }
 
-char *getAlignOption() {
+char *get_align_option(void) {
 	int opt = options_map[NGC_ALIGN_FILES];
 	if (opt == ALIGN_ALL)
 		return "Align All";
@@ -781,7 +778,7 @@ char *getAlignOption() {
 	return 0;
 }
 
-char *getAlignmentBoundaryOption() {
+char *get_alignment_boundary_option(void) {
 	int opt = options_map[NGC_ALIGN_BOUNDARY];
 	if (opt == ALIGN_32)
 		return "32Kb";
@@ -792,7 +789,7 @@ char *getAlignmentBoundaryOption() {
 	return 0;
 }
 
-char *getDualLayerOption() {
+char *get_dual_layer_option(void) {
 	int opt = options_map[WII_DUAL_LAYER];
 	if (opt == AUTO_DETECT)
 		return "Auto";
@@ -803,7 +800,7 @@ char *getDualLayerOption() {
 	return 0;
 }
 
-char *getNewFileOption() {
+char *get_new_file_option(void) {
 	int opt = options_map[WII_NEWFILE];
 	if (opt == ASK_USER)
 		return "Yes";
@@ -812,7 +809,7 @@ char *getNewFileOption() {
 	return 0;
 }
 
-char *getChunkSizeOption() {
+char *get_chunk_size_option(void) {
 	int opt = options_map[WII_CHUNK_SIZE];
 	if (opt == CHUNK_1GB)
 		return "1GB";
@@ -825,7 +822,7 @@ char *getChunkSizeOption() {
 	return 0;
 }
 
-int getMaxPos(int option_pos) {
+int get_max_option_pos(int option_pos) {
 	switch (option_pos) {
 	case WII_DUAL_LAYER:
 		return DUAL_DELIM;
@@ -843,20 +840,20 @@ int getMaxPos(int option_pos) {
 	return 0;
 }
 
-void toggleOption(int option_pos, int dir) {
-	int max = getMaxPos(option_pos);
-	if (options_map[option_pos] + dir >= max) {
+void toggle_option(int option_pos, int direction) {
+	int max = get_max_option_pos(option_pos);
+	if (options_map[option_pos] + direction >= max) {
 		options_map[option_pos] = 0;
-	} else if (options_map[option_pos] + dir < 0) {
+	} else if (options_map[option_pos] + direction < 0) {
 		options_map[option_pos] = max - 1;
 	} else {
-		options_map[option_pos] += dir;
+		options_map[option_pos] += direction;
 	}
 }
 
 static void get_settings(int disc_type) {
-	int currentSettingPos = 0, maxSettingPos =
-			((disc_type == IS_WII_DISC) ? MAX_WII_OPTIONS : MAX_NGC_OPTIONS) -1;
+	int current_setting_pos = 0;
+	int max_setting_pos = (disc_type == IS_WII_DISC ? MAX_WII_OPTIONS : MAX_NGC_OPTIONS) - 1;
 
 	while ((get_buttons_pressed() & PAD_BUTTON_A));
 	while (1) {
@@ -870,41 +867,41 @@ static void get_settings(int disc_type) {
 		if (disc_type == IS_NGC_DISC) {
 		/*
 			WriteFont(80, 160 + (32* 1 ), "Shrink ISO");
-			DrawSelectableButton(vmode->fbWidth-220, 160+(32*1), -1, 160+(32*1)+30, getShrinkOption(), (!currentSettingPos) ? B_SELECTED:B_NOSELECT);
+			DrawSelectableButton(vmode->fbWidth-220, 160+(32*1), -1, 160+(32*1)+30, get_shrink_option(), (!current_setting_pos) ? B_SELECTED:B_NOSELECT);
 			WriteFont(80, 160+(32*2), "Align Files");
-			DrawSelectableButton(vmode->fbWidth-220, 160+(32*2), -1, 160+(32*2)+30, getAlignOption(), (currentSettingPos==1) ? B_SELECTED:B_NOSELECT);
+			DrawSelectableButton(vmode->fbWidth-220, 160+(32*2), -1, 160+(32*2)+30, get_align_option(), (current_setting_pos==1) ? B_SELECTED:B_NOSELECT);
 			WriteFont(80, 160+(32*3), "Alignment boundary");
-			DrawSelectableButton(vmode->fbWidth-220, 160+(32*3), -1, 160+(32*3)+30, getAlignmentBoundaryOption(), (currentSettingPos==2) ? B_SELECTED:B_NOSELECT);
+			DrawSelectableButton(vmode->fbWidth-220, 160+(32*3), -1, 160+(32*3)+30, getAlignmentBoundaryOption(), (current_setting_pos==2) ? B_SELECTED:B_NOSELECT);
 		*/
 		}
 		// Wii Settings
 		else if(disc_type == IS_WII_DISC) {
 			WriteFont(80, 160+(32*1), "Dual Layer");
-			DrawSelectableButton(vmode->fbWidth-220, 160+(32*1), -1, 160+(32*1)+30, getDualLayerOption(), (!currentSettingPos) ? B_SELECTED:B_NOSELECT, -1);
+			DrawSelectableButton(vmode->fbWidth-220, 160+(32*1), -1, 160+(32*1)+30, get_dual_layer_option(), (!current_setting_pos) ? B_SELECTED:B_NOSELECT, -1);
 			WriteFont(80, 160+(32*2), "Chunk Size");
-			DrawSelectableButton(vmode->fbWidth-220, 160+(32*2), -1, 160+(32*2)+30, getChunkSizeOption(), (currentSettingPos==1) ? B_SELECTED:B_NOSELECT, -1);
+			DrawSelectableButton(vmode->fbWidth-220, 160+(32*2), -1, 160+(32*2)+30, get_chunk_size_option(), (current_setting_pos==1) ? B_SELECTED:B_NOSELECT, -1);
 			WriteFont(80, 160+(32*3), "New device per chunk");
-			DrawSelectableButton(vmode->fbWidth-220, 160+(32*3), -1, 160+(32*3)+30, getNewFileOption(), (currentSettingPos==2) ? B_SELECTED:B_NOSELECT, -1);
+			DrawSelectableButton(vmode->fbWidth-220, 160+(32*3), -1, 160+(32*3)+30, get_new_file_option(), (current_setting_pos==2) ? B_SELECTED:B_NOSELECT, -1);
 		}
 		WriteCentre(370,"Press  A  to continue");
 		DrawAButton(265,360);
 		DrawFrameFinish();
 
 		while (!(get_buttons_pressed() & (PAD_BUTTON_RIGHT | PAD_BUTTON_LEFT | PAD_BUTTON_A | PAD_BUTTON_UP | PAD_BUTTON_DOWN)));
-		u32 btns = get_buttons_pressed();
-		if(btns & PAD_BUTTON_RIGHT) {
-			toggleOption(currentSettingPos+((disc_type == IS_WII_DISC)?MAX_NGC_OPTIONS:0), 1);
+		u32 buttons = get_buttons_pressed();
+		if(buttons & PAD_BUTTON_RIGHT) {
+			toggle_option(current_setting_pos+((disc_type == IS_WII_DISC)?MAX_NGC_OPTIONS:0), 1);
 		}
-		if(btns & PAD_BUTTON_LEFT) {
-			toggleOption(currentSettingPos+((disc_type == IS_WII_DISC)?MAX_NGC_OPTIONS:0), -1);
+		if(buttons & PAD_BUTTON_LEFT) {
+			toggle_option(current_setting_pos+((disc_type == IS_WII_DISC)?MAX_NGC_OPTIONS:0), -1);
 		}
-		if(btns & PAD_BUTTON_UP) {
-			currentSettingPos = (currentSettingPos>0) ? (currentSettingPos-1):maxSettingPos;
+		if(buttons & PAD_BUTTON_UP) {
+			current_setting_pos = (current_setting_pos>0) ? (current_setting_pos-1):max_setting_pos;
 		}
-		if(btns & PAD_BUTTON_DOWN) {
-			currentSettingPos = (currentSettingPos<maxSettingPos) ? (currentSettingPos+1):0;
+		if(buttons & PAD_BUTTON_DOWN) {
+			current_setting_pos = (current_setting_pos<max_setting_pos) ? (current_setting_pos+1):0;
 		}
-		if(btns & PAD_BUTTON_A) {
+		if(buttons & PAD_BUTTON_A) {
 			break;
 		}
 		while (get_buttons_pressed() & (PAD_BUTTON_RIGHT | PAD_BUTTON_LEFT | PAD_BUTTON_A | PAD_BUTTON_UP | PAD_BUTTON_DOWN));
@@ -970,10 +967,10 @@ void prompt_new_file(FILE **fp, int chunk, int type, int fs, int silent) {
 				}
 			}
 			else if (fs == TYPE_NTFS) {
-				int mountCount = ntfsMountDevice(type == TYPE_USB ? usb : sdcard,
+				int num_mount = ntfsMountDevice(type == TYPE_USB ? usb : sdcard,
 						&mounts, NTFS_DEFAULT | NTFS_RECOVER);
-				if (mountCount && mountCount != -1) {
-					sprintf(&mountPath[0], "%s:/", mounts[0].name);
+				if (num_mount && num_mount != -1) {
+					sprintf(&mount_path[0], "%s:/", mounts[0].name);
 					ret = 1;
 				} else {
 					ret = -1;
@@ -991,7 +988,7 @@ void prompt_new_file(FILE **fp, int chunk, int type, int fs, int silent) {
 	}
 
 	*fp = NULL;
-	sprintf(txtbuffer, "%s%s.part%i.iso", &mountPath[0], &gameName[0], chunk);
+	sprintf(txtbuffer, "%s%s.part%i.iso", &mount_path[0], &game_name[0], chunk);
 	remove(&txtbuffer[0]);
 	*fp = fopen(&txtbuffer[0], "wb");
 	if (*fp == NULL) {
@@ -1009,8 +1006,8 @@ void prompt_new_file(FILE **fp, int chunk, int type, int fs, int silent) {
 	}
 }
 
-void dump_bca() {
-	sprintf(txtbuffer, "%s%s.bca", &mountPath[0], &gameName[0]);
+void write_dump_bca() {
+	sprintf(txtbuffer, "%s%s.bca", &mount_path[0], &game_name[0]);
 	remove(&txtbuffer[0]);
 	FILE *fp = fopen(txtbuffer, "wb");
 	if (fp) {
@@ -1023,27 +1020,27 @@ void dump_bca() {
 	}
 }
 
-void dump_info(char *md5, char *sha1, u32 crc32, int verified, u32 seconds) {
-	char infoLine[1024];
-	memset(infoLine, 0, 1024);
+void write_dump_info(char *md5, char *sha1, u32 crc32, int verified, u32 seconds) {
+	char dump_info[1024];
+	memset(dump_info, 0, 1024);
 	if(md5 && sha1 && crc32) {
-		sprintf(infoLine, "--File Generated by CleanRip v%i.%i.%i--"
+		sprintf(dump_info, "--File Generated by CleanRip v%i.%i.%i--"
 						  "\r\n\r\nFilename: %s\r\nInternal Name: %s\r\nMD5: %s\r\n"
 						  "SHA-1: %s\r\nCRC32: %08X\r\nVersion: 1.0%i\r\nVerified: %s\r\nDuration: %u min. %u sec.\r\n",
-				V_MAJOR,V_MID,V_MINOR,&gameName[0],&internalName[0], md5, sha1, crc32, *(u8*)0x80000007,
+				V_MAJOR,V_MID,V_MINOR,&game_name[0],&internal_name[0], md5, sha1, crc32, *(u8*)0x80000007,
 				verified ? "Yes" : "No", seconds/60, seconds%60);
 	}
 	else {
-		sprintf(infoLine, "--File Generated by CleanRip v%i.%i.%i--"
+		sprintf(dump_info, "--File Generated by CleanRip v%i.%i.%i--"
 						  "\r\n\r\nFilename: %s\r\nInternal Name: %s\r\n"
 						  "Version: 1.0%i\r\nChecksum calculations disabled\r\nDuration: %u min. %u sec.\r\n",
-				V_MAJOR,V_MID,V_MINOR,&gameName[0],&internalName[0], *(u8*)0x80000007, seconds/60, seconds%60);
+				V_MAJOR,V_MID,V_MINOR,&game_name[0],&internal_name[0], *(u8*)0x80000007, seconds/60, seconds%60);
 	}
-	sprintf(txtbuffer, "%s%s-dumpinfo.txt", &mountPath[0], &gameName[0]);
+	sprintf(txtbuffer, "%s%s-dumpinfo.txt", &mount_path[0], &game_name[0]);
 	remove(&txtbuffer[0]);
 	FILE *fp = fopen(txtbuffer, "wb");
 	if (fp) {
-		fwrite(infoLine, 1, strlen(&infoLine[0]), fp);
+		fwrite(dump_info, 1, strlen(&dump_info[0]), fp);
 		fclose(fp);
 	}
 }
@@ -1079,8 +1076,8 @@ int dump_game(int disc_type, int type, int fs) {
 	// The read size
 	u32 opt_read_size = READ_SIZE;
 
-	u32 startLBA = 0;
-	u32 endLBA = (disc_type == IS_NGC_DISC || disc_type == IS_DATEL_DISC) ? NGC_DISC_SIZE
+	u32 start_LBA = 0;
+	u32 end_LBA = (disc_type == IS_NGC_DISC || disc_type == IS_DATEL_DISC) ? NGC_DISC_SIZE
 			: (options_map[WII_DUAL_LAYER] == AUTO_DETECT ? detect_duallayer_disc()
 				: (options_map[WII_DUAL_LAYER] == DUAL_LAYER ? WII_D9_SIZE 
 					: WII_D5_SIZE));
@@ -1093,7 +1090,7 @@ int dump_game(int disc_type, int type, int fs) {
 		if (fs == TYPE_FAT) {
 			opt_chunk_size = 4 * ONE_GIGABYTE - (opt_read_size>>11) - 1;
 		} else {
-			opt_chunk_size = endLBA + (opt_read_size>>11);
+			opt_chunk_size = end_LBA + (opt_read_size>>11);
 		}
 	} else {
 		opt_chunk_size = (chunk_size_wii + 1) * ONE_GIGABYTE;
@@ -1105,7 +1102,7 @@ int dump_game(int disc_type, int type, int fs) {
 
 	// Dump the BCA for Nintendo discs
 #ifdef HW_RVL
-	dump_bca();
+	write_dump_bca();
 #endif
 
 	// Create the read buffers
@@ -1120,10 +1117,10 @@ int dump_game(int disc_type, int type, int fs) {
 	crc32 = 0;
 
 	// There will be chunks, name accordingly
-	if (opt_chunk_size < endLBA) {
-		sprintf(txtbuffer, "%s%s.part0.iso", &mountPath[0], &gameName[0]);
+	if (opt_chunk_size < end_LBA) {
+		sprintf(txtbuffer, "%s%s.part0.iso", &mount_path[0], &game_name[0]);
 	} else {
-		sprintf(txtbuffer, "%s%s.iso", &mountPath[0], &gameName[0]);
+		sprintf(txtbuffer, "%s%s.iso", &mount_path[0], &game_name[0]);
 	}
 	remove(&txtbuffer[0]);
 	FILE *fp = fopen(&txtbuffer[0], "wb");
@@ -1142,13 +1139,13 @@ int dump_game(int disc_type, int type, int fs) {
 	MQ_Send(msgq, (mqmsg_t)&msg, MQ_MSG_BLOCK);
 
 	int ret = 0;
-	u32 lastLBA = 0;
-	u64 lastCheckedTime = gettime();
-	u64 startTime = gettime();
+	u32 last_LBA = 0;
+	u64 last_checked_time = gettime();
+	u64 start_time = gettime();
 	int chunk = 1;
-	int isKnownDatel = 0;
+	int is_known_datel = 0;
 
-	while (!ret && (startLBA < endLBA)) {
+	while (!ret && (start_LBA < end_LBA)) {
 		MQ_Receive(blockq, (mqmsg_t*)&wmsg, MQ_MSG_BLOCK);
 		if (wmsg==NULL) { // asynchronous write error
 			LWP_JoinThread(writer, NULL);
@@ -1162,7 +1159,7 @@ int dump_game(int disc_type, int type, int fs) {
 			exit(1);
 		}
 
-		if (startLBA > (opt_chunk_size * chunk)) {
+		if (start_LBA > (opt_chunk_size * chunk)) {
 			// wait for writing to finish
 			vu32 sema = 0;
 			msg.command = MSG_FLUSH;
@@ -1175,7 +1172,7 @@ int dump_game(int disc_type, int type, int fs) {
 			u64 wait_begin = gettime();
 			prompt_new_file(&fp, chunk, type, fs, silent);
 			// pretend the wait didn't happen
-			startTime -= (gettime() - wait_begin);
+			start_time -= (gettime() - wait_begin);
 
 			// set writing file
 			msg.command = MSG_SETFILE;
@@ -1184,7 +1181,7 @@ int dump_game(int disc_type, int type, int fs) {
 			chunk++;
 		}
 
-		opt_read_size = (startLBA + (opt_read_size>>11)) <= endLBA ? opt_read_size : ((u32)((endLBA-startLBA)<<11));
+		opt_read_size = (start_LBA + (opt_read_size>>11)) <= end_LBA ? opt_read_size : ((u32)((end_LBA-start_LBA)<<11));
 
 		wmsg->command =  MSG_WRITE;
 		wmsg->data = wmsg+1;
@@ -1193,11 +1190,11 @@ int dump_game(int disc_type, int type, int fs) {
 
 		// Read from Disc
 		if(disc_type == IS_DATEL_DISC)
-			ret = DVD_LowRead64Datel(wmsg->data, (u32)opt_read_size, (u64)startLBA << 11, isKnownDatel);
+			ret = DVD_LowRead64Datel(wmsg->data, (u32)opt_read_size, (u64)start_LBA << 11, is_known_datel);
 		else
-			ret = DVD_LowRead64(wmsg->data, (u32)opt_read_size, (u64)startLBA << 11);
+			ret = DVD_LowRead64(wmsg->data, (u32)opt_read_size, (u64)start_LBA << 11);
 		MQ_Send(msgq, (mqmsg_t)wmsg, MQ_MSG_BLOCK);
-		if(calcChecksums) {
+		if(calculate_checksums) {
 			// Calculate MD5
 			md5_append(&state, (const md5_byte_t *) (wmsg+1), (u32) opt_read_size);
 			// Calculate SHA-1
@@ -1206,20 +1203,20 @@ int dump_game(int disc_type, int type, int fs) {
 			crc32 = Crc32_ComputeBuf( crc32, wmsg+1, (u32) opt_read_size);
 		}
 
-		if(disc_type == IS_DATEL_DISC && (((u64)startLBA<<11) + opt_read_size == 0x100000)){
+		if(disc_type == IS_DATEL_DISC && (((u64)start_LBA<<11) + opt_read_size == 0x100000)){
 			crc100000 = crc32;
-			isKnownDatel = datel_findCrcSum(crc100000);
+			is_known_datel = datel_findCrcSum(crc100000);
 			DrawFrameStart();
 			DrawEmptyBox(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
-			if(!isKnownDatel) {
+			if(!is_known_datel) {
 				WriteCentre(215, "(Warning: This disc will take a while to dump!)");
 			}
-			sprintf(txtbuffer, "%s CRC100000=%08X", (isKnownDatel ? "Known":"Unknown"), crc100000);
+			sprintf(txtbuffer, "%s CRC100000=%08X", (is_known_datel ? "Known":"Unknown"), crc100000);
 			WriteCentre(255, txtbuffer);
 			WriteCentre(315, "Press  A to continue  B to exit");
 			u64 waitTimeStart = gettime();
 			wait_press_A_exit_B();
-			startTime += (gettime() - waitTimeStart);	// Don't throw time off because we'd paused here
+			start_time += (gettime() - waitTimeStart);	// Don't throw time off because we'd paused here
 		}
 
 		check_exit_status();
@@ -1229,25 +1226,25 @@ int dump_game(int disc_type, int type, int fs) {
 		}
 		// Update status every second
 		u64 curTime = gettime();
-		s32 timePassed = diff_msec(lastCheckedTime, curTime);
+		s32 timePassed = diff_msec(last_checked_time, curTime);
 		if (timePassed >= 1000) {
-			u32 bytes_since_last_read = (u32)(((startLBA - lastLBA)<<11) * (1000.0f/timePassed));
-			u64 remainder = (((u64)endLBA - startLBA)<<11) - opt_read_size;
+			u32 bytes_since_last_read = (u32)(((start_LBA - last_LBA)<<11) * (1000.0f/timePassed));
+			u64 remainder = (((u64)end_LBA - start_LBA)<<11) - opt_read_size;
 
 			u32 etaTime = (remainder / bytes_since_last_read);
 			sprintf(txtbuffer, "%dMB %4.2fKB/s - ETA %02d:%02d:%02d",
-					(int) (((u64) ((u64) startLBA << 11)) / (1024*1024)),
+					(int) (((u64) ((u64) start_LBA << 11)) / (1024*1024)),
 				(float)bytes_since_last_read/1024.0f,
 				(int)((etaTime/3600)%60),(int)((etaTime/60)%60),(int)(etaTime%60));
 			DrawFrameStart();
-			DrawProgressBar((int)((float)((float)startLBA/(float)endLBA)*100), txtbuffer);
+			DrawProgressBar((int)((float)((float)start_LBA/(float)end_LBA)*100), txtbuffer);
       		DrawFrameFinish();
-  			lastCheckedTime = curTime;
-			lastLBA = startLBA;
+  			last_checked_time = curTime;
+			last_LBA = start_LBA;
 		}
-		startLBA+=opt_read_size>>11;
+		start_LBA+=opt_read_size>>11;
 	}
-	if(calcChecksums) {
+	if(calculate_checksums) {
 		md5_finish(&state, digest);
 	}
 
@@ -1281,11 +1278,11 @@ int dump_game(int disc_type, int type, int fs) {
 		return 0;
 	}
 	else {
-		sprintf(txtbuffer,"Copy completed in %u mins. Press A",diff_sec(startTime, gettime())/60);
+		sprintf(txtbuffer,"Copy completed in %u mins. Press A",diff_sec(start_time, gettime())/60);
 		DrawFrameStart();
 		DrawEmptyBox (30,180, vmode->fbWidth-38, 350, COLOR_BLACK);
 		WriteCentre(190,txtbuffer);
-		if(calcChecksums) {
+		if(calculate_checksums) {
 			char md5sum[64];
 			char sha1sum[64];
 			memset(&md5sum[0], 0, 64);
@@ -1302,13 +1299,13 @@ int dump_game(int disc_type, int type, int fs) {
 			WriteCentre(230,txtbuffer);
 			WriteCentre(255,verified ? verify_get_name() : "Not Verified with redump.org");
 			WriteCentre(280,&md5sum[0]);
-			dump_info(&md5sum[0], &sha1sum[0], crc32, verified, diff_sec(startTime, gettime()));
+			write_dump_info(&md5sum[0], &sha1sum[0], crc32, verified, diff_sec(start_time, gettime()));
 		}
 		else {
-			dump_info(NULL, NULL, 0, 0, diff_sec(startTime, gettime()));
+			write_dump_info(NULL, NULL, 0, 0, diff_sec(start_time, gettime()));
 		}
 		if((disc_type == IS_DATEL_DISC)) {
-			dump_skips(&mountPath[0], crc100000);
+			dump_skips(&mount_path[0], crc100000);
 		}
 		WriteCentre(315,"Press  A to continue  B to exit");
 		dvd_motor_off();
@@ -1319,7 +1316,7 @@ int dump_game(int disc_type, int type, int fs) {
 
 int main(int argc, char **argv) {
 
-	Initialise();
+	initialise();
 #ifdef HW_RVL
 	iosversion = IOS_GetVersion();
 #endif
@@ -1339,31 +1336,31 @@ int main(int argc, char **argv) {
 #endif
 
 	// Ask the user if they want checksum calculations enabled this time?
-	calcChecksums = DrawYesNoDialog("Enable checksum calculations?",
+	calculate_checksums = DrawYesNoDialog("Enable checksum calculations?",
 									"(Enabling will add about 3 minutes)");
 
-	int reuseSettings = NOT_ASKED;
+	int reuse_settings = NOT_ASKED;
 	while (1) {
 		int type, fs, ret;
-		if(reuseSettings == NOT_ASKED || reuseSettings == ANSWER_NO) {
-			type = device_type();
-			fs = filesystem_type();
+		if(reuse_settings == NOT_ASKED || reuse_settings == ANSWER_NO) {
+			type = select_storage_device_type();
+			fs = select_filesystem_type();
 
 			ret = -1;
 			do {
-				ret = initialise_device(type, fs);
+				ret = initialise_storage_device(type, fs);
 			} while (ret != 1);
 		}
 
-		if(calcChecksums) {
+		if(calculate_checksums) {
 			// Try to load up redump.org dat files
-			verify_init(&mountPath[0]);
+			verify_init(&mount_path[0]);
 #ifdef HW_RVL
 			// Ask the user if they want to download new ones
-			verify_download(&mountPath[0]);
+			verify_download(&mount_path[0]);
 
 			// User might've got some new files.
-			verify_init(&mountPath[0]);
+			verify_init(&mount_path[0]);
 #endif
 		}
 
@@ -1379,7 +1376,7 @@ int main(int argc, char **argv) {
 			disc_type = force_disc();
 		}
 
-		if(reuseSettings == NOT_ASKED || reuseSettings == ANSWER_NO) {
+		if(reuse_settings == NOT_ASKED || reuse_settings == ANSWER_NO) {
 			if (disc_type == IS_WII_DISC) {
 				get_settings(disc_type);
 			}
@@ -1388,19 +1385,19 @@ int main(int argc, char **argv) {
 			if(DrawYesNoDialog("Is this a unlicensed datel disc?",
 								 "(Will attempt auto-detect if no)")) {
 				disc_type = IS_DATEL_DISC;
-				datel_init(&mountPath[0]);
+				datel_init(&mount_path[0]);
 #ifdef HW_RVL
-				datel_download(&mountPath[0]);
-				datel_init(&mountPath[0]);
+				datel_download(&mount_path[0]);
+				datel_init(&mount_path[0]);
 #endif
-				calcChecksums = 1;
+				calculate_checksums = 1;
 			}
 		}
 		
-		if(reuseSettings == NOT_ASKED) {
+		if(reuse_settings == NOT_ASKED) {
 			if(DrawYesNoDialog("Remember settings?",
 								 "Will only ask again next session")) {
-				reuseSettings = ANSWER_YES;
+				reuse_settings = ANSWER_YES;
 			}
 		}
 
@@ -1409,11 +1406,11 @@ int main(int argc, char **argv) {
 
 		ret = dump_game(disc_type, type, fs);
 		verify_in_use = 0;
-		dumpCounter += (ret ? 1 : 0);
+		dump_counter += (ret ? 1 : 0);
 		
 		DrawFrameStart();
 		DrawEmptyBox(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
-		sprintf(txtbuffer, "%i disc(s) dumped", dumpCounter);
+		sprintf(txtbuffer, "%i disc(s) dumped", dump_counter);
 		WriteCentre(190, txtbuffer);
 		WriteCentre(255, "Dump another disc?");
 		WriteCentre(315, "Press  A to continue  B to exit");
