@@ -147,14 +147,14 @@ void print_gecko(const char* fmt, ...)
 
 void check_exit_status(void) {
 #ifdef HW_DOL
-	if(shutdown == 1 || shutdown == 2)
+	if(shutdown == POWER_OFF || shutdown == RETURN_TO_HBC)
 		exit(0);
 #endif
 #ifdef HW_RVL
-	if (shutdown == 1) {//Power off System
+	if (shutdown == POWER_OFF) {
 		SYS_ResetSystem(SYS_POWEROFF, 0, 0);
 	}
-	if (shutdown == 2) { //Return to HBC/whatever
+	if (shutdown == RETURN_TO_HBC) {
 		void (*rld)() = (void(*)()) 0x80001800;
 		rld();
 	}
@@ -195,7 +195,7 @@ u32 get_wii_buttons_pressed(u32 buttons) {
 	}
 
 	if (wii_pad->btns_h & WPAD_BUTTON_HOME) {
-		shutdown = 2;
+		shutdown = RETURN_TO_HBC;
 	}
 	return buttons;
 }
@@ -240,7 +240,7 @@ u32 get_buttons_pressed(void) {
 	}
 
 	if (gc_pad & PAD_TRIGGER_Z) {
-		shutdown = 2;
+		shutdown = RETURN_TO_HBC;
 	}
 	check_exit_status();
 	return buttons;
@@ -286,7 +286,7 @@ int have_hw_access(void) {
 }
 
 void shutdown_wii(void) {
-	shutdown = 1;
+	shutdown = POWER_OFF;
 }
 
 /* start up the GameCube/Wii */

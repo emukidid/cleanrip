@@ -142,5 +142,12 @@ enum SettingsAskedStatus
 	ANSWER_NO
 };
 
+enum ShutdownModes
+{
+  NO_SHUTDOWN=0,
+  POWER_OFF,
+  RETURN_TO_HBC,
+};
+
 #endif
 
