@@ -447,7 +447,7 @@ static int initialise_dvd(void) {
 	DrawEmptyBox(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
 	WriteCentre(255, "Initialising Disc ...");
 	DrawFrameFinish();
-	int ret = init_dvd();
+	int ret = dvd_initialise_drive();
 
 	if (ret == NO_DISC) {
 		DrawFrameStart();
@@ -609,7 +609,7 @@ static int identify_disc(void) {
 
 	memset(&internal_name[0],0,512);
 	// Read the header
-	DVD_LowRead64(read_buf, 2048, 0ULL);
+	dvd_low_read_64(read_buf, 2048, 0ULL);
 	if (read_buf[0]) {
 		strncpy(&game_name[0], read_buf, 6);
 		game_name[6] = 0;
@@ -678,7 +678,7 @@ int detect_duallayer_disc(void) {
 	char read_buf[64] __attribute__((aligned(32)));
 	uint64_t offset_to_second_layer = (uint64_t)WII_D5_SIZE << 11;
 	int disc_size = WII_D5_SIZE;
-	if (DVD_LowRead64(read_buf, 64, offset_to_second_layer) == 0) {
+	if (dvd_low_read_64(read_buf, 64, offset_to_second_layer) == 0) {
 		disc_size = WII_D9_SIZE;
 	}
 	return disc_size;
@@ -1002,7 +1002,7 @@ void prompt_new_file(FILE **fp, int chunk, int type, int fs, int silent) {
 		exit(0);
 	}
 	if(silent == ASK_USER) {
-		init_dvd();
+		dvd_initialise_drive();
 	}
 }
 
@@ -1190,9 +1190,9 @@ int dump_game(int disc_type, int type, int fs) {
 
 		// Read from Disc
 		if(disc_type == IS_DATEL_DISC)
-			ret = DVD_LowRead64Datel(wmsg->data, (u32)opt_read_size, (u64)start_LBA << 11, is_known_datel);
+			ret = dvd_low_read_64_datel(wmsg->data, (u32)opt_read_size, (u64)start_LBA << 11, is_known_datel);
 		else
-			ret = DVD_LowRead64(wmsg->data, (u32)opt_read_size, (u64)start_LBA << 11);
+			ret = dvd_low_read_64(wmsg->data, (u32)opt_read_size, (u64)start_LBA << 11);
 		MQ_Send(msgq, (mqmsg_t)wmsg, MQ_MSG_BLOCK);
 		if(calculate_checksums) {
 			// Calculate MD5
