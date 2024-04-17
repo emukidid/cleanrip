@@ -30,7 +30,7 @@
 #include <unistd.h>
 #include <di/di.h>
 #include <ogc/machine/processor.h>
-#include "gc_dvd.h"
+#include "dvd.h"
 #include "main.h"
 #include "datel.h"
 

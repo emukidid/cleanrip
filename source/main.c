@@ -33,7 +33,7 @@
 #include <ogc/machine/processor.h>
 #include "FrameBufferMagic.h"
 #include "IPLFontWrite.h"
-#include "gc_dvd.h"
+#include "dvd.h"
 #include "verify.h"
 #include "datel.h"
 #include "main.h"
