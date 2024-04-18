@@ -44,21 +44,6 @@
 
 extern u32 ios_version;
 
-// internal helper funcs
-char *msg_type_to_str(int type) {
-	switch (type) {
-	case D_WARN:
-		return "(Warning)";
-	case D_INFO:
-		return "(Info)";
-	case D_FAIL:
-		return "(Error!)";
-	case D_PASS:
-		return "(Success)";
-	}
-	return "";
-}
-
 #define GUI_MSGBOX_ALPHA 200
 
 TPLFile backdrop_TPL;
@@ -103,7 +88,6 @@ void draw_initialise()
 	// Reset various parameters from gfx plugin
 	GX_SetCoPlanar(GX_DISABLE);
 	GX_SetClipMode(GX_CLIP_ENABLE);
-//	GX_SetScissor(0,0,vmode->fbWidth,vmode->efbHeight);
 	GX_SetAlphaCompare(GX_ALWAYS,0,GX_AOP_AND,GX_ALWAYS,0);
 
 	guMtxIdentity(GXmodelView2D);
@@ -111,7 +95,6 @@ void draw_initialise()
 	GX_LoadPosMtxImm(GXmodelView2D,GX_PNMTX0);
 	guOrtho(GXprojection2D, 0, 479, 0, 639, 0, 700);
 	GX_LoadProjectionMtx(GXprojection2D, GX_ORTHOGRAPHIC);
-//	GX_SetViewport (0, 0, vmode->fbWidth, vmode->efbHeight, 0, 1);
 
 	GX_SetZMode(GX_DISABLE,GX_ALWAYS,GX_TRUE);
 
@@ -137,10 +120,8 @@ void draw_initialise()
 	GX_SetTevOp (GX_TEVSTAGE0, GX_PASSCLR);
 
 	//set blend mode
-	GX_SetBlendMode(GX_BM_BLEND, GX_BL_SRCALPHA, GX_BL_INVSRCALPHA, GX_LO_CLEAR); //Fix src alpha
+	GX_SetBlendMode(GX_BM_BLEND, GX_BL_SRCALPHA, GX_BL_INVSRCALPHA, GX_LO_CLEAR);
 	GX_SetColorUpdate(GX_ENABLE);
-//	GX_SetAlphaUpdate(GX_ENABLE);
-//	GX_SetDstAlpha(GX_DISABLE, 0xFF);
 	//set cull mode
 	GX_SetCullMode (GX_CULL_NONE);
 }
