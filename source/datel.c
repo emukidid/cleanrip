@@ -36,71 +36,71 @@
 #include "verify.h"
 
 // Pointers to the file
-static char *datelDAT = NULL;
-static int datel_initialized = 0;
-static int SkipFill = 0;
-static int NumSkips = 0;
+static char *datel_DAT = NULL;
+static int is_datel_initialized = 0;
+static int skip_fill_value = 0;
+static int num_skips = 0;
 #define MAX_SKIPS (0x580)
-static uint64_t SkipStart[MAX_SKIPS];
-static uint64_t SkipStop[MAX_SKIPS];
+static uint64_t skip_start[MAX_SKIPS];
+static uint64_t skip_stop[MAX_SKIPS];
 #ifdef HW_RVL
-static int datelDontAskAgain = 0;
+static int datel_dont_ask_again = 0;
 #endif
 
 // XML stuff
-static mxml_node_t *datelXML = NULL;
-static char gameName[256];
+static mxml_node_t *datel_XML = NULL;
+static char game_name[256];
 
-void datel_init(char *mountPath) {
-	if (datel_initialized) {
+void datel_init(char *mount_path) {
+	if (is_datel_initialized) {
 		return;
 	}
 	
-	if(datelDAT) {
-		if(datelXML) {
-			mxmlDelete(datelXML);
-			free(datelXML);
+	if(datel_DAT) {
+		if(datel_XML) {
+			mxmlDelete(datel_XML);
+			free(datel_XML);
 		}
-		free(datelDAT);
+		free(datel_DAT);
 	}
 
 	mxmlSetErrorCallback((mxml_error_cb_t)print_gecko);
 	FILE *fp = NULL;
 	// Check for the datel DAT and read it
-	sprintf(txtbuffer, "%sdatel.dat", mountPath);
+	sprintf(txtbuffer, "%sdatel.dat", mount_path);
 	fp = fopen(txtbuffer, "rb");
 	if (fp) {
 		fseek(fp, 0, SEEK_END);
-		int size = ftell(fp);
+		int file_size_DAT = ftell(fp);
 		fseek(fp, 0, SEEK_SET);
-		if (size > 0) {
-			datelDAT = (char*) memalign(32, size);
-			if (datelDAT) {
-				fread(datelDAT, 1, size, fp);
+		if (file_size_DAT > 0) {
+			datel_DAT = (char*) memalign(32, file_size_DAT);
+			if (datel_DAT) {
+				fread(datel_DAT, 1, file_size_DAT, fp);
 			}		
 		}
 		fclose(fp);
 		fp = NULL;
 	}
 
-	if (datelDAT) {
-		datelXML = mxmlLoadString(NULL, datelDAT, MXML_TEXT_CALLBACK);
+	if (datel_DAT) {
+		datel_XML = mxmlLoadString(NULL, datel_DAT, MXML_TEXT_CALLBACK);
 	}
 
-	print_gecko("DAT Files [Datel: %s]\r\n", datelDAT ? "YES":"NO");
-	datel_initialized = (datelDAT&&datelXML);
+	print_gecko("DAT Files [Datel: %s]\r\n", datel_DAT ? "YES":"NO");
+	is_datel_initialized = (datel_DAT&&datel_XML);
 }
 
 #ifdef HW_RVL
 // If there was some new files obtained, return 1, else 0
-void datel_download(char *mountPath) {
-	if(datelDontAskAgain) {
+void datel_download(char *mount_path) {
+	if(datel_dont_ask_again) {
 		return;
 	}
 	
 	int res = 0;
 	// Ask the user if they want to update from the web
-	if(datel_initialized) {
+	if(is_datel_initialized) {
 		char *line1 = "gc-forever Datel DAT file found";
 		char *line2 = "Check for updated DAT file?";
 		res = DrawYesNoDialog(line1, line2);
@@ -134,17 +134,17 @@ void datel_download(char *mountPath) {
   		}
 
   		// Download the GC DAT
-		char datFilePath[64];
-  		sprintf(datFilePath, "%sdatel.dat",mountPath);
+		char file_path_DAT[64];
+  		sprintf(file_path_DAT, "%sdatel.dat",mount_path);
   		u8 *xmlFile = (u8*)memalign(32, 1*1024*1024);
 		if((res = http_request("www.gc-forever.com","/datfile/datel.dat", xmlFile, (1*1024*1024), 0, 0)) > 0) {
-			remove(datFilePath);
-			FILE *fp = fopen(datFilePath, "wb");
+			remove(file_path_DAT);
+			FILE *fp = fopen(file_path_DAT, "wb");
 			if(fp) {
 				DrawMessageBox(D_INFO, "Checking for updates\nSaving GC DAT...");
 				fwrite(xmlFile, 1, res, fp);
 				fclose(fp);
-				datel_initialized = 0;
+				is_datel_initialized = 0;
 				print_gecko("Saved GameCube DAT! %i Bytes\r\n", res);
 			}
 			else {
@@ -159,21 +159,21 @@ void datel_download(char *mountPath) {
 			sleep(5);
 		}
 		free(xmlFile);
-		datelDontAskAgain = 1;
+		datel_dont_ask_again = 1;
 	}
 	else {
-		datelDontAskAgain = 1;
+		datel_dont_ask_again = 1;
 	}
 }
 #endif
 
-int datel_findCrcSum(int crcorig) {
+int datel_find_crc_sum(int crcorig) {
 
-	NumSkips = 0;
+	num_skips = 0;
 	print_gecko("Looking for CRC [%x]\r\n", crcorig);
-	char *xmlPointer = datelDAT;
+	char *xmlPointer = datel_DAT;
 	if(xmlPointer) {
-		mxml_node_t *pointer = datelXML;
+		mxml_node_t *pointer = datel_XML;
 		
 		pointer = mxmlLoadString(NULL, xmlPointer, MXML_TEXT_CALLBACK);
 		
@@ -210,10 +210,10 @@ int datel_findCrcSum(int crcorig) {
 					memset(&crc[0], 0, 64);
 					strncpy(&crc[0], mxmlElementGetAttr(fillElem, "skipfill"), 32);
 
-					SkipFill = strtoul(crc, NULL, 16);
+					skip_fill_value = strtoul(crc, NULL, 16);
 					//print_gecko("Comparing game [%x] and crc [%x]\r\n",mxmlElementGetAttr(nameElem, "name"),mxmlElementGetAttr(crcElem, "crc100000"));
 					if (crcval == crcorig) {
-						snprintf(&gameName[0], 128, "%s", mxmlElementGetAttr(
+						snprintf(&game_name[0], 128, "%s", mxmlElementGetAttr(
 								nameElem, "name"));
 						print_gecko("Found a match!\r\n");
 				mxml_index_t *skipiterator = mxmlIndexNew(gameElem, "skip", NULL);
@@ -222,19 +222,19 @@ int datel_findCrcSum(int crcorig) {
 				//print_gecko("Item Pointer OK\r\n");
 				// iterate over all the <game> entries
 				while ((skipElem = mxmlIndexEnum(skipiterator)) != NULL) {
-					if (NumSkips >= MAX_SKIPS)
+					if (num_skips >= MAX_SKIPS)
 						DrawYesNoDialog("datel crc", "TODO: Too many skips.  Fix source code.");
 					char skipstr[64];
 					memset(&skipstr[0], 0, 64);
 					strncpy(&skipstr[0], mxmlElementGetAttr(skipElem, "start"), 32);
 
-					SkipStart[NumSkips] = strtoull(skipstr, NULL, 16);
+					skip_start[num_skips] = strtoull(skipstr, NULL, 16);
 
 					memset(&skipstr[0], 0, 64);
 					strncpy(&skipstr[0], mxmlElementGetAttr(skipElem, "stop"), 32);
 
-					SkipStop[NumSkips] = strtoull(skipstr, NULL, 16);
-					NumSkips++;
+					skip_stop[num_skips] = strtoull(skipstr, NULL, 16);
+					num_skips++;
 				}
 						return 1;
 					}
@@ -245,52 +245,52 @@ int datel_findCrcSum(int crcorig) {
 	return 0;
 }
 
-void datel_adjustStartStop(uint64_t* start, u32* length, u32* fill) {
+void datel_adjust_start_stop(uint64_t *start, u32 *length, u32 *fill) {
 	int n=0;
-	*fill = SkipFill;
-	for (n=0; (n<NumSkips) && (*length > 0); n++) {
-		if ((SkipStart[n] <= *start) && (SkipStop[n] >= *start)) {
-			if (SkipStop[n] + 1 > *start + *length)
+	*fill = skip_fill_value;
+	for (n=0; (n<num_skips) && (*length > 0); n++) {
+		if ((skip_start[n] <= *start) && (skip_stop[n] >= *start)) {
+			if (skip_stop[n] + 1 > *start + *length)
 				*length = 0;
 			else {
-				*length -= SkipStop[n] + 1 - *start;
-				*start = SkipStop[n] + 1;
+				*length -= skip_stop[n] + 1 - *start;
+				*start = skip_stop[n] + 1;
 			}
 		}
-		if ((SkipStart[n] < (*start + *length)) && (SkipStop[n] >= (*start + *length - 1)) && (*length > 0))
-			*length = SkipStart[n] - *start;
+		if ((skip_start[n] < (*start + *length)) && (skip_stop[n] >= (*start + *length - 1)) && (*length > 0))
+			*length = skip_start[n] - *start;
 	}
 }
 
-void datel_addSkip(uint64_t start, u32 length) {
-	if ((NumSkips > 0) && (start == SkipStop[NumSkips-1] + 1))
-		SkipStop[NumSkips-1] += length;
+void datel_add_skip(uint64_t start, u32 length) {
+	if ((num_skips > 0) && (start == skip_stop[num_skips-1] + 1))
+		skip_stop[num_skips-1] += length;
 	else {
-		SkipStart[NumSkips] = start;
-		SkipStop[NumSkips] = start + length - 1;
-		NumSkips++;
-		if (NumSkips == MAX_SKIPS)
-			NumSkips=0;
+		skip_start[num_skips] = start;
+		skip_stop[num_skips] = start + length - 1;
+		num_skips++;
+		if (num_skips == MAX_SKIPS)
+			num_skips=0;
 	}
 }
 
-void dump_skips(char *mountPath, u32 crc100000) {
-	sprintf(txtbuffer, "%s%s.skp", mountPath, get_game_name());
+void datel_write_dump_skips(char *mount_path, u32 crc100000) {
+	sprintf(txtbuffer, "%s%s.skp", mount_path, get_game_name());
 	FILE *fp = fopen(txtbuffer, "wb");
 	if (fp) {
 		int sk=0;
-		char SkipsInfo[100];
-		sprintf(SkipsInfo, "\t\t<skipcrc crc100000=\"%08X\" skipfill=\"%02X\"/>\n", crc100000, SkipFill);
-		fwrite(SkipsInfo, 1, strlen(&SkipsInfo[0]), fp);
-		for (sk=0;sk<NumSkips;sk++) {
-			sprintf(SkipsInfo, "\t\t<skip start=\"%08X\" stop=\"%08X\"/>\n", (u32)(SkipStart[sk] & 0xFFFFFFFF), (u32)(SkipStop[sk] & 0xFFFFFFFF));
-			fwrite(SkipsInfo, 1, strlen(&SkipsInfo[0]), fp);
+		char skips_info[100];
+		sprintf(skips_info, "\t\t<skipcrc crc100000=\"%08X\" skipfill=\"%02X\"/>\n", crc100000, skip_fill_value);
+		fwrite(skips_info, 1, strlen(&skips_info[0]), fp);
+		for (sk=0;sk<num_skips;sk++) {
+			sprintf(skips_info, "\t\t<skip start=\"%08X\" stop=\"%08X\"/>\n", (u32)(skip_start[sk] & 0xFFFFFFFF), (u32)(skip_stop[sk] & 0xFFFFFFFF));
+			fwrite(skips_info, 1, strlen(&skips_info[0]), fp);
 		}
 		fclose(fp);
 	}
 }
 
 
-int datel_is_available() {
-	return datelDAT != NULL;
+int datel_is_available(void) {
+	return datel_DAT != NULL;
 }

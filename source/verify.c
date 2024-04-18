@@ -48,7 +48,7 @@ static mxml_node_t *ngcXML = NULL;
 #ifdef HW_RVL
 static mxml_node_t *wiiXML = NULL;
 #endif
-static char gameName[256];
+static char game_name[256];
 
 void verify_init(char *mountPath) {
 	if (verify_initialized) {
@@ -258,18 +258,18 @@ int verify_findMD5Sum(const char * md5orig, int disc_type) {
 	if (!gameElem)
 		return 0;
 
-	snprintf(&gameName[0], 128, "%s", mxmlElementGetAttr(gameElem, "name"));
+	snprintf(&game_name[0], 128, "%s", mxmlElementGetAttr(gameElem, "name"));
 	print_gecko("Found a match!\r\n");
 	return 1;
 }
 
 char *verify_get_name() {
-	if(strlen(&gameName[0]) > 32) {
-		 gameName[30] = '.';
-		 gameName[31] = '.';
-		 gameName[32] = 0;
+	if(strlen(&game_name[0]) > 32) {
+		 game_name[30] = '.';
+		 game_name[31] = '.';
+		 game_name[32] = 0;
 	 }
-	return &gameName[0];
+	return &game_name[0];
 }
 
 int verify_is_available(int disc_type) {

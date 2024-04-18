@@ -21,14 +21,12 @@
 #ifndef DATEL_H
 #define DATEL_H
 
-void datel_init(char *mountPath);
-int datel_findCrcSum(int crc);
-int datel_is_available(int disc_type);
-int datel_download(char *mountPath);
-char *datel_get_name();
-void datel_adjustStartStop(uint64_t* start, u32* length, u32* fill);
-void datel_addSkip(uint64_t start, u32 length);
-void dump_skips(char *mountPath, u32 crc100000);
+void datel_init(char *mount_path);
+int datel_find_crc_sum(int crc);
+int datel_is_available(void);
+int datel_download(char *mount_path);
+void datel_adjust_start_stop(uint64_t *start, u32 *length, u32 *fill);
+void datel_add_skip(uint64_t start, u32 length);
+void datel_write_dump_skips(char *mount_path, u32 crc100000);
 
 #endif
-

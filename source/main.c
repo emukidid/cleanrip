@@ -1205,7 +1205,7 @@ int dump_game(int disc_type, int type, int fs) {
 
 		if(disc_type == IS_DATEL_DISC && (((u64)start_LBA<<11) + opt_read_size == 0x100000)){
 			crc100000 = crc32;
-			is_known_datel = datel_findCrcSum(crc100000);
+			is_known_datel = datel_find_crc_sum(crc100000);
 			DrawFrameStart();
 			DrawEmptyBox(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
 			if(!is_known_datel) {
@@ -1305,7 +1305,7 @@ int dump_game(int disc_type, int type, int fs) {
 			write_dump_info(NULL, NULL, 0, 0, diff_sec(start_time, gettime()));
 		}
 		if((disc_type == IS_DATEL_DISC)) {
-			dump_skips(&mount_path[0], crc100000);
+			datel_write_dump_skips(&mount_path[0], crc100000);
 		}
 		WriteCentre(315,"Press  A to continue  B to exit");
 		dvd_motor_off();

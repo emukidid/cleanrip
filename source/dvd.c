@@ -191,7 +191,7 @@ int dvd_low_read_64_datel(void* dst, u32 len, uint64_t offset, int is_known_date
 	uint64_t disc_offset = offset;
 	u32 disc_len = len;
 	u32 fill = 0;
-	datel_adjustStartStop(&disc_offset, &disc_len, &fill);
+	datel_adjust_start_stop(&disc_offset, &disc_len, &fill);
 	if ((disc_offset != offset) || (disc_len != len))
 		memset(dst, fill, len);
 	if (disc_len == 0) {
@@ -225,7 +225,7 @@ int dvd_low_read_64_datel(void* dst, u32 len, uint64_t offset, int is_known_date
 			return 1;
 
 		// Logic assumes READ_SIZE 0x10000
-		datel_addSkip(offset & 0xFFFF0000, 0x00100000 - (offset & 0x000F0000)); // Test every start 0xXXX00000
+		datel_add_skip(offset & 0xFFFF0000, 0x00100000 - (offset & 0x000F0000)); // Test every start 0xXXX00000
 		memset(dst, fill, len);
 	}
 	return 0;
