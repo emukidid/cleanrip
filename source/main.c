@@ -698,7 +698,7 @@ int select_storage_device_type(void) {
 				(selected_type == 1) ? B_SELECTED : B_NOSELECT, -1);
 #endif
 #ifdef HW_RVL
-		fbm_draw_selection_button(100, 310, -1, 340, "USB",
+		fbm_draw_selection_button(140, 310, -1, 340, "USB",
 				(selected_type == 0) ? B_SELECTED : B_NOSELECT, -1);
 		fbm_draw_selection_button(380, 310, -1, 340, "Front SD",
 				(selected_type == 1) ? B_SELECTED : B_NOSELECT, -1);
@@ -737,7 +737,7 @@ int select_filesystem_type() {
 		fbm_frame_start();
 		fbm_draw_box(30, 180, vmode->fbWidth - 38, 350);
 		font_write_center(255, "Please select the filesystem type");
-		fbm_draw_selection_button(100, 310, -1, 340, "FAT",
+		fbm_draw_selection_button(140, 310, -1, 340, "FAT",
 				(type == TYPE_FAT) ? B_SELECTED : B_NOSELECT, -1);
 		fbm_draw_selection_button(380, 310, -1, 340, "NTFS",
 				(type == TYPE_NTFS) ? B_SELECTED : B_NOSELECT, -1);
