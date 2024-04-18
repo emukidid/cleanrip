@@ -34,7 +34,6 @@ extern void __SYS_ReadROM(void *buf, u32 len, u32 offset);
 
 #define FONT_TEX_SIZE_I4 ((512*512)>>1)
 #define FONT_SIZE_ANSI (288 + 131072)
-//#define STR_HEIGHT_OFFSET 6
 #define STR_HEIGHT_OFFSET 0
 
 typedef struct {
@@ -43,7 +42,6 @@ typedef struct {
 
 static unsigned char font_texture_buffer[ 0x40000 ] __attribute__((aligned(32)));
 
-u16 frameWidth;
 CHAR_INFO font_chars;
 GXTexObj font_tex_obj;
 
@@ -51,10 +49,7 @@ GXColor DEFAULT_COLOR = (GXColor) {255,255,255,255};
 GXColor DISABLED_COLOR = (GXColor) {175,175,182,255};
 GXColor FONT_COLOR = (GXColor) {255,255,255,255};
 
-/****************************************************************************
- * YAY0 Decoding
- ****************************************************************************/
-/* Yay0 decompression */
+
 void decode_Yay0(unsigned char *s, unsigned char *d)
 {
 	int i, j, k, p, q, cnt;
@@ -187,22 +182,13 @@ void draw_font_initialise(GXColor FONT_COLOR)
 	// Reset various parameters from gfx plugin
 	GX_SetCoPlanar(GX_DISABLE);
 	GX_SetClipMode(GX_CLIP_ENABLE);
-//	GX_SetScissor(0,0,vmode->fbWidth,vmode->efbHeight);
 	GX_SetAlphaCompare(GX_ALWAYS,0,GX_AOP_AND,GX_ALWAYS,0);
 
 	guMtxIdentity(GXmodelView2D);
 	GX_LoadTexMtxImm(GXmodelView2D,GX_TEXMTX0,GX_MTX2x4);
-//	guMtxTransApply (GXmodelView2D, GXmodelView2D, 0.0F, 0.0F, -5.0F);
 	GX_LoadPosMtxImm(GXmodelView2D,GX_PNMTX0);
-/*	if(screenMode && menuActive)
-		guOrtho(GXprojection2D, 0, 479, -104, 743, 0, 700);
-	else if(screenMode == SCREENMODE_16x9_PILLARBOX)
-		guOrtho(GXprojection2D, 0, 479, -104, 743, 0, 700);
-	else
-		guOrtho(GXprojection2D, 0, 479, 0, 639, 0, 700);*/
 	guOrtho(GXprojection2D, 0, 479, 0, 639, 0, 700);
 	GX_LoadProjectionMtx(GXprojection2D, GX_ORTHOGRAPHIC);
-//	GX_SetViewport (0, 0, vmode->fbWidth, vmode->efbHeight, 0, 1);
 
 	GX_SetZMode(GX_DISABLE,GX_ALWAYS,GX_TRUE);
 
@@ -215,12 +201,10 @@ void draw_font_initialise(GXColor FONT_COLOR)
 	//set vertex attribute formats here
 	GX_SetVtxAttrFmt(GX_VTXFMT1, GX_VA_POS, GX_POS_XYZ, GX_S16, 0);
 	GX_SetVtxAttrFmt(GX_VTXFMT1, GX_VA_CLR0, GX_CLR_RGBA, GX_RGBA8, 0);
-//	GX_SetVtxAttrFmt(GX_VTXFMT1, GX_VA_TEX0, GX_TEX_ST, GX_U16, 7);
 	GX_SetVtxAttrFmt(GX_VTXFMT1, GX_VA_TEX0, GX_TEX_ST, GX_F32, 0);
 
 	//enable textures
 	GX_SetNumChans (1);
-//	GX_SetChanCtrl(GX_COLOR0A0,GX_DISABLE,GX_SRC_REG,GX_SRC_VTX,GX_LIGHTNULL,GX_DF_NONE,GX_AF_NONE);
 	GX_SetNumTexGens (1);
 	GX_SetTexCoordGen(GX_TEXCOORD0, GX_TG_MTX2x4, GX_TG_TEX0, GX_IDENTITY);
 
@@ -229,26 +213,17 @@ void draw_font_initialise(GXColor FONT_COLOR)
 	GX_LoadTexObj(&font_tex_obj, GX_TEXMAP0);
 
 	GX_SetTevColor(GX_TEVREG1,FONT_COLOR);
-//	GX_SetTevKColor(GX_KCOLOR0, FONT_COLOR);
-//	GX_SetTevKColorSel(GX_TEVSTAGE0,GX_TEV_KCSEL_K0);
-//	GX_SetTevKAlphaSel(GX_TEVSTAGE0,GX_TEV_KCSEL_K0_A);
 
 	GX_SetNumTevStages (1);
-	GX_SetTevOrder (GX_TEVSTAGE0, GX_TEXCOORD0, GX_TEXMAP0, GX_COLOR0A0); // change to (u8) tile later
+	GX_SetTevOrder (GX_TEVSTAGE0, GX_TEXCOORD0, GX_TEXMAP0, GX_COLOR0A0);
 	GX_SetTevColorIn (GX_TEVSTAGE0, GX_CC_C1, GX_CC_ZERO, GX_CC_ZERO, GX_CC_ZERO);
-//	GX_SetTevColorIn (GX_TEVSTAGE0, GX_CC_KONST, GX_CC_ZERO, GX_CC_ZERO, GX_CC_ZERO);
 	GX_SetTevColorOp (GX_TEVSTAGE0, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_ENABLE, GX_TEVPREV);
 	GX_SetTevAlphaIn (GX_TEVSTAGE0, GX_CA_ZERO, GX_CA_A1, GX_CA_TEXA, GX_CA_ZERO);
 	GX_SetTevAlphaOp (GX_TEVSTAGE0, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_ENABLE, GX_TEVPREV);
-//	GX_SetTevSwapModeTable(GX_TEV_SWAP1, GX_CH_RED, GX_CH_GREEN, GX_CH_BLUE, GX_CH_RED);
-//	GX_SetTevSwapModeTable(GX_TEV_SWAP0, GX_CH_RED, GX_CH_GREEN, GX_CH_BLUE, GX_CH_ALPHA);
-//	GX_SetTevSwapMode(GX_TEVSTAGE0, GX_TEV_SWAP0, GX_TEV_SWAP1);
 
 	//set blend mode
-	GX_SetBlendMode(GX_BM_BLEND, GX_BL_SRCALPHA, GX_BL_INVSRCALPHA, GX_LO_CLEAR); //Fix src alpha
+	GX_SetBlendMode(GX_BM_BLEND, GX_BL_SRCALPHA, GX_BL_INVSRCALPHA, GX_LO_CLEAR);
 	GX_SetColorUpdate(GX_ENABLE);
-//	GX_SetAlphaUpdate(GX_ENABLE);
-//	GX_SetDstAlpha(GX_DISABLE, 0xFF);
 	//set cull mode
 	GX_SetCullMode (GX_CULL_NONE);
 }
@@ -260,26 +235,19 @@ void draw_string(int x, int y, char *string, float scale, bool centered)
 		int string_width = 0;
 		int strHeight = (font_chars.fheight+STR_HEIGHT_OFFSET) * scale;
 		char* string_work = string;
-//		while(*string_work && (x < back_framewidth))
+
 		while(*string_work)
 		{
 			unsigned char c = *string_work;
 			string_width += (int) font_chars.font_size[c] * scale;
 			string_work++;
 		}
-//		x0 = (int) MAX(0, (back_framewidth - x)/2);
-//		x = (int) (frameWidth - x)/2;
 		x = (int) x - string_width/2;
 		y = (int) y - strHeight/2;
-//		write_font(x0,y,string,scale);
 	}
 
-//	int ox = x;
-	
-//	while (*string && (x < (ox + back_framewidth)))
 	while (*string)
 	{
-		//blit_char(axfb,whichfb,x, y, *string, norm_blit ? blit_lookup_norm : blit_lookup);
 		unsigned char c = *string;
 		int i;
 		GX_Begin(GX_QUADS, GX_VTXFMT1, 4);
@@ -292,9 +260,6 @@ void draw_string(int x, int y, char *string, float scale, bool centered)
 			t = (int) t * scale;
 			GX_Position3s16(x + s, y + t, 0);
 			GX_Color4u8(FONT_COLOR.r, FONT_COLOR.g, FONT_COLOR.b, FONT_COLOR.a);
-//			GX_Color4u8(fontState->colour.r, fontState->colour.g, fontState->colour.b, fontState->colour.a);
-//			GX_TexCoord2f32(((float) (font_chars.s[c] + s))/512, ((float) (font_chars.t[c] + t))/512);
-//			GX_TexCoord2u16(font_chars.s[c] + s, font_chars.t[c] + t);
 			GX_TexCoord2f32(s0, t0);
 		}
 		GX_End();
