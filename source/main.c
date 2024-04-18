@@ -248,17 +248,17 @@ u32 get_buttons_pressed(void) {
 
 void wait_press_A(void) {
 	// Draw the A button
-	DrawAButton(265, 310);
-	DrawFrameFinish();
+	fbm_draw_A_button(265, 310);
+	fbm_frame_finish();
 	while ((get_buttons_pressed() & PAD_BUTTON_A));
 	while (!(get_buttons_pressed() & PAD_BUTTON_A));
 }
 
 void wait_press_A_exit_B(void) {
 	// Draw the A and B buttons
-	DrawAButton(195, 310);
-	DrawBButton(390, 310);
-	DrawFrameFinish();
+	fbm_draw_A_button(195, 310);
+	fbm_draw_B_button(390, 310);
+	fbm_frame_finish();
 	while ((get_buttons_pressed() & (PAD_BUTTON_A | PAD_BUTTON_B)));
 	while (1) {
 		while (!(get_buttons_pressed() & (PAD_BUTTON_A | PAD_BUTTON_B)));
@@ -336,7 +336,7 @@ static void initialise(void) {
 	GX_CopyDisp (xfb[0], GX_TRUE); // This clears the xfb
 
 	font_initialise();
-	init_textures();
+	fbm_initialise();
 	which_fb = 0;
 }
 
@@ -379,8 +379,8 @@ static int find_ios(u32 ios) {
 /* check for AHBPROT & IOS58 */
 static void hardware_checks(void) {
 	if (!have_hw_access()) {
-		DrawFrameStart();
-		DrawEmptyBox(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
+		fbm_frame_start();
+		fbm_draw_box(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
 		font_write_center(190, "AHBPROT check failed");
 		font_write_center(255, "Please install the latest HBC");
 		font_write_center(280, "Check the FAQ for more info");
@@ -392,8 +392,8 @@ static void hardware_checks(void) {
 	int has_ios_58 = find_ios(58);
 	print_gecko("IOS 58 Exists: %s\r\n", has_ios_58 ? "YES":"NO");
 	if (has_ios_58 && ios_version != 58) {
-		DrawFrameStart();
-		DrawEmptyBox(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
+		fbm_frame_start();
+		fbm_draw_box(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
 		font_write_center(190, "IOS Version check failed");
 		font_write_center(255, "IOS 58 exists but is not in use");
 		font_write_center(280, "Dumping to USB will be SLOW!");
@@ -401,8 +401,8 @@ static void hardware_checks(void) {
 		wait_press_A_exit_B();
 	}
 	if (!has_ios_58) {
-		DrawFrameStart();
-		DrawEmptyBox(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
+		fbm_frame_start();
+		fbm_draw_box(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
 		font_write_center(190, "IOS Version check failed");
 		font_write_center(255, "Please install IOS58");
 		font_write_center(280, "Dumping to USB will be SLOW!");
@@ -413,16 +413,16 @@ static void hardware_checks(void) {
 #endif
 
 static void show_disclaimer(void) {
-	DrawFrameStart();
-	DrawEmptyBox(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
+	fbm_frame_start();
+	fbm_draw_box(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
 	font_write_center(190, "Disclaimer");
 	font_write_center(230, "The author is not responsible for any");
 	font_write_center(255, "damages that could occur to any");
 	font_write_center(280, "removable device used within this program");
-	DrawFrameFinish();
+	fbm_frame_finish();
 
-	DrawFrameStart();
-	DrawEmptyBox(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
+	fbm_frame_start();
+	fbm_draw_box(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
 	font_write_center(190, "Disclaimer");
 	font_write_center(230, "The author is not responsible for any");
 	font_write_center(255, "damages that could occur to any");
@@ -433,8 +433,8 @@ static void show_disclaimer(void) {
 }
 
 static int initialise_dvd(void) {
-	DrawFrameStart();
-	DrawEmptyBox(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
+	fbm_frame_start();
+	fbm_draw_box(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
 #ifdef HW_DOL
 	font_write_center(255, "Insert a GameCube DVD Disc");
 #else
@@ -443,17 +443,17 @@ static int initialise_dvd(void) {
 	font_write_center(315, "Press  A to continue  B to exit");
 	wait_press_A_exit_B();
 
-	DrawFrameStart();
-	DrawEmptyBox(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
+	fbm_frame_start();
+	fbm_draw_box(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
 	font_write_center(255, "Initialising Disc ...");
-	DrawFrameFinish();
+	fbm_frame_finish();
 	int ret = dvd_initialise_drive();
 
 	if (ret == NO_DISC) {
-		DrawFrameStart();
-		DrawEmptyBox(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
+		fbm_frame_start();
+		fbm_draw_box(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
 		font_write_center(255, "No disc detected");
-		DrawFrameFinish();
+		fbm_frame_finish();
 		sleep(3);
 	}
 	return ret;
@@ -464,13 +464,13 @@ int select_sd_gecko_slot() {
 	int slot = 0;
 	while ((get_buttons_pressed() & PAD_BUTTON_A));
 	while (1) {
-		DrawFrameStart();
-		DrawEmptyBox(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
+		fbm_frame_start();
+		fbm_draw_box(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
 		font_write_center(255, "Please select SDGecko Slot");
-		DrawSelectableButton(100, 310, -1, 340, "Slot A", slot == 0 ? B_SELECTED : B_NOSELECT, -1);
-		DrawSelectableButton(240, 310, -1, 340, "Slot B", slot == 1 ? B_SELECTED : B_NOSELECT, -1);
-		DrawSelectableButton(380, 310, -1, 340, "SD2SP2", slot == 2 ? B_SELECTED : B_NOSELECT, -1);
-		DrawFrameFinish();
+		fbm_draw_selection_button(100, 310, -1, 340, "Slot A", slot == 0 ? B_SELECTED : B_NOSELECT, -1);
+		fbm_draw_selection_button(240, 310, -1, 340, "Slot B", slot == 1 ? B_SELECTED : B_NOSELECT, -1);
+		fbm_draw_selection_button(380, 310, -1, 340, "SD2SP2", slot == 2 ? B_SELECTED : B_NOSELECT, -1);
+		fbm_frame_finish();
 		while (!(get_buttons_pressed() & (PAD_BUTTON_RIGHT | PAD_BUTTON_LEFT
 				| PAD_BUTTON_B | PAD_BUTTON_A)));
 		u32 buttons = get_buttons_pressed();
@@ -507,15 +507,15 @@ const DISC_INTERFACE* get_sd_card_handler(int slot) {
 static int initialise_storage_device(int type, int fs) {
 	int ret = 0;
 
-	DrawFrameStart();
-	DrawEmptyBox(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
+	fbm_frame_start();
+	fbm_draw_box(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
 	if (type == TYPE_SD) {
 #ifdef HW_DOL
 		sdcard_slot = select_sd_gecko_slot();
 		sdcard = get_sd_card_handler(sdcard_slot);
 
-		DrawFrameStart();
-		DrawEmptyBox(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
+		fbm_frame_start();
+		fbm_draw_box(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
 #endif
 		font_write_center(255, "Insert a SD FAT32/NTFS formatted device");
 	}
@@ -547,8 +547,8 @@ static int initialise_storage_device(int type, int fs) {
 #endif
 		}
 		if (ret != 1) {
-			DrawFrameStart();
-			DrawEmptyBox(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
+			fbm_frame_start();
+			fbm_draw_box(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
 			sprintf(txtbuffer, "Error Mounting Device [%08X]", ret);
 			font_write_center(255, txtbuffer);
 			font_write_center(315, "Press A to try again  B to exit");
@@ -573,8 +573,8 @@ static int initialise_storage_device(int type, int fs) {
 #endif
 		}
 
-		DrawFrameStart();
-		DrawEmptyBox(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
+		fbm_frame_start();
+		fbm_draw_box(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
 		if (!num_mount || num_mount == -1) {
 			if (num_mount == -1) {
 				sprintf(txtbuffer, "Error whilst mounting devices (%i)", errno);
@@ -642,15 +642,15 @@ static int force_disc(void) {
 	int type = IS_NGC_DISC;
 	while ((get_buttons_pressed() & PAD_BUTTON_A));
 	while (1) {
-		DrawFrameStart();
-		DrawEmptyBox(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
+		fbm_frame_start();
+		fbm_draw_box(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
 		font_write_center(190, "Failed to detect the disc type");
 		font_write_center(255, "Please select the correct type");
-		DrawSelectableButton(100, 310, -1, 340, "Gamecube", (type
+		fbm_draw_selection_button(100, 310, -1, 340, "Gamecube", (type
 				== IS_NGC_DISC) ? B_SELECTED : B_NOSELECT, -1);
-		DrawSelectableButton(380, 310, -1, 340, "Wii",
+		fbm_draw_selection_button(380, 310, -1, 340, "Wii",
 				(type == IS_WII_DISC) ? B_SELECTED : B_NOSELECT, -1);
-		DrawFrameFinish();
+		fbm_frame_finish();
 		while (!(get_buttons_pressed() & (PAD_BUTTON_RIGHT | PAD_BUTTON_LEFT
 				| PAD_BUTTON_B | PAD_BUTTON_A)))
 			;
@@ -688,22 +688,22 @@ int detect_duallayer_disc(void) {
 int select_storage_device_type(void) {
 	int selected_type = 0;
 	while (1) {
-		DrawFrameStart();
-		DrawEmptyBox(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
+		fbm_frame_start();
+		fbm_draw_box(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
 		font_write_center(255, "Please select the device type");
 #ifdef HW_DOL
-		DrawSelectableButton(140, 310, -1, 340, "SD Card",
+		fbm_draw_selection_button(140, 310, -1, 340, "SD Card",
 				(selected_type == 0) ? B_SELECTED : B_NOSELECT, -1);
-		DrawSelectableButton(380, 310, -1, 340, "M.2 Loader",
+		fbm_draw_selection_button(380, 310, -1, 340, "M.2 Loader",
 				(selected_type == 1) ? B_SELECTED : B_NOSELECT, -1);
 #endif
 #ifdef HW_RVL
-		DrawSelectableButton(100, 310, -1, 340, "USB",
+		fbm_draw_selection_button(100, 310, -1, 340, "USB",
 				(selected_type == 0) ? B_SELECTED : B_NOSELECT, -1);
-		DrawSelectableButton(380, 310, -1, 340, "Front SD",
+		fbm_draw_selection_button(380, 310, -1, 340, "Front SD",
 				(selected_type == 1) ? B_SELECTED : B_NOSELECT, -1);
 #endif
-		DrawFrameFinish();
+		fbm_frame_finish();
 		while (!(get_buttons_pressed() & (PAD_BUTTON_RIGHT | PAD_BUTTON_LEFT
 				| PAD_BUTTON_B | PAD_BUTTON_A)));
 		u32 btns = get_buttons_pressed();
@@ -734,14 +734,14 @@ int select_filesystem_type() {
 	int type = TYPE_FAT;
 	while ((get_buttons_pressed() & PAD_BUTTON_A));
 	while (1) {
-		DrawFrameStart();
-		DrawEmptyBox(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
+		fbm_frame_start();
+		fbm_draw_box(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
 		font_write_center(255, "Please select the filesystem type");
-		DrawSelectableButton(100, 310, -1, 340, "FAT",
+		fbm_draw_selection_button(100, 310, -1, 340, "FAT",
 				(type == TYPE_FAT) ? B_SELECTED : B_NOSELECT, -1);
-		DrawSelectableButton(380, 310, -1, 340, "NTFS",
+		fbm_draw_selection_button(380, 310, -1, 340, "NTFS",
 				(type == TYPE_NTFS) ? B_SELECTED : B_NOSELECT, -1);
-		DrawFrameFinish();
+		fbm_frame_finish();
 		while (!(get_buttons_pressed() & (PAD_BUTTON_RIGHT | PAD_BUTTON_LEFT
 				| PAD_BUTTON_B | PAD_BUTTON_A)));
 		u32 btns = get_buttons_pressed();
@@ -857,8 +857,8 @@ static void get_settings(int disc_type) {
 
 	while ((get_buttons_pressed() & PAD_BUTTON_A));
 	while (1) {
-		DrawFrameStart();
-		DrawEmptyBox(75, 120, vmode->fbWidth - 78, 400, COLOR_BLACK);
+		fbm_frame_start();
+		fbm_draw_box(75, 120, vmode->fbWidth - 78, 400, COLOR_BLACK);
 		sprintf(txtbuffer, "%s Disc Ripper Setup:",
 				disc_type == IS_WII_DISC ? "Wii" : "Gamecube");
 		font_write_center(130, txtbuffer);
@@ -867,25 +867,25 @@ static void get_settings(int disc_type) {
 		if (disc_type == IS_NGC_DISC) {
 		/*
 			font_write(80, 160 + (32* 1 ), "Shrink ISO");
-			DrawSelectableButton(vmode->fbWidth-220, 160+(32*1), -1, 160+(32*1)+30, get_shrink_option(), (!current_setting_pos) ? B_SELECTED:B_NOSELECT);
+			fbm_draw_selection_button(vmode->fbWidth-220, 160+(32*1), -1, 160+(32*1)+30, get_shrink_option(), (!current_setting_pos) ? B_SELECTED:B_NOSELECT);
 			font_write(80, 160+(32*2), "Align Files");
-			DrawSelectableButton(vmode->fbWidth-220, 160+(32*2), -1, 160+(32*2)+30, get_align_option(), (current_setting_pos==1) ? B_SELECTED:B_NOSELECT);
+			fbm_draw_selection_button(vmode->fbWidth-220, 160+(32*2), -1, 160+(32*2)+30, get_align_option(), (current_setting_pos==1) ? B_SELECTED:B_NOSELECT);
 			font_write(80, 160+(32*3), "Alignment boundary");
-			DrawSelectableButton(vmode->fbWidth-220, 160+(32*3), -1, 160+(32*3)+30, getAlignmentBoundaryOption(), (current_setting_pos==2) ? B_SELECTED:B_NOSELECT);
+			fbm_draw_selection_button(vmode->fbWidth-220, 160+(32*3), -1, 160+(32*3)+30, getAlignmentBoundaryOption(), (current_setting_pos==2) ? B_SELECTED:B_NOSELECT);
 		*/
 		}
 		// Wii Settings
 		else if(disc_type == IS_WII_DISC) {
 			font_write(80, 160+(32*1), "Dual Layer");
-			DrawSelectableButton(vmode->fbWidth-220, 160+(32*1), -1, 160+(32*1)+30, get_dual_layer_option(), (!current_setting_pos) ? B_SELECTED:B_NOSELECT, -1);
+			fbm_draw_selection_button(vmode->fbWidth-220, 160+(32*1), -1, 160+(32*1)+30, get_dual_layer_option(), (!current_setting_pos) ? B_SELECTED:B_NOSELECT, -1);
 			font_write(80, 160+(32*2), "Chunk Size");
-			DrawSelectableButton(vmode->fbWidth-220, 160+(32*2), -1, 160+(32*2)+30, get_chunk_size_option(), (current_setting_pos==1) ? B_SELECTED:B_NOSELECT, -1);
+			fbm_draw_selection_button(vmode->fbWidth-220, 160+(32*2), -1, 160+(32*2)+30, get_chunk_size_option(), (current_setting_pos==1) ? B_SELECTED:B_NOSELECT, -1);
 			font_write(80, 160+(32*3), "New device per chunk");
-			DrawSelectableButton(vmode->fbWidth-220, 160+(32*3), -1, 160+(32*3)+30, get_new_file_option(), (current_setting_pos==2) ? B_SELECTED:B_NOSELECT, -1);
+			fbm_draw_selection_button(vmode->fbWidth-220, 160+(32*3), -1, 160+(32*3)+30, get_new_file_option(), (current_setting_pos==2) ? B_SELECTED:B_NOSELECT, -1);
 		}
 		font_write_center(370,"Press  A  to continue");
-		DrawAButton(265,360);
-		DrawFrameFinish();
+		fbm_draw_A_button(265,360);
+		fbm_frame_finish();
 
 		while (!(get_buttons_pressed() & (PAD_BUTTON_RIGHT | PAD_BUTTON_LEFT | PAD_BUTTON_A | PAD_BUTTON_UP | PAD_BUTTON_DOWN)));
 		u32 buttons = get_buttons_pressed();
@@ -951,8 +951,8 @@ void prompt_new_file(FILE **fp, int chunk, int type, int fs, int silent) {
 	if(silent == ASK_USER) {
 		int ret = -1;
 		do {
-				DrawFrameStart();
-				DrawEmptyBox(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
+				fbm_frame_start();
+				fbm_draw_box(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
 				font_write_center(255, "Insert a device for the next chunk");
 				font_write_center(315, "Press  A to continue  B to exit");
 				wait_press_A_exit_B();
@@ -977,8 +977,8 @@ void prompt_new_file(FILE **fp, int chunk, int type, int fs, int silent) {
 				}
 			}
 			if (ret != 1) {
-				DrawFrameStart();
-				DrawEmptyBox(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
+				fbm_frame_start();
+				fbm_draw_box(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
 				sprintf(txtbuffer, "Error Mounting Device [%08X]", ret);
 				font_write_center(255, txtbuffer);
 				font_write_center(315, "Press A to try again  B to exit");
@@ -992,12 +992,12 @@ void prompt_new_file(FILE **fp, int chunk, int type, int fs, int silent) {
 	remove(&txtbuffer[0]);
 	*fp = fopen(&txtbuffer[0], "wb");
 	if (*fp == NULL) {
-		DrawFrameStart();
-		DrawEmptyBox(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
+		fbm_frame_start();
+		fbm_draw_box(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
 		font_write_center(230, "Failed to create file:");
 		font_write_center(255, txtbuffer);
 		font_write_center(315, "Exiting in 5 seconds");
-		DrawFrameFinish();
+		fbm_frame_finish();
 		sleep(5);
 		exit(0);
 	}
@@ -1125,12 +1125,12 @@ int dump_game(int disc_type, int type, int fs) {
 	remove(&txtbuffer[0]);
 	FILE *fp = fopen(&txtbuffer[0], "wb");
 	if (fp == NULL) {
-		DrawFrameStart();
-		DrawEmptyBox(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
+		fbm_frame_start();
+		fbm_draw_box(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
 		font_write_center(230, "Failed to create file:");
 		font_write_center(255, txtbuffer);
 		font_write_center(315, "Exiting in 5 seconds");
-		DrawFrameFinish();
+		fbm_frame_finish();
 		sleep(5);
 		exit(0);
 	}
@@ -1150,11 +1150,11 @@ int dump_game(int disc_type, int type, int fs) {
 		if (wmsg==NULL) { // asynchronous write error
 			LWP_JoinThread(writer, NULL);
 			fclose(fp);
-			DrawFrameStart();
-			DrawEmptyBox(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
+			fbm_frame_start();
+			fbm_draw_box(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
 			font_write_center(255, "Write Error!");
 			font_write_center(315, "Exiting in 10 seconds");
-			DrawFrameFinish();
+			fbm_frame_finish();
 			sleep(10);
 			exit(1);
 		}
@@ -1206,8 +1206,8 @@ int dump_game(int disc_type, int type, int fs) {
 		if(disc_type == IS_DATEL_DISC && (((u64)start_LBA<<11) + opt_read_size == 0x100000)){
 			crc100000 = crc32;
 			is_known_datel = datel_find_crc_sum(crc100000);
-			DrawFrameStart();
-			DrawEmptyBox(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
+			fbm_frame_start();
+			fbm_draw_box(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
 			if(!is_known_datel) {
 				font_write_center(215, "(Warning: This disc will take a while to dump!)");
 			}
@@ -1236,9 +1236,9 @@ int dump_game(int disc_type, int type, int fs) {
 					(int) (((u64) ((u64) start_LBA << 11)) / (1024*1024)),
 				(float)bytes_since_last_read/1024.0f,
 				(int)((etaTime/3600)%60),(int)((etaTime/60)%60),(int)(etaTime%60));
-			DrawFrameStart();
-			DrawProgressBar((int)((float)((float)start_LBA/(float)end_LBA)*100), txtbuffer);
-      		DrawFrameFinish();
+			fbm_frame_start();
+			fbm_draw_progress_bar((int)((float)((float)start_LBA/(float)end_LBA)*100), txtbuffer);
+      		fbm_frame_finish();
   			last_checked_time = curTime;
 			last_LBA = start_LBA;
 		}
@@ -1258,8 +1258,8 @@ int dump_game(int disc_type, int type, int fs) {
 	MQ_Close(msgq);
 
 	if(ret != -61 && ret) {
-		DrawFrameStart();
-		DrawEmptyBox (30,180, vmode->fbWidth-38, 350, COLOR_BLACK);
+		fbm_frame_start();
+		fbm_draw_box (30,180, vmode->fbWidth-38, 350, COLOR_BLACK);
 		sprintf(txtbuffer, "%s",dvd_error_str());
 		font_write_center(255,txtbuffer);
 		font_write_center(315,"Press  A  to continue");
@@ -1268,8 +1268,8 @@ int dump_game(int disc_type, int type, int fs) {
 		return 0;
 	}
 	else if (ret == -61) {
-		DrawFrameStart();
-		DrawEmptyBox (30,180, vmode->fbWidth-38, 350, COLOR_BLACK);
+		fbm_frame_start();
+		fbm_draw_box (30,180, vmode->fbWidth-38, 350, COLOR_BLACK);
 		sprintf(txtbuffer, "Copy Cancelled");
 		font_write_center(255,txtbuffer);
 		font_write_center(315,"Press  A  to continue");
@@ -1279,8 +1279,8 @@ int dump_game(int disc_type, int type, int fs) {
 	}
 	else {
 		sprintf(txtbuffer,"Copy completed in %u mins. Press A",diff_sec(start_time, gettime())/60);
-		DrawFrameStart();
-		DrawEmptyBox (30,180, vmode->fbWidth-38, 350, COLOR_BLACK);
+		fbm_frame_start();
+		fbm_draw_box (30,180, vmode->fbWidth-38, 350, COLOR_BLACK);
 		font_write_center(190,txtbuffer);
 		if(calculate_checksums) {
 			char md5sum[64];
@@ -1336,7 +1336,7 @@ int main(int argc, char **argv) {
 #endif
 
 	// Ask the user if they want checksum calculations enabled this time?
-	calculate_checksums = DrawYesNoDialog("Enable checksum calculations?",
+	calculate_checksums = fbm_draw_yes_no_dialog("Enable checksum calculations?",
 									"(Enabling will add about 3 minutes)");
 
 	int reuse_settings = NOT_ASKED;
@@ -1382,7 +1382,7 @@ int main(int argc, char **argv) {
 			}
 		
 			// Ask the user if they want to force Datel check this time?
-			if(DrawYesNoDialog("Is this a unlicensed datel disc?",
+			if(fbm_draw_yes_no_dialog("Is this a unlicensed datel disc?",
 								 "(Will attempt auto-detect if no)")) {
 				disc_type = IS_DATEL_DISC;
 				datel_init(&mount_path[0]);
@@ -1395,7 +1395,7 @@ int main(int argc, char **argv) {
 		}
 		
 		if(reuse_settings == NOT_ASKED) {
-			if(DrawYesNoDialog("Remember settings?",
+			if(fbm_draw_yes_no_dialog("Remember settings?",
 								 "Will only ask again next session")) {
 				reuse_settings = ANSWER_YES;
 			}
@@ -1408,8 +1408,8 @@ int main(int argc, char **argv) {
 		verify_in_use = 0;
 		dump_counter += (ret ? 1 : 0);
 		
-		DrawFrameStart();
-		DrawEmptyBox(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
+		fbm_frame_start();
+		fbm_draw_box(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
 		sprintf(txtbuffer, "%i disc(s) dumped", dump_counter);
 		font_write_center(190, txtbuffer);
 		font_write_center(255, "Dump another disc?");

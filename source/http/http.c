@@ -298,7 +298,7 @@ int http_request(char *http_host, char *http_path, u8 *buffer, u32 maxsize, bool
 	{
 		net_close(s);
 		if((http_status == 301 || http_status == 302) && redirect[0] != 0 && retry < 5) {
-			DrawMessageBox(D_INFO, "Checking for updates\nRedirect!\nDownloading...");
+			fbm_draw_msg_box(D_INFO, "Checking for updates\nRedirect!\nDownloading...");
 			sleep(5);
 			return http_request(&redirect[0], &redirect[10], buffer, maxsize, silent, ++retry);
 		}
@@ -320,7 +320,7 @@ int http_request(char *http_host, char *http_path, u8 *buffer, u32 maxsize, bool
 	{
 		char txtbuf[256];
 		sprintf(txtbuf, "Connected to gc-forever.com\nDownloading %u bytes", content_length);
-		DrawMessageBox(D_INFO, txtbuf);
+		fbm_draw_msg_box(D_INFO, txtbuf);
 		sizeread = tcp_read(s, buffer, content_length);
 	}
 

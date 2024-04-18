@@ -51,15 +51,15 @@ enum TextureId
 	TEX_BTNB
 };
 
-void init_textures();
-void DrawFrameStart();
-void DrawFrameFinish();
-void DrawProgressBar(int percent, char *message);
-void DrawMessageBox(int type, char *message);
-void DrawRawFont(int x, int y, char *message);
-void DrawSelectableButton(int x1, int y1, int x2, int y2, char *message, int mode, u32 color);
-void DrawEmptyBox(int x1, int y1, int x2, int y2, int color);
-void DrawAButton(int x, int y);
-void DrawBButton(int x, int y);
-int DrawYesNoDialog(char *line1, char *line2);
+void fbm_initialise(void);
+void fbm_frame_start(void);
+void fbm_frame_finish(void);
+void fbm_draw_box(int x1, int y1, int x2, int y2, int color);
+void fbm_draw_msg_box(int type, char *message);
+void fbm_draw_raw_font(int x, int y, char *message);
+void fbm_draw_A_button(int x, int y);
+void fbm_draw_B_button(int x, int y);
+int fbm_draw_yes_no_dialog(char *line1, char *line2);
+void fbm_draw_selection_button(int x1, int y1, int x2, int y2, char *message, int mode, u32 color);
+void fbm_draw_progress_bar(int percent, char *message);
 #endif

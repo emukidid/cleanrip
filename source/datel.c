@@ -103,12 +103,12 @@ void datel_download(char *mount_path) {
 	if(is_datel_initialized) {
 		char *line1 = "gc-forever Datel DAT file found";
 		char *line2 = "Check for updated DAT file?";
-		res = DrawYesNoDialog(line1, line2);
+		res = fbm_draw_yes_no_dialog(line1, line2);
 	}
 	else {
 		char *line1 = "gc-forever Datel DAT files not found";
 		char *line2 = "Download them now?";
-		res = DrawYesNoDialog(line1, line2);
+		res = fbm_draw_yes_no_dialog(line1, line2);
 	}
 	
 	// If yes, lets download an update
@@ -116,16 +116,16 @@ void datel_download(char *mount_path) {
 		// Initialize the network
 		if(!net_initialized) {
 			char ip[16];
-			DrawMessageBox(D_INFO, "Checking for DAT updates\n \nInitializing Network...");
+			fbm_draw_msg_box(D_INFO, "Checking for DAT updates\n \nInitializing Network...");
 			res = if_config(ip, NULL, NULL, true);
       		if(res >= 0) {
 	      		sprintf(txtbuffer, "Checking for DAT updates\nNetwork Initialized!\nIP: %s", ip);
-	      		DrawMessageBox(D_INFO, txtbuffer);
+	      		fbm_draw_msg_box(D_INFO, txtbuffer);
 				net_initialized = 1;
 				print_gecko("Network Initialized!\r\n");
 			}
       		else {
-	      		DrawMessageBox(D_FAIL, "Checking for DAT updates\nNetwork failed to Initialize!");
+	      		fbm_draw_msg_box(D_FAIL, "Checking for DAT updates\nNetwork failed to Initialize!");
 	      		sleep(5);
         		net_initialized = 0;
 				print_gecko("Network Failed to Initialize!\r\n");
@@ -141,21 +141,21 @@ void datel_download(char *mount_path) {
 			remove(file_path_DAT);
 			FILE *fp = fopen(file_path_DAT, "wb");
 			if(fp) {
-				DrawMessageBox(D_INFO, "Checking for updates\nSaving GC DAT...");
+				fbm_draw_msg_box(D_INFO, "Checking for updates\nSaving GC DAT...");
 				fwrite(xmlFile, 1, res, fp);
 				fclose(fp);
 				is_datel_initialized = 0;
 				print_gecko("Saved GameCube DAT! %i Bytes\r\n", res);
 			}
 			else {
-				DrawMessageBox(D_FAIL, "Checking for updates\nFailed to save Datel DAT...");
+				fbm_draw_msg_box(D_FAIL, "Checking for updates\nFailed to save Datel DAT...");
 				sleep(5);
 			}
 		}
 		else {
 			sprintf(txtbuffer, "Error: %i", res);
 			print_gecko("Error Saving Datel DAT %i\r\n", res);
-			DrawMessageBox(D_FAIL, "Checking for updates\nCouldn't find file on gc-forever.com");
+			fbm_draw_msg_box(D_FAIL, "Checking for updates\nCouldn't find file on gc-forever.com");
 			sleep(5);
 		}
 		free(xmlFile);
@@ -223,7 +223,7 @@ int datel_find_crc_sum(int crcorig) {
 				// iterate over all the <game> entries
 				while ((skipElem = mxmlIndexEnum(skipiterator)) != NULL) {
 					if (num_skips >= MAX_SKIPS)
-						DrawYesNoDialog("datel crc", "TODO: Too many skips.  Fix source code.");
+						fbm_draw_yes_no_dialog("datel crc", "TODO: Too many skips.  Fix source code.");
 					char skipstr[64];
 					memset(&skipstr[0], 0, 64);
 					strncpy(&skipstr[0], mxmlElementGetAttr(skipElem, "start"), 32);

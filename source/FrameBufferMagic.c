@@ -72,7 +72,7 @@ GXTexObj boxinnerTexObj;
 TPLFile boxouterTPL;
 GXTexObj boxouterTexObj;
 
-void init_textures() 
+void fbm_initialise(void) 
 {
 	TPL_OpenTPLFromMemory(&backdropTPL, (void *)backdrop_tpl, backdrop_tpl_size);
 	TPL_GetTexture(&backdropTPL,backdrop,&backdropTexObj);
@@ -215,11 +215,11 @@ void DrawImage(int textureId, int x, int y, int width, int height, int depth, fl
 	GX_End();
 }
 
-void DrawAButton(int x, int y) {
+void fbm_draw_A_button(int x, int y) {
 	DrawImage(TEX_BTNA, x, y, 36, 36, 0, 0.0f, 1.0f, 0.0f, 1.0f);
 }
 
-void DrawBButton(int x, int y) {
+void fbm_draw_B_button(int x, int y) {
 	DrawImage(TEX_BTNB, x, y, 36, 36, 0, 0.0f, 1.0f, 0.0f, 1.0f);
 }
 
@@ -249,13 +249,13 @@ void _DrawBackdrop() {
 // Externally accessible functions
 
 // Call this when starting a screen
-void DrawFrameStart() {
+void fbm_frame_start(void) {
   which_fb ^= 1;
   _DrawBackdrop();
 }
 
 // Call this at the end of a screen
-void DrawFrameFinish() {
+void fbm_frame_finish(void) {
 	//Copy EFB->XFB
 	GX_SetCopyClear((GXColor){0, 0, 0, 0xFF}, GX_MAX_Z24);
 	GX_CopyDisp(xfb[which_fb],GX_TRUE);
@@ -267,7 +267,7 @@ void DrawFrameFinish() {
 	if(vmode->viTVMode&VI_NON_INTERLACE) VIDEO_WaitVSync();
 }
 
-void DrawProgressBar(int percent, char *message) {
+void fbm_draw_progress_bar(int percent, char *message) {
 	int x1 = ((640/2) - (PROGRESS_BOX_WIDTH/2));
 	int x2 = ((640/2) + (PROGRESS_BOX_WIDTH/2));
 	int y1 = ((480/2) - (PROGRESS_BOX_HEIGHT/2));
@@ -292,7 +292,7 @@ void DrawProgressBar(int percent, char *message) {
 	font_write_styled(640/2, middleY+30, txtbuffer, 1.0f, true, DEFAULT_COLOR);
 }
 
-void DrawMessageBox(int type, char *message) 
+void fbm_draw_msg_box(int type, char *message) 
 {
 	int x1 = ((640/2) - (PROGRESS_BOX_WIDTH/2));
 	int x2 = ((640/2) + (PROGRESS_BOX_WIDTH/2));
@@ -303,7 +303,7 @@ void DrawMessageBox(int type, char *message)
   	GXColor fillColor = (GXColor) {0,0,0,GUI_MSGBOX_ALPHA}; //black
 	GXColor borderColor = (GXColor) {200,200,200,GUI_MSGBOX_ALPHA}; //silver
 	
-	DrawFrameStart();
+	fbm_frame_start();
 	DrawSimpleBox( x1, y1, x2-x1, y2-y1, 0, fillColor, borderColor); 
 
 	char *tok = strtok(message,"\n");
@@ -312,14 +312,14 @@ void DrawMessageBox(int type, char *message)
 		tok = strtok(NULL,"\n");
 		middleY+=24;
 	}
-	DrawFrameFinish();
+	fbm_frame_finish();
 }
 
-void DrawRawFont(int x, int y, char *message) {
+void fbm_draw_raw_font(int x, int y, char *message) {
   font_write(x, y, message);
 }
 
-void DrawSelectableButton(int x1, int y1, int x2, int y2, char *message, int mode, u32 color) 
+void fbm_draw_selection_button(int x1, int y1, int x2, int y2, char *message, int mode, u32 color) 
 {
 	int middleY, borderSize;
 	color = (color == -1) ? BUTTON_COLOUR_INNER : color; //never used
@@ -350,7 +350,7 @@ void DrawSelectableButton(int x1, int y1, int x2, int y2, char *message, int mod
 	}
 }
 
-void DrawEmptyBox(int x1, int y1, int x2, int y2, int color) 
+void fbm_draw_box(int x1, int y1, int x2, int y2, int color) 
 {
 	int borderSize;
 	borderSize = (y2-y1) <= 30 ? 3 : 10;
@@ -362,18 +362,18 @@ void DrawEmptyBox(int x1, int y1, int x2, int y2, int color)
 	DrawSimpleBox( x1, y1, x2-x1, y2-y1, 0, fillColor, borderColor);
 }
 
-int DrawYesNoDialog(char *line1, char *line2) {
+int fbm_draw_yes_no_dialog(char *line1, char *line2) {
 	int selection = 0;
 	while ((get_buttons_pressed() & PAD_BUTTON_A));
 	while (1) {
-		DrawFrameStart();
+		fbm_frame_start();
 		int xlen = (vmode->fbWidth - 38) - 30;
-		DrawEmptyBox(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
+		fbm_draw_box(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
 		font_write_center(230, line1);
 		font_write_center(255, line2);
-		DrawSelectableButton((xlen/3), 310, -1, 340, "Yes", (selection) ? B_SELECTED : B_NOSELECT, -1);
-		DrawSelectableButton((vmode->fbWidth - 38) - (xlen/3), 310, -1, 340, "No", (!selection) ? B_SELECTED : B_NOSELECT, -1);
-		DrawFrameFinish();
+		fbm_draw_selection_button((xlen/3), 310, -1, 340, "Yes", (selection) ? B_SELECTED : B_NOSELECT, -1);
+		fbm_draw_selection_button((vmode->fbWidth - 38) - (xlen/3), 310, -1, 340, "No", (!selection) ? B_SELECTED : B_NOSELECT, -1);
+		fbm_frame_finish();
 		while (!(get_buttons_pressed() & (PAD_BUTTON_RIGHT | PAD_BUTTON_LEFT
 				| PAD_BUTTON_B | PAD_BUTTON_A)));
 		u32 btns = get_buttons_pressed();
