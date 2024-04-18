@@ -1294,7 +1294,7 @@ int dump_game(int disc_type, int type, int fs) {
 			else {
 				sprintf(sha1sum, "Error computing SHA-1");
 			}
-			int verified = (verify_is_available(disc_type) && verify_findMD5Sum(&md5sum[0], disc_type));
+			int verified = (verify_is_available(disc_type) && verify_find_md5(&md5sum[0], disc_type));
 			sprintf(txtbuffer, "MD5: %s", verified ? "Verified OK" : "");
 			WriteCentre(230,txtbuffer);
 			WriteCentre(255,verified ? verify_get_name() : "Not Verified with redump.org");
@@ -1354,13 +1354,13 @@ int main(int argc, char **argv) {
 
 		if(calculate_checksums) {
 			// Try to load up redump.org dat files
-			verify_init(&mount_path[0]);
+			verify_initialise(&mount_path[0]);
 #ifdef HW_RVL
 			// Ask the user if they want to download new ones
-			verify_download(&mount_path[0]);
+			verify_download_DAT(&mount_path[0]);
 
 			// User might've got some new files.
-			verify_init(&mount_path[0]);
+			verify_initialise(&mount_path[0]);
 #endif
 		}
 
