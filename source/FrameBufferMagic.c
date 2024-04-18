@@ -228,20 +228,20 @@ void _DrawBackdrop() {
 	DrawImage(TEX_BACKDROP, 0, 0, 640, 480, 0, 0.0f, 1.0f, 0.0f, 1.0f);
 #ifdef HW_RVL
 	sprintf(iosStr, "IOS %u", ios_version);
-	WriteFont(520, 40, iosStr);
+	font_write(520, 40, iosStr);
 #endif
 #ifdef HW_DOL
-	WriteFont(510, 40, "GameCube");
+	font_write(510, 40, "GameCube");
 #endif
 
 	sprintf(iosStr, "v%i.%i.%i by emu_kidid", V_MAJOR,V_MID,V_MINOR);
-	WriteFont(225, 40, iosStr);
+	font_write(225, 40, iosStr);
 	if (verify_in_use) {
 		if(verify_disc_type == IS_NGC_DISC) {
-			WriteCentre(440, "Gamecube Redump.org DAT in use");
+			font_write_center(440, "Gamecube Redump.org DAT in use");
 		}
 		else if(verify_disc_type == IS_WII_DISC) {
-			WriteCentre(440, "Wii Redump.org DAT in use");
+			font_write_center(440, "Wii Redump.org DAT in use");
 		}
 	}
 }
@@ -273,7 +273,7 @@ void DrawProgressBar(int percent, char *message) {
 	int y1 = ((480/2) - (PROGRESS_BOX_HEIGHT/2));
 	int y2 = ((480/2) + (PROGRESS_BOX_HEIGHT/2));
 	int middleY = (y2+y1)/2;
-	float scale = GetTextScaleToFitInWidth(message, x2-x1);
+	float scale = font_text_scale_to_fit_width(message, x2-x1);
   	GXColor fillColor = (GXColor) {0,0,0,GUI_MSGBOX_ALPHA}; //black
   	GXColor noColor = (GXColor) {0,0,0,0}; //blank
 	GXColor borderColor = (GXColor) {200,200,200,GUI_MSGBOX_ALPHA}; //silver
@@ -287,9 +287,9 @@ void DrawProgressBar(int percent, char *message) {
 	DrawSimpleBox( (640/2 - progressBarWidth/2), y1+20,
 			(multiplier*percent), 20, 0, progressBarColor, noColor); 
 
-	WriteFontStyled(640/2, middleY, message, scale, true, defaultColor);
+	font_write_styled(640/2, middleY, message, scale, true, DEFAULT_COLOR);
 	sprintf(txtbuffer,"%d %% complete",percent);
-	WriteFontStyled(640/2, middleY+30, txtbuffer, 1.0f, true, defaultColor);
+	font_write_styled(640/2, middleY+30, txtbuffer, 1.0f, true, DEFAULT_COLOR);
 }
 
 void DrawMessageBox(int type, char *message) 
@@ -308,7 +308,7 @@ void DrawMessageBox(int type, char *message)
 
 	char *tok = strtok(message,"\n");
 	while(tok != NULL) {
-		WriteFontStyled(640/2, middleY, tok, 1.0f, true, defaultColor);
+		font_write_styled(640/2, middleY, tok, 1.0f, true, DEFAULT_COLOR);
 		tok = strtok(NULL,"\n");
 		middleY+=24;
 	}
@@ -316,7 +316,7 @@ void DrawMessageBox(int type, char *message)
 }
 
 void DrawRawFont(int x, int y, char *message) {
-  WriteFont(x, y, message);
+  font_write(x, y, message);
 }
 
 void DrawSelectableButton(int x1, int y1, int x2, int y2, char *message, int mode, u32 color) 
@@ -329,7 +329,7 @@ void DrawSelectableButton(int x1, int y1, int x2, int y2, char *message, int mod
 
 	//determine length of the text ourselves if x2 == -1
 	x1 = (x2 == -1) ? x1+2:x1;
-	x2 = (x2 == -1) ? GetTextSizeInPixels(message)+x1+(borderSize*2)+6 : x2;
+	x2 = (x2 == -1) ? font_text_size_in_pixels(message)+x1+(borderSize*2)+6 : x2;
 
 	if(middleY+24 > y2) {
 		middleY = y1+3;
@@ -342,11 +342,11 @@ void DrawSelectableButton(int x1, int y1, int x2, int y2, char *message, int mod
 	//Draw Text and backfill (if selected)
 	if(mode==B_SELECTED) {
 		DrawSimpleBox( x1, y1, x2-x1, y2-y1, 0, selectColor, borderColor);
-		WriteFontStyled(x1 + borderSize+3, middleY, message, 1.0f, false, defaultColor);
+		font_write_styled(x1 + borderSize+3, middleY, message, 1.0f, false, DEFAULT_COLOR);
 	}
 	else {
 		DrawSimpleBox( x1, y1, x2-x1, y2-y1, 0, noColor, borderColor);
-		WriteFontStyled(x1 + borderSize+3, middleY, message, 1.0f, false, defaultColor);
+		font_write_styled(x1 + borderSize+3, middleY, message, 1.0f, false, DEFAULT_COLOR);
 	}
 }
 
@@ -369,8 +369,8 @@ int DrawYesNoDialog(char *line1, char *line2) {
 		DrawFrameStart();
 		int xlen = (vmode->fbWidth - 38) - 30;
 		DrawEmptyBox(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
-		WriteCentre(230, line1);
-		WriteCentre(255, line2);
+		font_write_center(230, line1);
+		font_write_center(255, line2);
 		DrawSelectableButton((xlen/3), 310, -1, 340, "Yes", (selection) ? B_SELECTED : B_NOSELECT, -1);
 		DrawSelectableButton((vmode->fbWidth - 38) - (xlen/3), 310, -1, 340, "No", (!selection) ? B_SELECTED : B_NOSELECT, -1);
 		DrawFrameFinish();

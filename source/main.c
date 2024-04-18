@@ -335,7 +335,7 @@ static void initialise(void) {
 	GX_CopyDisp (xfb[0], GX_TRUE); // This clears the efb
 	GX_CopyDisp (xfb[0], GX_TRUE); // This clears the xfb
 
-	init_font();
+	font_initialise();
 	init_textures();
 	which_fb = 0;
 }
@@ -381,10 +381,10 @@ static void hardware_checks(void) {
 	if (!have_hw_access()) {
 		DrawFrameStart();
 		DrawEmptyBox(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
-		WriteCentre(190, "AHBPROT check failed");
-		WriteCentre(255, "Please install the latest HBC");
-		WriteCentre(280, "Check the FAQ for more info");
-		WriteCentre(315, "Press A to exit");
+		font_write_center(190, "AHBPROT check failed");
+		font_write_center(255, "Please install the latest HBC");
+		font_write_center(280, "Check the FAQ for more info");
+		font_write_center(315, "Press A to exit");
 		wait_press_A();
 		exit(0);
 	}
@@ -394,19 +394,19 @@ static void hardware_checks(void) {
 	if (has_ios_58 && ios_version != 58) {
 		DrawFrameStart();
 		DrawEmptyBox(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
-		WriteCentre(190, "IOS Version check failed");
-		WriteCentre(255, "IOS 58 exists but is not in use");
-		WriteCentre(280, "Dumping to USB will be SLOW!");
-		WriteCentre(315, "Press  A to continue  B to exit");
+		font_write_center(190, "IOS Version check failed");
+		font_write_center(255, "IOS 58 exists but is not in use");
+		font_write_center(280, "Dumping to USB will be SLOW!");
+		font_write_center(315, "Press  A to continue  B to exit");
 		wait_press_A_exit_B();
 	}
 	if (!has_ios_58) {
 		DrawFrameStart();
 		DrawEmptyBox(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
-		WriteCentre(190, "IOS Version check failed");
-		WriteCentre(255, "Please install IOS58");
-		WriteCentre(280, "Dumping to USB will be SLOW!");
-		WriteCentre(315, "Press  A to continue  B to exit");
+		font_write_center(190, "IOS Version check failed");
+		font_write_center(255, "Please install IOS58");
+		font_write_center(280, "Dumping to USB will be SLOW!");
+		font_write_center(315, "Press  A to continue  B to exit");
 		wait_press_A_exit_B();
 	}
 }
@@ -415,19 +415,19 @@ static void hardware_checks(void) {
 static void show_disclaimer(void) {
 	DrawFrameStart();
 	DrawEmptyBox(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
-	WriteCentre(190, "Disclaimer");
-	WriteCentre(230, "The author is not responsible for any");
-	WriteCentre(255, "damages that could occur to any");
-	WriteCentre(280, "removable device used within this program");
+	font_write_center(190, "Disclaimer");
+	font_write_center(230, "The author is not responsible for any");
+	font_write_center(255, "damages that could occur to any");
+	font_write_center(280, "removable device used within this program");
 	DrawFrameFinish();
 
 	DrawFrameStart();
 	DrawEmptyBox(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
-	WriteCentre(190, "Disclaimer");
-	WriteCentre(230, "The author is not responsible for any");
-	WriteCentre(255, "damages that could occur to any");
-	WriteCentre(280, "removable device used within this program");
-	WriteCentre(315, "Press  A to continue  B to exit");
+	font_write_center(190, "Disclaimer");
+	font_write_center(230, "The author is not responsible for any");
+	font_write_center(255, "damages that could occur to any");
+	font_write_center(280, "removable device used within this program");
+	font_write_center(315, "Press  A to continue  B to exit");
 	sleep(5);
 	wait_press_A_exit_B();
 }
@@ -436,23 +436,23 @@ static int initialise_dvd(void) {
 	DrawFrameStart();
 	DrawEmptyBox(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
 #ifdef HW_DOL
-	WriteCentre(255, "Insert a GameCube DVD Disc");
+	font_write_center(255, "Insert a GameCube DVD Disc");
 #else
-	WriteCentre(255, "Insert a GC/Wii DVD Disc");
+	font_write_center(255, "Insert a GC/Wii DVD Disc");
 #endif
-	WriteCentre(315, "Press  A to continue  B to exit");
+	font_write_center(315, "Press  A to continue  B to exit");
 	wait_press_A_exit_B();
 
 	DrawFrameStart();
 	DrawEmptyBox(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
-	WriteCentre(255, "Initialising Disc ...");
+	font_write_center(255, "Initialising Disc ...");
 	DrawFrameFinish();
 	int ret = dvd_initialise_drive();
 
 	if (ret == NO_DISC) {
 		DrawFrameStart();
 		DrawEmptyBox(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
-		WriteCentre(255, "No disc detected");
+		font_write_center(255, "No disc detected");
 		DrawFrameFinish();
 		sleep(3);
 	}
@@ -466,7 +466,7 @@ int select_sd_gecko_slot() {
 	while (1) {
 		DrawFrameStart();
 		DrawEmptyBox(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
-		WriteCentre(255, "Please select SDGecko Slot");
+		font_write_center(255, "Please select SDGecko Slot");
 		DrawSelectableButton(100, 310, -1, 340, "Slot A", slot == 0 ? B_SELECTED : B_NOSELECT, -1);
 		DrawSelectableButton(240, 310, -1, 340, "Slot B", slot == 1 ? B_SELECTED : B_NOSELECT, -1);
 		DrawSelectableButton(380, 310, -1, 340, "SD2SP2", slot == 2 ? B_SELECTED : B_NOSELECT, -1);
@@ -517,18 +517,18 @@ static int initialise_storage_device(int type, int fs) {
 		DrawFrameStart();
 		DrawEmptyBox(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
 #endif
-		WriteCentre(255, "Insert a SD FAT32/NTFS formatted device");
+		font_write_center(255, "Insert a SD FAT32/NTFS formatted device");
 	}
 #ifdef HW_DOL
 	else if (type == TYPE_M2LOADER) {
-		WriteCentre(255, "Insert a M.2 FAT32/NTFS formatted device");
+		font_write_center(255, "Insert a M.2 FAT32/NTFS formatted device");
 	}
 #else
 	else if (type == TYPE_USB) {
-		WriteCentre(255, "Insert a USB FAT32/NTFS formatted device");
+		font_write_center(255, "Insert a USB FAT32/NTFS formatted device");
 	}
 #endif
-	WriteCentre(315, "Press  A to continue  B to exit");
+	font_write_center(315, "Press  A to continue  B to exit");
 	wait_press_A_exit_B();
 
 	if (fs == TYPE_FAT) {
@@ -550,8 +550,8 @@ static int initialise_storage_device(int type, int fs) {
 			DrawFrameStart();
 			DrawEmptyBox(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
 			sprintf(txtbuffer, "Error Mounting Device [%08X]", ret);
-			WriteCentre(255, txtbuffer);
-			WriteCentre(315, "Press A to try again  B to exit");
+			font_write_center(255, txtbuffer);
+			font_write_center(315, "Press A to try again  B to exit");
 			wait_press_A_exit_B();
 		}
 		sprintf(&mount_path[0], "fat:/");
@@ -581,15 +581,15 @@ static int initialise_storage_device(int type, int fs) {
 			} else {
 				sprintf(txtbuffer, "No NTFS volume(s) were found and/or mounted");
 			}
-			WriteCentre(255, txtbuffer);
-			WriteCentre(315, "Press A to try again  B to exit");
+			font_write_center(255, txtbuffer);
+			font_write_center(315, "Press A to try again  B to exit");
 			wait_press_A_exit_B();
 		} else {
 			sprintf(txtbuffer, "%s Mounted", ntfsGetVolumeName(mounts[0].name));
-			WriteCentre(230, txtbuffer);
+			font_write_center(230, txtbuffer);
 			sprintf(txtbuffer, "%i NTFS volume(s) mounted!", num_mount);
-			WriteCentre(255, txtbuffer);
-			WriteCentre(315, "Press  A  to continue");
+			font_write_center(255, txtbuffer);
+			font_write_center(315, "Press  A  to continue");
 			wait_press_A();
 			sprintf(&mount_path[0], "%s:/", mounts[0].name);
 			ret = 1;
@@ -644,8 +644,8 @@ static int force_disc(void) {
 	while (1) {
 		DrawFrameStart();
 		DrawEmptyBox(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
-		WriteCentre(190, "Failed to detect the disc type");
-		WriteCentre(255, "Please select the correct type");
+		font_write_center(190, "Failed to detect the disc type");
+		font_write_center(255, "Please select the correct type");
 		DrawSelectableButton(100, 310, -1, 340, "Gamecube", (type
 				== IS_NGC_DISC) ? B_SELECTED : B_NOSELECT, -1);
 		DrawSelectableButton(380, 310, -1, 340, "Wii",
@@ -690,7 +690,7 @@ int select_storage_device_type(void) {
 	while (1) {
 		DrawFrameStart();
 		DrawEmptyBox(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
-		WriteCentre(255, "Please select the device type");
+		font_write_center(255, "Please select the device type");
 #ifdef HW_DOL
 		DrawSelectableButton(140, 310, -1, 340, "SD Card",
 				(selected_type == 0) ? B_SELECTED : B_NOSELECT, -1);
@@ -736,7 +736,7 @@ int select_filesystem_type() {
 	while (1) {
 		DrawFrameStart();
 		DrawEmptyBox(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
-		WriteCentre(255, "Please select the filesystem type");
+		font_write_center(255, "Please select the filesystem type");
 		DrawSelectableButton(100, 310, -1, 340, "FAT",
 				(type == TYPE_FAT) ? B_SELECTED : B_NOSELECT, -1);
 		DrawSelectableButton(380, 310, -1, 340, "NTFS",
@@ -861,29 +861,29 @@ static void get_settings(int disc_type) {
 		DrawEmptyBox(75, 120, vmode->fbWidth - 78, 400, COLOR_BLACK);
 		sprintf(txtbuffer, "%s Disc Ripper Setup:",
 				disc_type == IS_WII_DISC ? "Wii" : "Gamecube");
-		WriteCentre(130, txtbuffer);
+		font_write_center(130, txtbuffer);
 
 		// Gamecube Settings
 		if (disc_type == IS_NGC_DISC) {
 		/*
-			WriteFont(80, 160 + (32* 1 ), "Shrink ISO");
+			font_write(80, 160 + (32* 1 ), "Shrink ISO");
 			DrawSelectableButton(vmode->fbWidth-220, 160+(32*1), -1, 160+(32*1)+30, get_shrink_option(), (!current_setting_pos) ? B_SELECTED:B_NOSELECT);
-			WriteFont(80, 160+(32*2), "Align Files");
+			font_write(80, 160+(32*2), "Align Files");
 			DrawSelectableButton(vmode->fbWidth-220, 160+(32*2), -1, 160+(32*2)+30, get_align_option(), (current_setting_pos==1) ? B_SELECTED:B_NOSELECT);
-			WriteFont(80, 160+(32*3), "Alignment boundary");
+			font_write(80, 160+(32*3), "Alignment boundary");
 			DrawSelectableButton(vmode->fbWidth-220, 160+(32*3), -1, 160+(32*3)+30, getAlignmentBoundaryOption(), (current_setting_pos==2) ? B_SELECTED:B_NOSELECT);
 		*/
 		}
 		// Wii Settings
 		else if(disc_type == IS_WII_DISC) {
-			WriteFont(80, 160+(32*1), "Dual Layer");
+			font_write(80, 160+(32*1), "Dual Layer");
 			DrawSelectableButton(vmode->fbWidth-220, 160+(32*1), -1, 160+(32*1)+30, get_dual_layer_option(), (!current_setting_pos) ? B_SELECTED:B_NOSELECT, -1);
-			WriteFont(80, 160+(32*2), "Chunk Size");
+			font_write(80, 160+(32*2), "Chunk Size");
 			DrawSelectableButton(vmode->fbWidth-220, 160+(32*2), -1, 160+(32*2)+30, get_chunk_size_option(), (current_setting_pos==1) ? B_SELECTED:B_NOSELECT, -1);
-			WriteFont(80, 160+(32*3), "New device per chunk");
+			font_write(80, 160+(32*3), "New device per chunk");
 			DrawSelectableButton(vmode->fbWidth-220, 160+(32*3), -1, 160+(32*3)+30, get_new_file_option(), (current_setting_pos==2) ? B_SELECTED:B_NOSELECT, -1);
 		}
-		WriteCentre(370,"Press  A  to continue");
+		font_write_center(370,"Press  A  to continue");
 		DrawAButton(265,360);
 		DrawFrameFinish();
 
@@ -953,8 +953,8 @@ void prompt_new_file(FILE **fp, int chunk, int type, int fs, int silent) {
 		do {
 				DrawFrameStart();
 				DrawEmptyBox(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
-				WriteCentre(255, "Insert a device for the next chunk");
-				WriteCentre(315, "Press  A to continue  B to exit");
+				font_write_center(255, "Insert a device for the next chunk");
+				font_write_center(315, "Press  A to continue  B to exit");
 				wait_press_A_exit_B();
 
 			if (fs == TYPE_FAT) {
@@ -980,8 +980,8 @@ void prompt_new_file(FILE **fp, int chunk, int type, int fs, int silent) {
 				DrawFrameStart();
 				DrawEmptyBox(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
 				sprintf(txtbuffer, "Error Mounting Device [%08X]", ret);
-				WriteCentre(255, txtbuffer);
-				WriteCentre(315, "Press A to try again  B to exit");
+				font_write_center(255, txtbuffer);
+				font_write_center(315, "Press A to try again  B to exit");
 				wait_press_A_exit_B();
 			}
 		} while (ret != 1);
@@ -994,9 +994,9 @@ void prompt_new_file(FILE **fp, int chunk, int type, int fs, int silent) {
 	if (*fp == NULL) {
 		DrawFrameStart();
 		DrawEmptyBox(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
-		WriteCentre(230, "Failed to create file:");
-		WriteCentre(255, txtbuffer);
-		WriteCentre(315, "Exiting in 5 seconds");
+		font_write_center(230, "Failed to create file:");
+		font_write_center(255, txtbuffer);
+		font_write_center(315, "Exiting in 5 seconds");
 		DrawFrameFinish();
 		sleep(5);
 		exit(0);
@@ -1127,9 +1127,9 @@ int dump_game(int disc_type, int type, int fs) {
 	if (fp == NULL) {
 		DrawFrameStart();
 		DrawEmptyBox(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
-		WriteCentre(230, "Failed to create file:");
-		WriteCentre(255, txtbuffer);
-		WriteCentre(315, "Exiting in 5 seconds");
+		font_write_center(230, "Failed to create file:");
+		font_write_center(255, txtbuffer);
+		font_write_center(315, "Exiting in 5 seconds");
 		DrawFrameFinish();
 		sleep(5);
 		exit(0);
@@ -1152,8 +1152,8 @@ int dump_game(int disc_type, int type, int fs) {
 			fclose(fp);
 			DrawFrameStart();
 			DrawEmptyBox(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
-			WriteCentre(255, "Write Error!");
-			WriteCentre(315, "Exiting in 10 seconds");
+			font_write_center(255, "Write Error!");
+			font_write_center(315, "Exiting in 10 seconds");
 			DrawFrameFinish();
 			sleep(10);
 			exit(1);
@@ -1209,11 +1209,11 @@ int dump_game(int disc_type, int type, int fs) {
 			DrawFrameStart();
 			DrawEmptyBox(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
 			if(!is_known_datel) {
-				WriteCentre(215, "(Warning: This disc will take a while to dump!)");
+				font_write_center(215, "(Warning: This disc will take a while to dump!)");
 			}
 			sprintf(txtbuffer, "%s CRC100000=%08X", (is_known_datel ? "Known":"Unknown"), crc100000);
-			WriteCentre(255, txtbuffer);
-			WriteCentre(315, "Press  A to continue  B to exit");
+			font_write_center(255, txtbuffer);
+			font_write_center(315, "Press  A to continue  B to exit");
 			u64 waitTimeStart = gettime();
 			wait_press_A_exit_B();
 			start_time += (gettime() - waitTimeStart);	// Don't throw time off because we'd paused here
@@ -1261,8 +1261,8 @@ int dump_game(int disc_type, int type, int fs) {
 		DrawFrameStart();
 		DrawEmptyBox (30,180, vmode->fbWidth-38, 350, COLOR_BLACK);
 		sprintf(txtbuffer, "%s",dvd_error_str());
-		WriteCentre(255,txtbuffer);
-		WriteCentre(315,"Press  A  to continue");
+		font_write_center(255,txtbuffer);
+		font_write_center(315,"Press  A  to continue");
 		dvd_motor_off();
 		wait_press_A();
 		return 0;
@@ -1271,8 +1271,8 @@ int dump_game(int disc_type, int type, int fs) {
 		DrawFrameStart();
 		DrawEmptyBox (30,180, vmode->fbWidth-38, 350, COLOR_BLACK);
 		sprintf(txtbuffer, "Copy Cancelled");
-		WriteCentre(255,txtbuffer);
-		WriteCentre(315,"Press  A  to continue");
+		font_write_center(255,txtbuffer);
+		font_write_center(315,"Press  A  to continue");
 		dvd_motor_off();
 		wait_press_A();
 		return 0;
@@ -1281,7 +1281,7 @@ int dump_game(int disc_type, int type, int fs) {
 		sprintf(txtbuffer,"Copy completed in %u mins. Press A",diff_sec(start_time, gettime())/60);
 		DrawFrameStart();
 		DrawEmptyBox (30,180, vmode->fbWidth-38, 350, COLOR_BLACK);
-		WriteCentre(190,txtbuffer);
+		font_write_center(190,txtbuffer);
 		if(calculate_checksums) {
 			char md5sum[64];
 			char sha1sum[64];
@@ -1296,9 +1296,9 @@ int dump_game(int disc_type, int type, int fs) {
 			}
 			int verified = (verify_is_available(disc_type) && verify_find_md5(&md5sum[0], disc_type));
 			sprintf(txtbuffer, "MD5: %s", verified ? "Verified OK" : "");
-			WriteCentre(230,txtbuffer);
-			WriteCentre(255,verified ? verify_get_name() : "Not Verified with redump.org");
-			WriteCentre(280,&md5sum[0]);
+			font_write_center(230,txtbuffer);
+			font_write_center(255,verified ? verify_get_name() : "Not Verified with redump.org");
+			font_write_center(280,&md5sum[0]);
 			write_dump_info(&md5sum[0], &sha1sum[0], crc32, verified, diff_sec(start_time, gettime()));
 		}
 		else {
@@ -1307,7 +1307,7 @@ int dump_game(int disc_type, int type, int fs) {
 		if((disc_type == IS_DATEL_DISC)) {
 			datel_write_dump_skips(&mount_path[0], crc100000);
 		}
-		WriteCentre(315,"Press  A to continue  B to exit");
+		font_write_center(315,"Press  A to continue  B to exit");
 		dvd_motor_off();
 		wait_press_A_exit_B();
 	}
@@ -1411,9 +1411,9 @@ int main(int argc, char **argv) {
 		DrawFrameStart();
 		DrawEmptyBox(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
 		sprintf(txtbuffer, "%i disc(s) dumped", dump_counter);
-		WriteCentre(190, txtbuffer);
-		WriteCentre(255, "Dump another disc?");
-		WriteCentre(315, "Press  A to continue  B to exit");
+		font_write_center(190, txtbuffer);
+		font_write_center(255, "Dump another disc?");
+		font_write_center(315, "Press  A to continue  B to exit");
 		wait_press_A_exit_B();
 	}
 

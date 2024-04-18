@@ -34,27 +34,28 @@ extern void __SYS_ReadROM(void *buf, u32 len, u32 offset);
 
 #define FONT_TEX_SIZE_I4 ((512*512)>>1)
 #define FONT_SIZE_ANSI (288 + 131072)
-//#define STRHEIGHT_OFFSET 6
-#define STRHEIGHT_OFFSET 0
+//#define STR_HEIGHT_OFFSET 6
+#define STR_HEIGHT_OFFSET 0
 
 typedef struct {
 	u16 s[256], t[256], font_size[256], fheight;
 } CHAR_INFO;
 
-static unsigned char fontFont[ 0x40000 ] __attribute__((aligned(32)));
+static unsigned char font_texture_buffer[ 0x40000 ] __attribute__((aligned(32)));
 
 u16 frameWidth;
-CHAR_INFO fontChars;
-GXTexObj fontTexObj;
-GXColor defaultColor = (GXColor) {255,255,255,255};
-GXColor disabledColor = (GXColor) {175,175,182,255};
-GXColor fontColor = (GXColor) {255,255,255,255};
+CHAR_INFO font_chars;
+GXTexObj font_tex_obj;
+
+GXColor DEFAULT_COLOR = (GXColor) {255,255,255,255};
+GXColor DISABLED_COLOR = (GXColor) {175,175,182,255};
+GXColor FONT_COLOR = (GXColor) {255,255,255,255};
 
 /****************************************************************************
  * YAY0 Decoding
  ****************************************************************************/
 /* Yay0 decompression */
-void decodeYay0(unsigned char *s, unsigned char *d)
+void decode_Yay0(unsigned char *s, unsigned char *d)
 {
 	int i, j, k, p, q, cnt;
 
@@ -119,7 +120,7 @@ void decodeYay0(unsigned char *s, unsigned char *d)
 	} while(q < i);
 }
 
-void convertI2toI4(void *dst, void *src, int xres, int yres)
+void convert_I2_to_I4(void *dst, void *src, int xres, int yres)
 {
 	// I4 has 8x8 tiles
 	int x, y;
@@ -142,43 +143,43 @@ void convertI2toI4(void *dst, void *src, int xres, int yres)
 		}
 }
 
-void init_font(void)
+void font_initialise(void)
 {
-	void* fontArea = memalign(32,FONT_SIZE_ANSI);
-	memset(fontArea,0,FONT_SIZE_ANSI);
-	void* packed_data = (void*)(((u32)fontArea+119072)&~31);
-	void* unpacked_data = (void*)((u32)fontArea+288);
+	void* font_area = memalign(32,FONT_SIZE_ANSI);
+	memset(font_area,0,FONT_SIZE_ANSI);
+	void* packed_data = (void*)(((u32)font_area+119072)&~31);
+	void* unpacked_data = (void*)((u32)font_area+288);
 	__SYS_ReadROM(packed_data,0x3000,0x1FCF00);
-	decodeYay0(packed_data,unpacked_data);
+	decode_Yay0(packed_data,unpacked_data);
 
-	sys_fontheader *fontData = (sys_fontheader*)unpacked_data;
+	sys_fontheader *font_data = (sys_fontheader*)unpacked_data;
 
-	convertI2toI4((void*)fontFont, (void*)((u32)unpacked_data+fontData->sheet_image), fontData->sheet_width, fontData->sheet_height);
-	DCFlushRange(fontFont, FONT_TEX_SIZE_I4);
+	convert_I2_to_I4((void*)font_texture_buffer, (void*)((u32)unpacked_data+font_data->sheet_image), font_data->sheet_width, font_data->sheet_height);
+	DCFlushRange(font_texture_buffer, FONT_TEX_SIZE_I4);
 
 	int i;
 	for (i=0; i<256; ++i)
 	{
 		int c = i;
 
-		if ((c < fontData->first_char) || (c > fontData->last_char)) c = fontData->inval_char;
-		else c -= fontData->first_char;
+		if ((c < font_data->first_char) || (c > font_data->last_char)) c = font_data->inval_char;
+		else c -= font_data->first_char;
 
-		fontChars.font_size[i] = ((unsigned char*)fontData)[fontData->width_table + c];
+		font_chars.font_size[i] = ((unsigned char*)font_data)[font_data->width_table + c];
 
-		int r = c / fontData->sheet_column;
-		c %= fontData->sheet_column;
+		int r = c / font_data->sheet_column;
+		c %= font_data->sheet_column;
 
-		fontChars.s[i] = c * fontData->cell_width;
-		fontChars.t[i] = r * fontData->cell_height;
+		font_chars.s[i] = c * font_data->cell_width;
+		font_chars.t[i] = r * font_data->cell_height;
 	}
 	
-	fontChars.fheight = fontData->cell_height;
+	font_chars.fheight = font_data->cell_height;
 
-	free(fontArea);
+	free(font_area);
 }
 
-void drawFontInit(GXColor fontColor)
+void draw_font_initialise(GXColor FONT_COLOR)
 {
 	Mtx44 GXprojection2D;
 	Mtx GXmodelView2D;
@@ -224,11 +225,11 @@ void drawFontInit(GXColor fontColor)
 	GX_SetTexCoordGen(GX_TEXCOORD0, GX_TG_MTX2x4, GX_TG_TEX0, GX_IDENTITY);
 
 	GX_InvalidateTexAll();
-	GX_InitTexObj(&fontTexObj, &fontFont[0], 512, 512, GX_TF_I4, GX_CLAMP, GX_CLAMP, GX_FALSE);
-	GX_LoadTexObj(&fontTexObj, GX_TEXMAP0);
+	GX_InitTexObj(&font_tex_obj, &font_texture_buffer[0], 512, 512, GX_TF_I4, GX_CLAMP, GX_CLAMP, GX_FALSE);
+	GX_LoadTexObj(&font_tex_obj, GX_TEXMAP0);
 
-	GX_SetTevColor(GX_TEVREG1,fontColor);
-//	GX_SetTevKColor(GX_KCOLOR0, fontColor);
+	GX_SetTevColor(GX_TEVREG1,FONT_COLOR);
+//	GX_SetTevKColor(GX_KCOLOR0, FONT_COLOR);
 //	GX_SetTevKColorSel(GX_TEVSTAGE0,GX_TEV_KCSEL_K0);
 //	GX_SetTevKAlphaSel(GX_TEVSTAGE0,GX_TEV_KCSEL_K0_A);
 
@@ -252,23 +253,23 @@ void drawFontInit(GXColor fontColor)
 	GX_SetCullMode (GX_CULL_NONE);
 }
 
-void drawString(int x, int y, char *string, float scale, bool centered)
+void draw_string(int x, int y, char *string, float scale, bool centered)
 {
 	if(centered)
 	{
-		int strWidth = 0;
-		int strHeight = (fontChars.fheight+STRHEIGHT_OFFSET) * scale;
+		int string_width = 0;
+		int strHeight = (font_chars.fheight+STR_HEIGHT_OFFSET) * scale;
 		char* string_work = string;
 //		while(*string_work && (x < back_framewidth))
 		while(*string_work)
 		{
 			unsigned char c = *string_work;
-			strWidth += (int) fontChars.font_size[c] * scale;
+			string_width += (int) font_chars.font_size[c] * scale;
 			string_work++;
 		}
 //		x0 = (int) MAX(0, (back_framewidth - x)/2);
 //		x = (int) (frameWidth - x)/2;
-		x = (int) x - strWidth/2;
+		x = (int) x - string_width/2;
 		y = (int) y - strHeight/2;
 //		write_font(x0,y,string,scale);
 	}
@@ -283,72 +284,72 @@ void drawString(int x, int y, char *string, float scale, bool centered)
 		int i;
 		GX_Begin(GX_QUADS, GX_VTXFMT1, 4);
 		for (i=0; i<4; i++) {
-			int s = (i & 1) ^ ((i & 2) >> 1) ? fontChars.font_size[c] : 1;
-			int t = (i & 2) ? fontChars.fheight : 1;
-			float s0 = ((float) (fontChars.s[c] + s))/512;
-			float t0 = ((float) (fontChars.t[c] + t))/512;
+			int s = (i & 1) ^ ((i & 2) >> 1) ? font_chars.font_size[c] : 1;
+			int t = (i & 2) ? font_chars.fheight : 1;
+			float s0 = ((float) (font_chars.s[c] + s))/512;
+			float t0 = ((float) (font_chars.t[c] + t))/512;
 			s = (int) s * scale;
 			t = (int) t * scale;
 			GX_Position3s16(x + s, y + t, 0);
-			GX_Color4u8(fontColor.r, fontColor.g, fontColor.b, fontColor.a);
+			GX_Color4u8(FONT_COLOR.r, FONT_COLOR.g, FONT_COLOR.b, FONT_COLOR.a);
 //			GX_Color4u8(fontState->colour.r, fontState->colour.g, fontState->colour.b, fontState->colour.a);
-//			GX_TexCoord2f32(((float) (fontChars.s[c] + s))/512, ((float) (fontChars.t[c] + t))/512);
-//			GX_TexCoord2u16(fontChars.s[c] + s, fontChars.t[c] + t);
+//			GX_TexCoord2f32(((float) (font_chars.s[c] + s))/512, ((float) (font_chars.t[c] + t))/512);
+//			GX_TexCoord2u16(font_chars.s[c] + s, font_chars.t[c] + t);
 			GX_TexCoord2f32(s0, t0);
 		}
 		GX_End();
 
-		x += (int) fontChars.font_size[c] * scale;
+		x += (int) font_chars.font_size[c] * scale;
 		string++;
 	}
 
 }
 
-void WriteFontStyled(int x, int y, char *string, float size, bool centered, GXColor color)
+void font_write_styled(int x, int y, char *string, float size, bool centered, GXColor color)
 {
-	fontColor = color;
-	drawFontInit(fontColor);
-	drawString(x, y, string, size, centered);
+	FONT_COLOR = color;
+	draw_font_initialise(FONT_COLOR);
+	draw_string(x, y, string, size, centered);
 }
 
-void WriteFont(int x, int y, char *string)
+void font_write(int x, int y, char *string)
 {
-	WriteFontStyled(x, y, string, 1.0f, false, (GXColor) {255, 255, 255, 255});
-	fontColor = (GXColor) {255, 255, 255, 255};
-	drawFontInit(fontColor);
-	drawString(x, y, string, 1.0f, false);
+	font_write_styled(x, y, string, 1.0f, false, (GXColor) {255, 255, 255, 255});
+	FONT_COLOR = (GXColor) {255, 255, 255, 255};
+	draw_font_initialise(FONT_COLOR);
+	draw_string(x, y, string, 1.0f, false);
 }
 
-int GetTextSizeInPixels(char *string)
+int font_text_size_in_pixels(char *string)
 {
-	int strWidth = 0;
+	int string_width = 0;
 	float scale = 1.0f;
 	char* string_work = string;
 	while(*string_work)
 	{
 		unsigned char c = *string_work;
-		strWidth += (int) fontChars.font_size[c] * scale;
+		string_width += (int) font_chars.font_size[c] * scale;
 		string_work++;
 	}
-	return strWidth;
+	return string_width;
 }
 
-float GetTextScaleToFitInWidth(char *string, int width) {
-	int strWidth = 0;
+float font_text_scale_to_fit_width(char *string, int width) {
+	int string_width = 0;
 	char* string_work = string;
 	while(*string_work)
 	{
 		unsigned char c = *string_work;
-		strWidth += (int) fontChars.font_size[c] * 1.0f;
+		string_width += (int) font_chars.font_size[c] * 1.0f;
 		string_work++;
 	}
-	return width>strWidth ? 1.0f : (float)((float)width/(float)strWidth);
+	return width>string_width ? 1.0f : (float)((float)width/(float)string_width);
 }
 
-void WriteCentre(int y, char *string) {
-	int x = GetTextSizeInPixels(string);
+void font_write_center(int y, char *string) {
+	int x = font_text_size_in_pixels(string);
 	if (x > back_framewidth)
 		x = back_framewidth;
 	x = (back_framewidth - x) >> 1;
-	WriteFont(x, y, string);
+	font_write(x, y, string);
 }

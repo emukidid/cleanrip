@@ -26,15 +26,15 @@
 #define back_framewidth vmode->fbWidth
 #define back_frameheight vmode->xfbHeight
 
-extern GXColor defaultColor;
-extern GXColor disabledColor;
+extern GXColor DEFAULT_COLOR;
+extern GXColor DISABLED_COLOR;
 extern char txtbuffer[2048];
 
-void init_font(void);
-void WriteFont(int x, int y, char *string);
-void WriteFontStyled(int x, int y, char *string, float size, bool centered, GXColor color);
-int GetTextSizeInPixels(char *string);
-float GetTextScaleToFitInWidth(char *string, int width);
-void WriteCentre(int y, char *string);
+void font_initialise(void);
+void font_write(int x, int y, char *string);
+void font_write_styled(int x, int y, char *string, float size, bool centered, GXColor color);
+int font_text_size_in_pixels(char *string);
+float font_text_scale_to_fit_width(char *string, int width);
+void font_write_center(int y, char *string);
 
 #endif
