@@ -326,7 +326,7 @@ void fbm_draw_selection_button(int x1, int y1, int x2, int y2, char *message, in
 	}
 }
 
-void fbm_draw_box(int x1, int y1, int x2, int y2, int color) 
+void fbm_draw_box(int x1, int y1, int x2, int y2)
 {
 	int border_size;
 	border_size = (y2-y1) <= 30 ? 3 : 10;
@@ -341,7 +341,7 @@ int fbm_draw_yes_no_dialog(char *line1, char *line2) {
 	while (1) {
 		fbm_frame_start();
 		int x_len = (vmode->fbWidth - 38) - 30;
-		fbm_draw_box(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
+		fbm_draw_box(30, 180, vmode->fbWidth - 38, 350);
 		font_write_center(230, line1);
 		font_write_center(255, line2);
 		fbm_draw_selection_button((x_len/3), 310, -1, 340, "Yes", (selection) ? B_SELECTED : B_NOSELECT, -1);

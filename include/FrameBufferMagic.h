@@ -54,7 +54,7 @@ enum TextureId
 void fbm_initialise(void);
 void fbm_frame_start(void);
 void fbm_frame_finish(void);
-void fbm_draw_box(int x1, int y1, int x2, int y2, int color);
+void fbm_draw_box(int x1, int y1, int x2, int y2);
 void fbm_draw_msg_box(int type, char *message);
 void fbm_draw_raw_font(int x, int y, char *message);
 void fbm_draw_A_button(int x, int y);

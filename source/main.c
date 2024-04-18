@@ -380,7 +380,7 @@ static int find_ios(u32 ios) {
 static void hardware_checks(void) {
 	if (!have_hw_access()) {
 		fbm_frame_start();
-		fbm_draw_box(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
+		fbm_draw_box(30, 180, vmode->fbWidth - 38, 350);
 		font_write_center(190, "AHBPROT check failed");
 		font_write_center(255, "Please install the latest HBC");
 		font_write_center(280, "Check the FAQ for more info");
@@ -393,7 +393,7 @@ static void hardware_checks(void) {
 	print_gecko("IOS 58 Exists: %s\r\n", has_ios_58 ? "YES":"NO");
 	if (has_ios_58 && ios_version != 58) {
 		fbm_frame_start();
-		fbm_draw_box(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
+		fbm_draw_box(30, 180, vmode->fbWidth - 38, 350);
 		font_write_center(190, "IOS Version check failed");
 		font_write_center(255, "IOS 58 exists but is not in use");
 		font_write_center(280, "Dumping to USB will be SLOW!");
@@ -402,7 +402,7 @@ static void hardware_checks(void) {
 	}
 	if (!has_ios_58) {
 		fbm_frame_start();
-		fbm_draw_box(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
+		fbm_draw_box(30, 180, vmode->fbWidth - 38, 350);
 		font_write_center(190, "IOS Version check failed");
 		font_write_center(255, "Please install IOS58");
 		font_write_center(280, "Dumping to USB will be SLOW!");
@@ -414,7 +414,7 @@ static void hardware_checks(void) {
 
 static void show_disclaimer(void) {
 	fbm_frame_start();
-	fbm_draw_box(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
+	fbm_draw_box(30, 180, vmode->fbWidth - 38, 350);
 	font_write_center(190, "Disclaimer");
 	font_write_center(230, "The author is not responsible for any");
 	font_write_center(255, "damages that could occur to any");
@@ -422,7 +422,7 @@ static void show_disclaimer(void) {
 	fbm_frame_finish();
 
 	fbm_frame_start();
-	fbm_draw_box(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
+	fbm_draw_box(30, 180, vmode->fbWidth - 38, 350);
 	font_write_center(190, "Disclaimer");
 	font_write_center(230, "The author is not responsible for any");
 	font_write_center(255, "damages that could occur to any");
@@ -434,7 +434,7 @@ static void show_disclaimer(void) {
 
 static int initialise_dvd(void) {
 	fbm_frame_start();
-	fbm_draw_box(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
+	fbm_draw_box(30, 180, vmode->fbWidth - 38, 350);
 #ifdef HW_DOL
 	font_write_center(255, "Insert a GameCube DVD Disc");
 #else
@@ -444,14 +444,14 @@ static int initialise_dvd(void) {
 	wait_press_A_exit_B();
 
 	fbm_frame_start();
-	fbm_draw_box(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
+	fbm_draw_box(30, 180, vmode->fbWidth - 38, 350);
 	font_write_center(255, "Initialising Disc ...");
 	fbm_frame_finish();
 	int ret = dvd_initialise_drive();
 
 	if (ret == NO_DISC) {
 		fbm_frame_start();
-		fbm_draw_box(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
+		fbm_draw_box(30, 180, vmode->fbWidth - 38, 350);
 		font_write_center(255, "No disc detected");
 		fbm_frame_finish();
 		sleep(3);
@@ -465,7 +465,7 @@ int select_sd_gecko_slot() {
 	while ((get_buttons_pressed() & PAD_BUTTON_A));
 	while (1) {
 		fbm_frame_start();
-		fbm_draw_box(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
+		fbm_draw_box(30, 180, vmode->fbWidth - 38, 350);
 		font_write_center(255, "Please select SDGecko Slot");
 		fbm_draw_selection_button(100, 310, -1, 340, "Slot A", slot == 0 ? B_SELECTED : B_NOSELECT, -1);
 		fbm_draw_selection_button(240, 310, -1, 340, "Slot B", slot == 1 ? B_SELECTED : B_NOSELECT, -1);
@@ -508,14 +508,14 @@ static int initialise_storage_device(int type, int fs) {
 	int ret = 0;
 
 	fbm_frame_start();
-	fbm_draw_box(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
+	fbm_draw_box(30, 180, vmode->fbWidth - 38, 350);
 	if (type == TYPE_SD) {
 #ifdef HW_DOL
 		sdcard_slot = select_sd_gecko_slot();
 		sdcard = get_sd_card_handler(sdcard_slot);
 
 		fbm_frame_start();
-		fbm_draw_box(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
+		fbm_draw_box(30, 180, vmode->fbWidth - 38, 350);
 #endif
 		font_write_center(255, "Insert a SD FAT32/NTFS formatted device");
 	}
@@ -548,7 +548,7 @@ static int initialise_storage_device(int type, int fs) {
 		}
 		if (ret != 1) {
 			fbm_frame_start();
-			fbm_draw_box(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
+			fbm_draw_box(30, 180, vmode->fbWidth - 38, 350);
 			sprintf(txtbuffer, "Error Mounting Device [%08X]", ret);
 			font_write_center(255, txtbuffer);
 			font_write_center(315, "Press A to try again  B to exit");
@@ -574,7 +574,7 @@ static int initialise_storage_device(int type, int fs) {
 		}
 
 		fbm_frame_start();
-		fbm_draw_box(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
+		fbm_draw_box(30, 180, vmode->fbWidth - 38, 350);
 		if (!num_mount || num_mount == -1) {
 			if (num_mount == -1) {
 				sprintf(txtbuffer, "Error whilst mounting devices (%i)", errno);
@@ -643,7 +643,7 @@ static int force_disc(void) {
 	while ((get_buttons_pressed() & PAD_BUTTON_A));
 	while (1) {
 		fbm_frame_start();
-		fbm_draw_box(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
+		fbm_draw_box(30, 180, vmode->fbWidth - 38, 350);
 		font_write_center(190, "Failed to detect the disc type");
 		font_write_center(255, "Please select the correct type");
 		fbm_draw_selection_button(100, 310, -1, 340, "Gamecube", (type
@@ -689,7 +689,7 @@ int select_storage_device_type(void) {
 	int selected_type = 0;
 	while (1) {
 		fbm_frame_start();
-		fbm_draw_box(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
+		fbm_draw_box(30, 180, vmode->fbWidth - 38, 350);
 		font_write_center(255, "Please select the device type");
 #ifdef HW_DOL
 		fbm_draw_selection_button(140, 310, -1, 340, "SD Card",
@@ -735,7 +735,7 @@ int select_filesystem_type() {
 	while ((get_buttons_pressed() & PAD_BUTTON_A));
 	while (1) {
 		fbm_frame_start();
-		fbm_draw_box(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
+		fbm_draw_box(30, 180, vmode->fbWidth - 38, 350);
 		font_write_center(255, "Please select the filesystem type");
 		fbm_draw_selection_button(100, 310, -1, 340, "FAT",
 				(type == TYPE_FAT) ? B_SELECTED : B_NOSELECT, -1);
@@ -858,7 +858,7 @@ static void get_settings(int disc_type) {
 	while ((get_buttons_pressed() & PAD_BUTTON_A));
 	while (1) {
 		fbm_frame_start();
-		fbm_draw_box(75, 120, vmode->fbWidth - 78, 400, COLOR_BLACK);
+		fbm_draw_box(75, 120, vmode->fbWidth - 78, 400);
 		sprintf(txtbuffer, "%s Disc Ripper Setup:",
 				disc_type == IS_WII_DISC ? "Wii" : "Gamecube");
 		font_write_center(130, txtbuffer);
@@ -952,7 +952,7 @@ void prompt_new_file(FILE **fp, int chunk, int type, int fs, int silent) {
 		int ret = -1;
 		do {
 				fbm_frame_start();
-				fbm_draw_box(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
+				fbm_draw_box(30, 180, vmode->fbWidth - 38, 350);
 				font_write_center(255, "Insert a device for the next chunk");
 				font_write_center(315, "Press  A to continue  B to exit");
 				wait_press_A_exit_B();
@@ -978,7 +978,7 @@ void prompt_new_file(FILE **fp, int chunk, int type, int fs, int silent) {
 			}
 			if (ret != 1) {
 				fbm_frame_start();
-				fbm_draw_box(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
+				fbm_draw_box(30, 180, vmode->fbWidth - 38, 350);
 				sprintf(txtbuffer, "Error Mounting Device [%08X]", ret);
 				font_write_center(255, txtbuffer);
 				font_write_center(315, "Press A to try again  B to exit");
@@ -993,7 +993,7 @@ void prompt_new_file(FILE **fp, int chunk, int type, int fs, int silent) {
 	*fp = fopen(&txtbuffer[0], "wb");
 	if (*fp == NULL) {
 		fbm_frame_start();
-		fbm_draw_box(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
+		fbm_draw_box(30, 180, vmode->fbWidth - 38, 350);
 		font_write_center(230, "Failed to create file:");
 		font_write_center(255, txtbuffer);
 		font_write_center(315, "Exiting in 5 seconds");
@@ -1126,7 +1126,7 @@ int dump_game(int disc_type, int type, int fs) {
 	FILE *fp = fopen(&txtbuffer[0], "wb");
 	if (fp == NULL) {
 		fbm_frame_start();
-		fbm_draw_box(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
+		fbm_draw_box(30, 180, vmode->fbWidth - 38, 350);
 		font_write_center(230, "Failed to create file:");
 		font_write_center(255, txtbuffer);
 		font_write_center(315, "Exiting in 5 seconds");
@@ -1151,7 +1151,7 @@ int dump_game(int disc_type, int type, int fs) {
 			LWP_JoinThread(writer, NULL);
 			fclose(fp);
 			fbm_frame_start();
-			fbm_draw_box(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
+			fbm_draw_box(30, 180, vmode->fbWidth - 38, 350);
 			font_write_center(255, "Write Error!");
 			font_write_center(315, "Exiting in 10 seconds");
 			fbm_frame_finish();
@@ -1207,7 +1207,7 @@ int dump_game(int disc_type, int type, int fs) {
 			crc100000 = crc32;
 			is_known_datel = datel_find_crc_sum(crc100000);
 			fbm_frame_start();
-			fbm_draw_box(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
+			fbm_draw_box(30, 180, vmode->fbWidth - 38, 350);
 			if(!is_known_datel) {
 				font_write_center(215, "(Warning: This disc will take a while to dump!)");
 			}
@@ -1259,7 +1259,7 @@ int dump_game(int disc_type, int type, int fs) {
 
 	if(ret != -61 && ret) {
 		fbm_frame_start();
-		fbm_draw_box (30,180, vmode->fbWidth-38, 350, COLOR_BLACK);
+		fbm_draw_box (30,180, vmode->fbWidth-38, 350);
 		sprintf(txtbuffer, "%s",dvd_error_str());
 		font_write_center(255,txtbuffer);
 		font_write_center(315,"Press  A  to continue");
@@ -1269,7 +1269,7 @@ int dump_game(int disc_type, int type, int fs) {
 	}
 	else if (ret == -61) {
 		fbm_frame_start();
-		fbm_draw_box (30,180, vmode->fbWidth-38, 350, COLOR_BLACK);
+		fbm_draw_box (30,180, vmode->fbWidth-38, 350);
 		sprintf(txtbuffer, "Copy Cancelled");
 		font_write_center(255,txtbuffer);
 		font_write_center(315,"Press  A  to continue");
@@ -1280,7 +1280,7 @@ int dump_game(int disc_type, int type, int fs) {
 	else {
 		sprintf(txtbuffer,"Copy completed in %u mins. Press A",diff_sec(start_time, gettime())/60);
 		fbm_frame_start();
-		fbm_draw_box (30,180, vmode->fbWidth-38, 350, COLOR_BLACK);
+		fbm_draw_box (30,180, vmode->fbWidth-38, 350);
 		font_write_center(190,txtbuffer);
 		if(calculate_checksums) {
 			char md5sum[64];
@@ -1409,7 +1409,7 @@ int main(int argc, char **argv) {
 		dump_counter += (ret ? 1 : 0);
 		
 		fbm_frame_start();
-		fbm_draw_box(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
+		fbm_draw_box(30, 180, vmode->fbWidth - 38, 350);
 		sprintf(txtbuffer, "%i disc(s) dumped", dump_counter);
 		font_write_center(190, txtbuffer);
 		font_write_center(255, "Dump another disc?");
