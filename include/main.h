@@ -60,11 +60,10 @@
 /*** 2D Video Globals ***/
 extern GXRModeObj *vmode;	/*** Graphics Mode Object ***/
 extern u32 *xfb[2];			/*** Framebuffers ***/
-extern int whichfb;			/*** Frame buffer toggle ***/
-extern u32 iosversion;
+extern int which_fb;			/*** Frame buffer toggle ***/
+extern u32 ios_version;
 extern int verify_in_use;
 extern int verify_disc_type;
-extern int forceDatel;
 
 u32 get_buttons_pressed(void);
 void print_gecko(const char* fmt, ...);

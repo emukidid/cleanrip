@@ -77,8 +77,8 @@ static char wpad_need_scan = 0;
 static char pad_need_scan = 0;
 int print_usb = 0;
 int shutdown = 0;
-int whichfb = 0;
-u32 iosversion = -1;
+int which_fb = 0;
+u32 ios_version = -1;
 int verify_in_use = 0;
 int verify_disc_type = 0;
 GXRModeObj *vmode = NULL;
@@ -337,7 +337,7 @@ static void initialise(void) {
 
 	init_font();
 	init_textures();
-	whichfb = 0;
+	which_fb = 0;
 }
 
 #ifdef HW_RVL
@@ -391,7 +391,7 @@ static void hardware_checks(void) {
 
 	int has_ios_58 = find_ios(58);
 	print_gecko("IOS 58 Exists: %s\r\n", has_ios_58 ? "YES":"NO");
-	if (has_ios_58 && iosversion != 58) {
+	if (has_ios_58 && ios_version != 58) {
 		DrawFrameStart();
 		DrawEmptyBox(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
 		WriteCentre(190, "IOS Version check failed");
@@ -1318,7 +1318,7 @@ int main(int argc, char **argv) {
 
 	initialise();
 #ifdef HW_RVL
-	iosversion = IOS_GetVersion();
+	ios_version = IOS_GetVersion();
 #endif
 	if(usb_isgeckoalive(1)) {
 		usb_flush(1);
@@ -1328,7 +1328,7 @@ int main(int argc, char **argv) {
 	print_gecko("Arena Size: %iKb\r\n",(SYS_GetArena1Hi()-SYS_GetArena1Lo())/1024);
 
 #ifdef HW_RVL
-	print_gecko("Running on IOS ver: %i\r\n", iosversion);
+	print_gecko("Running on IOS ver: %i\r\n", ios_version);
 #endif
 	show_disclaimer();
 #ifdef HW_RVL

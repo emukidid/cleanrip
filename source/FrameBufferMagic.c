@@ -42,7 +42,7 @@
 #include "boxouter_tpl.h"
 #include "boxouter.h"
 
-extern u32 iosversion;
+extern u32 ios_version;
 
 // internal helper funcs
 char *typeToStr(int type) {
@@ -227,7 +227,7 @@ void _DrawBackdrop() {
 	char iosStr[256];
 	DrawImage(TEX_BACKDROP, 0, 0, 640, 480, 0, 0.0f, 1.0f, 0.0f, 1.0f);
 #ifdef HW_RVL
-	sprintf(iosStr, "IOS %u", iosversion);
+	sprintf(iosStr, "IOS %u", ios_version);
 	WriteFont(520, 40, iosStr);
 #endif
 #ifdef HW_DOL
@@ -250,7 +250,7 @@ void _DrawBackdrop() {
 
 // Call this when starting a screen
 void DrawFrameStart() {
-  whichfb ^= 1;
+  which_fb ^= 1;
   _DrawBackdrop();
 }
 
@@ -258,10 +258,10 @@ void DrawFrameStart() {
 void DrawFrameFinish() {
 	//Copy EFB->XFB
 	GX_SetCopyClear((GXColor){0, 0, 0, 0xFF}, GX_MAX_Z24);
-	GX_CopyDisp(xfb[whichfb],GX_TRUE);
+	GX_CopyDisp(xfb[which_fb],GX_TRUE);
 	GX_Flush();
 
-	VIDEO_SetNextFramebuffer(xfb[whichfb]);
+	VIDEO_SetNextFramebuffer(xfb[which_fb]);
 	VIDEO_Flush();
  	VIDEO_WaitVSync();
 	if(vmode->viTVMode&VI_NON_INTERLACE) VIDEO_WaitVSync();
