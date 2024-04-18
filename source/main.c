@@ -654,12 +654,12 @@ static int force_disc(void) {
 		while (!(get_buttons_pressed() & (PAD_BUTTON_RIGHT | PAD_BUTTON_LEFT
 				| PAD_BUTTON_B | PAD_BUTTON_A)))
 			;
-		u32 btns = get_buttons_pressed();
-		if (btns & PAD_BUTTON_RIGHT)
+		u32 buttons = get_buttons_pressed();
+		if (buttons & PAD_BUTTON_RIGHT)
 			type ^= 1;
-		if (btns & PAD_BUTTON_LEFT)
+		if (buttons & PAD_BUTTON_LEFT)
 			type ^= 1;
-		if (btns & PAD_BUTTON_A)
+		if (buttons & PAD_BUTTON_A)
 			break;
 		while ((get_buttons_pressed() & (PAD_BUTTON_RIGHT | PAD_BUTTON_LEFT
 				| PAD_BUTTON_B | PAD_BUTTON_A)))
@@ -706,14 +706,14 @@ int select_storage_device_type(void) {
 		fbm_frame_finish();
 		while (!(get_buttons_pressed() & (PAD_BUTTON_RIGHT | PAD_BUTTON_LEFT
 				| PAD_BUTTON_B | PAD_BUTTON_A)));
-		u32 btns = get_buttons_pressed();
+		u32 buttons = get_buttons_pressed();
 
-		if (btns & PAD_BUTTON_RIGHT)
+		if (buttons & PAD_BUTTON_RIGHT)
 			selected_type ^= 1;
-		if (btns & PAD_BUTTON_LEFT)
+		if (buttons & PAD_BUTTON_LEFT)
 			selected_type ^= 1;
 
-		if (btns & PAD_BUTTON_A)
+		if (buttons & PAD_BUTTON_A)
 			break;
 
 		while ((get_buttons_pressed() & (PAD_BUTTON_RIGHT | PAD_BUTTON_LEFT
@@ -744,12 +744,12 @@ int select_filesystem_type() {
 		fbm_frame_finish();
 		while (!(get_buttons_pressed() & (PAD_BUTTON_RIGHT | PAD_BUTTON_LEFT
 				| PAD_BUTTON_B | PAD_BUTTON_A)));
-		u32 btns = get_buttons_pressed();
-		if (btns & PAD_BUTTON_RIGHT)
+		u32 buttons = get_buttons_pressed();
+		if (buttons & PAD_BUTTON_RIGHT)
 			type ^= 1;
-		if (btns & PAD_BUTTON_LEFT)
+		if (buttons & PAD_BUTTON_LEFT)
 			type ^= 1;
-		if (btns & PAD_BUTTON_A)
+		if (buttons & PAD_BUTTON_A)
 			break;
 		while ((get_buttons_pressed() & (PAD_BUTTON_RIGHT | PAD_BUTTON_LEFT
 				| PAD_BUTTON_B | PAD_BUTTON_A)));
