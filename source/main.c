@@ -270,7 +270,7 @@ void wait_press_A_exit_B(void) {
 	}
 }
 
-static void invalidate_pads(void) {
+static void invalidate_pads() {
 	pad_need_scan = wpad_need_scan = 1;
 }
 
