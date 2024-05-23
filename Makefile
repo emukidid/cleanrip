@@ -17,9 +17,9 @@ include $(DEVKITPRO)/libogc2/wii_rules
 #---------------------------------------------------------------------------------
 TARGET		:=	$(notdir $(CURDIR))
 BUILD		:=	build
-SOURCES		:=	images source source/sha1-c source/crc32 source/http
+SOURCES		:=	images source source/sha1-c source/crc32 source/md5 source/http
 DATA		:=	data
-INCLUDES	:=	include source/sha1-c source/crc32 source/http
+INCLUDES	:=	include source/sha1-c source/crc32 source/md5 source/http
 TEXTURES	:=	images
 
 #---------------------------------------------------------------------------------

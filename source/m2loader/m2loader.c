@@ -27,13 +27,13 @@ extern void usleep(int s);
 extern void print_gecko(const char* fmt, ...);
 
 u16 buffer[256] ATTRIBUTE_ALIGN(32);
-static bool M2Loader_DriveInserted = false;
+static bool is_drive_inserted = false;
 
 // Drive information struct
-typeDriveInfo M2LoaderDriveInfo;
+drive_info m2loader_drive_info;
 
 // Returns 8 bits from the ATA Status register
-inline u8 _M2Loader_ReadStatusReg()
+inline u8 _m2loader_read_status_reg(void)
 {
     // read ATA_REG_CMDSTATUS1 | 0x00 (dummy)
     u16 dat = 0x1700;
@@ -48,7 +48,7 @@ inline u8 _M2Loader_ReadStatusReg()
 }
 
 // Returns 8 bits from the ATA Error register
-inline u8 _M2Loader_ReadErrorReg()
+inline u8 _m2loader_read_error_reg(void)
 {
     // read ATA_REG_ERROR | 0x00 (dummy)
     u16 dat = 0x1100;
@@ -63,7 +63,7 @@ inline u8 _M2Loader_ReadErrorReg()
 }
 
 // Writes 8 bits of data out to the specified ATA Register
-inline void _M2Loader_WriteByte(u8 addr, u8 data)
+inline void _m2loader_write_byte(u8 addr, u8 data)
 {
     u32 dat = 0x80000000 | (addr << 24) | (data << 16);
     EXI_Lock(EXI_CHANNEL_0, EXI_DEVICE_2, NULL);
@@ -74,7 +74,7 @@ inline void _M2Loader_WriteByte(u8 addr, u8 data)
 }
 
 // Writes 16 bits to the ATA Data register
-inline void _M2Loader_WriteU16(u16 data)
+inline void _m2loader_write_u16(u16 data)
 {
     // write 16 bit to ATA_REG_DATA | data LSB | data MSB | 0x00 (dummy)
     u32 dat = 0xD0000000 | (((data >> 8) & 0xff) << 16) | ((data & 0xff) << 8);
@@ -86,7 +86,7 @@ inline void _M2Loader_WriteU16(u16 data)
 }
 
 // Returns 16 bits from the ATA Data register
-inline u16 _M2Loader_ReadU16()
+inline u16 _m2loader_read_u16(void)
 {
     // read 16 bit from ATA_REG_DATA | 0x00 (dummy)
     u16 dat = 0x5000;
@@ -101,7 +101,7 @@ inline u16 _M2Loader_ReadU16()
 }
 
 // Reads 512 bytes
-inline void _M2Loader_ReadBuffer(u32 *dst)
+inline void _m2loader_read_buffer(u32 *dst)
 {
     u16 dwords = 128; // 128 * 4 = 512 bytes
     // (31:29) 011b | (28:24) 10000b | (23:16) <num_words_LSB> | (15:8) <num_words_MSB> | (7:0) 00h (4 bytes)
@@ -129,7 +129,7 @@ inline void _M2Loader_ReadBuffer(u32 *dst)
     EXI_Unlock(EXI_CHANNEL_0);
 }
 
-inline void _M2Loader_WriteBuffer(u32 *src)
+inline void _m2loader_write_buffer(u32 *src)
 {
     u16 dwords = 128; // 128 * 4 = 512 bytes
     // (23:21) 111b | (20:16) 10000b | (15:8) <num_words_LSB> | (7:0) <num_words_MSB> (3 bytes)
@@ -144,7 +144,7 @@ inline void _M2Loader_WriteBuffer(u32 *src)
     EXI_Unlock(EXI_CHANNEL_0);
 }
 
-void _M2Loader_PrintHddSector(u32 *dest)
+void _m2loader_print_hdd_sector(u32 *dest)
 {
     int i = 0;
     for (i = 0; i < 512 / 4; i += 4)
@@ -153,7 +153,7 @@ void _M2Loader_PrintHddSector(u32 *dest)
     }
 }
 
-bool M2Loader_IsInserted()
+bool m2loader_is_inserted(void)
 {
     u32 cid = 0;
     EXI_GetID(EXI_CHANNEL_0, EXI_DEVICE_2, &cid);
@@ -163,20 +163,20 @@ bool M2Loader_IsInserted()
 
 // Sends the IDENTIFY command to the SSD
 // Returns 0 on success, -1 otherwise
-u32 _M2Loader_DriveIdentify()
+u32 _m2loader_drive_identify()
 {
     u16 tmp, retries = 50;
     u32 i = 0;
 
-    memset(&M2LoaderDriveInfo, 0, sizeof(typeDriveInfo));
+    memset(&m2loader_drive_info, 0, sizeof(drive_info));
 
     // Select the device
-    _M2Loader_WriteByte(ATA_REG_DEVICE, 0 /*ATA_HEAD_USE_LBA*/);
+    _m2loader_write_byte(ATA_REG_DEVICE, 0 /*ATA_HEAD_USE_LBA*/);
 
     // Wait for drive to be ready (BSY to clear) - 5 sec timeout
     do
     {
-        tmp = _M2Loader_ReadStatusReg();
+        tmp = _m2loader_read_status_reg();
         usleep(100000); // sleep for 0.1 seconds
         retries--;
 #ifdef _M2LDR_DEBUG
@@ -193,13 +193,13 @@ u32 _M2Loader_DriveIdentify()
     }
 
     // Write the identify command
-    _M2Loader_WriteByte(ATA_REG_COMMAND, ATA_CMD_IDENTIFY);
+    _m2loader_write_byte(ATA_REG_COMMAND, ATA_CMD_IDENTIFY);
 
     // Wait for drive to request data transfer - 1 sec timeout
     retries = 10;
     do
     {
-        tmp = _M2Loader_ReadStatusReg();
+        tmp = _m2loader_read_status_reg();
         usleep(100000); // sleep for 0.1 seconds
         retries--;
 #ifdef _M2LDR_DEBUG
@@ -221,64 +221,64 @@ u32 _M2Loader_DriveIdentify()
     // Read Identify data from drive
     for (i = 0; i < 256; i++)
     {
-        tmp = _M2Loader_ReadU16(); // get data
+        tmp = _m2loader_read_u16(); // get data
         *ptr++ = bswap16(tmp);     // swap
     }
 
     // Get the info out of the Identify data buffer
     // From the command set, check if LBA48 is supported
-    u16 commandSet = *(u16 *)(&buffer[ATA_IDENT_COMMANDSET]);
-    M2LoaderDriveInfo.lba48Support = (commandSet >> 8) & ATA_IDENT_LBA48MASK;
+    u16 command_set = *(u16 *)(&buffer[ATA_IDENT_COMMANDSET]);
+    m2loader_drive_info.lba48_support = (command_set >> 8) & ATA_IDENT_LBA48MASK;
 
-    if (M2LoaderDriveInfo.lba48Support)
+    if (m2loader_drive_info.lba48_support)
     {
         u16 lbaHi = *(u16 *)(&buffer[ATA_IDENT_LBA48SECTORS + 2]);
         u16 lbaMid = *(u16 *)(&buffer[ATA_IDENT_LBA48SECTORS + 1]);
         u16 lbaLo = *(u16 *)(&buffer[ATA_IDENT_LBA48SECTORS]);
-        M2LoaderDriveInfo.sizeInSectors = (u64)(((u64)lbaHi << 32) | (lbaMid << 16) | lbaLo);
-        M2LoaderDriveInfo.sizeInGigaBytes = (u32)((M2LoaderDriveInfo.sizeInSectors << 9) / 1024 / 1024 / 1024);
+        m2loader_drive_info.size_in_sectors = (u64)(((u64)lbaHi << 32) | (lbaMid << 16) | lbaLo);
+        m2loader_drive_info.size_in_gigabytes = (u32)((m2loader_drive_info.size_in_sectors << 9) / 1024 / 1024 / 1024);
     }
     else
     {
-        M2LoaderDriveInfo.cylinders = *(u16 *)(&buffer[ATA_IDENT_CYLINDERS]);
-        M2LoaderDriveInfo.heads = *(u16 *)(&buffer[ATA_IDENT_HEADS]);
-        M2LoaderDriveInfo.sectors = *(u16 *)(&buffer[ATA_IDENT_SECTORS]);
-        M2LoaderDriveInfo.sizeInSectors = ((*(u16 *)&buffer[ATA_IDENT_LBASECTORS + 1]) << 16) |
+        m2loader_drive_info.cylinders = *(u16 *)(&buffer[ATA_IDENT_CYLINDERS]);
+        m2loader_drive_info.heads = *(u16 *)(&buffer[ATA_IDENT_HEADS]);
+        m2loader_drive_info.sectors = *(u16 *)(&buffer[ATA_IDENT_SECTORS]);
+        m2loader_drive_info.size_in_sectors = ((*(u16 *)&buffer[ATA_IDENT_LBASECTORS + 1]) << 16) |
                                           (*(u16 *)&buffer[ATA_IDENT_LBASECTORS]);
-        M2LoaderDriveInfo.sizeInGigaBytes = (u32)((M2LoaderDriveInfo.sizeInSectors << 9) / 1024 / 1024 / 1024);
+        m2loader_drive_info.size_in_gigabytes = (u32)((m2loader_drive_info.size_in_sectors << 9) / 1024 / 1024 / 1024);
     }
 
     i = 20;
     // copy serial string
-    memcpy(&M2LoaderDriveInfo.serial[0], &buffer[ATA_IDENT_SERIAL], 20);
+    memcpy(&m2loader_drive_info.serial[0], &buffer[ATA_IDENT_SERIAL], 20);
     // cut off the string (usually has trailing spaces)
-    while ((M2LoaderDriveInfo.serial[i] == ' ' || !M2LoaderDriveInfo.serial[i]) && i >= 0)
+    while ((m2loader_drive_info.serial[i] == ' ' || !m2loader_drive_info.serial[i]) && i >= 0)
     {
-        M2LoaderDriveInfo.serial[i] = 0;
+        m2loader_drive_info.serial[i] = 0;
         i--;
     }
     // copy model string
-    memcpy(&M2LoaderDriveInfo.model[0], &buffer[ATA_IDENT_MODEL], 40);
+    memcpy(&m2loader_drive_info.model[0], &buffer[ATA_IDENT_MODEL], 40);
     // cut off the string (usually has trailing spaces)
     i = 40;
-    while ((M2LoaderDriveInfo.model[i] == ' ' || !M2LoaderDriveInfo.model[i]) && i >= 0)
+    while ((m2loader_drive_info.model[i] == ' ' || !m2loader_drive_info.model[i]) && i >= 0)
     {
-        M2LoaderDriveInfo.model[i] = 0;
+        m2loader_drive_info.model[i] = 0;
         i--;
     }
 
 #ifdef _M2LDR_DEBUG
-    print_gecko("%d GB SDD Connected\r\n", M2LoaderDriveInfo.sizeInGigaBytes);
-    print_gecko("LBA 48-Bit Mode %s\r\n", M2LoaderDriveInfo.lba48Support ? "Supported" : "Not Supported");
-    if (!M2LoaderDriveInfo.lba48Support)
+    print_gecko("%d GB SDD Connected\r\n", m2loader_drive_info.size_in_gigabytes);
+    print_gecko("LBA 48-Bit Mode %s\r\n", m2loader_drive_info.lba48_support ? "Supported" : "Not Supported");
+    if (!m2loader_drive_info.lba48_support)
     {
-        print_gecko("Cylinders: %i\r\n", M2LoaderDriveInfo.cylinders);
-        print_gecko("Heads Per Cylinder: %i\r\n", M2LoaderDriveInfo.heads);
-        print_gecko("Sectors Per Track: %i\r\n", M2LoaderDriveInfo.sectors);
+        print_gecko("Cylinders: %i\r\n", m2loader_drive_info.cylinders);
+        print_gecko("Heads Per Cylinder: %i\r\n", m2loader_drive_info.heads);
+        print_gecko("Sectors Per Track: %i\r\n", m2loader_drive_info.sectors);
     }
-    print_gecko("Model: %s\r\n", M2LoaderDriveInfo.model);
-    print_gecko("Serial: %s\r\n", M2LoaderDriveInfo.serial);
-    _M2Loader_PrintHddSector((u32 *)&buffer);
+    print_gecko("Model: %s\r\n", m2loader_drive_info.model);
+    print_gecko("Serial: %s\r\n", m2loader_drive_info.serial);
+    _m2loader_print_hdd_sector((u32 *)&buffer);
 #endif
 
     return 0;
@@ -286,18 +286,18 @@ u32 _M2Loader_DriveIdentify()
 
 // Unlocks a ATA HDD with a password
 // Returns 0 on success, -1 on failure.
-int M2Loader_Unlock(int useMaster, char *password, int command)
+int m2loader_unlock(int useMaster, char *password, int command)
 {
     u32 i;
     u16 tmp, retries = 50;
 
     // Select the device
-    _M2Loader_WriteByte(ATA_REG_DEVICE, ATA_HEAD_USE_LBA);
+    _m2loader_write_byte(ATA_REG_DEVICE, ATA_HEAD_USE_LBA);
 
     // Wait for drive to be ready (BSY to clear) - 5 sec timeout
     do
     {
-        tmp = _M2Loader_ReadStatusReg();
+        tmp = _m2loader_read_status_reg();
         usleep(100000); // sleep for 0.1 seconds
         retries--;
 #ifdef _M2LDR_DEBUG
@@ -314,13 +314,13 @@ int M2Loader_Unlock(int useMaster, char *password, int command)
     }
 
     // Write the appropriate unlock command
-    _M2Loader_WriteByte(ATA_REG_COMMAND, command);
+    _m2loader_write_byte(ATA_REG_COMMAND, command);
 
     // Wait for drive to request data transfer - 1 sec timeout
     retries = 10;
     do
     {
-        tmp = _M2Loader_ReadStatusReg();
+        tmp = _m2loader_read_status_reg();
         usleep(100000); // sleep for 0.1 seconds
         retries--;
 #ifdef _M2LDR_DEBUG
@@ -338,8 +338,8 @@ int M2Loader_Unlock(int useMaster, char *password, int command)
     usleep(2000);
 
     // Fill an unlock struct
-    unlockStruct unlock;
-    memset(&unlock, 0, sizeof(unlockStruct));
+    unlock_struct unlock;
+    memset(&unlock, 0, sizeof(unlock_struct));
     unlock.type = (u16)useMaster;
     memcpy(unlock.password, password, strlen(password));
 
@@ -348,94 +348,94 @@ int M2Loader_Unlock(int useMaster, char *password, int command)
     for (i = 0; i < 256; i++)
     {
         ptr[i] = bswap16(ptr[i]);
-        _M2Loader_WriteU16(ptr[i]);
+        _m2loader_write_u16(ptr[i]);
     }
 
     // Wait for BSY to clear
     u32 temp = 0;
-    while ((temp = _M2Loader_ReadStatusReg()) & ATA_SR_BSY)
+    while ((temp = _m2loader_read_status_reg()) & ATA_SR_BSY)
         ;
 
     // If the error bit was set, fail.
     if (temp & ATA_SR_ERR)
     {
 #ifdef _M2LDR_DEBUG
-        print_gecko("Error: %02X\r\n", _M2Loader_ReadErrorReg());
+        print_gecko("Error: %02X\r\n", _m2loader_read_error_reg());
 #endif
 
         return 1;
     }
 
-    return !(_M2Loader_ReadErrorReg() & ATA_ER_ABRT);
+    return !(_m2loader_read_error_reg() & ATA_ER_ABRT);
 }
 
 // Reads sectors from the specified lba, for the specified slot
 // Returns 0 on success, -1 on failure.
-int _M2Loader_ReadSector(u64 lba, u32 *Buffer)
+int _m2loader_read_sector(u64 lba, u32 *Buffer)
 {
     u32 temp = 0;
 
     // Wait for drive to be ready (BSY to clear)
-    while (_M2Loader_ReadStatusReg() & ATA_SR_BSY)
+    while (_m2loader_read_status_reg() & ATA_SR_BSY)
         ;
 
     // Select the device differently based on 28 or 48bit mode
-    if (M2LoaderDriveInfo.lba48Support)
+    if (m2loader_drive_info.lba48_support)
     {
         // Select the device (ATA_HEAD_USE_LBA is 0x40 for master, 0x50 for slave)
-        _M2Loader_WriteByte(ATA_REG_DEVICE, ATA_HEAD_USE_LBA);
+        _m2loader_write_byte(ATA_REG_DEVICE, ATA_HEAD_USE_LBA);
     }
     else
     {
         // Select the device (ATA_HEAD_USE_LBA is 0x40 for master, 0x50 for slave)
-        _M2Loader_WriteByte(ATA_REG_DEVICE, 0xE0 | (u8)((lba >> 24) & 0x0F));
+        _m2loader_write_byte(ATA_REG_DEVICE, 0xE0 | (u8)((lba >> 24) & 0x0F));
     }
 
     // check if drive supports LBA 48-bit
-    if (M2LoaderDriveInfo.lba48Support)
+    if (m2loader_drive_info.lba48_support)
     {
-        _M2Loader_WriteByte(ATA_REG_SECCOUNT, 0);                      // Sector count (Hi)
-        _M2Loader_WriteByte(ATA_REG_LBALO, (u8)((lba >> 24) & 0xFF));  // LBA 4
-        _M2Loader_WriteByte(ATA_REG_LBAMID, (u8)((lba >> 32) & 0xFF)); // LBA 5
-        _M2Loader_WriteByte(ATA_REG_LBAHI, (u8)((lba >> 40) & 0xFF));  // LBA 6
-        _M2Loader_WriteByte(ATA_REG_SECCOUNT, 1);                      // Sector count (Lo)
-        _M2Loader_WriteByte(ATA_REG_LBALO, (u8)(lba & 0xFF));          // LBA 1
-        _M2Loader_WriteByte(ATA_REG_LBAMID, (u8)((lba >> 8) & 0xFF));  // LBA 2
-        _M2Loader_WriteByte(ATA_REG_LBAHI, (u8)((lba >> 16) & 0xFF));  // LBA 3
+        _m2loader_write_byte(ATA_REG_SECCOUNT, 0);                      // Sector count (Hi)
+        _m2loader_write_byte(ATA_REG_LBALO, (u8)((lba >> 24) & 0xFF));  // LBA 4
+        _m2loader_write_byte(ATA_REG_LBAMID, (u8)((lba >> 32) & 0xFF)); // LBA 5
+        _m2loader_write_byte(ATA_REG_LBAHI, (u8)((lba >> 40) & 0xFF));  // LBA 6
+        _m2loader_write_byte(ATA_REG_SECCOUNT, 1);                      // Sector count (Lo)
+        _m2loader_write_byte(ATA_REG_LBALO, (u8)(lba & 0xFF));          // LBA 1
+        _m2loader_write_byte(ATA_REG_LBAMID, (u8)((lba >> 8) & 0xFF));  // LBA 2
+        _m2loader_write_byte(ATA_REG_LBAHI, (u8)((lba >> 16) & 0xFF));  // LBA 3
     }
     else
     {
-        _M2Loader_WriteByte(ATA_REG_SECCOUNT, 1);                     // Sector count
-        _M2Loader_WriteByte(ATA_REG_LBALO, (u8)(lba & 0xFF));         // LBA Lo
-        _M2Loader_WriteByte(ATA_REG_LBAMID, (u8)((lba >> 8) & 0xFF)); // LBA Mid
-        _M2Loader_WriteByte(ATA_REG_LBAHI, (u8)((lba >> 16) & 0xFF)); // LBA Hi
+        _m2loader_write_byte(ATA_REG_SECCOUNT, 1);                     // Sector count
+        _m2loader_write_byte(ATA_REG_LBALO, (u8)(lba & 0xFF));         // LBA Lo
+        _m2loader_write_byte(ATA_REG_LBAMID, (u8)((lba >> 8) & 0xFF)); // LBA Mid
+        _m2loader_write_byte(ATA_REG_LBAHI, (u8)((lba >> 16) & 0xFF)); // LBA Hi
     }
 
     // Write the appropriate read command
-    _M2Loader_WriteByte(ATA_REG_COMMAND, M2LoaderDriveInfo.lba48Support ? ATA_CMD_READSECTEXT : ATA_CMD_READSECT);
+    _m2loader_write_byte(ATA_REG_COMMAND, m2loader_drive_info.lba48_support ? ATA_CMD_READSECTEXT : ATA_CMD_READSECT);
 
     // Wait for BSY to clear
-    while ((temp = _M2Loader_ReadStatusReg()) & ATA_SR_BSY)
+    while ((temp = _m2loader_read_status_reg()) & ATA_SR_BSY)
         ;
 
     // If the error bit was set, fail.
     if (temp & ATA_SR_ERR)
     {
 #ifdef _M2LDR_DEBUG
-        print_gecko("Error: %02X", _M2Loader_ReadErrorReg());
+        print_gecko("Error: %02X", _m2loader_read_error_reg());
 #endif
 
         return 1;
     }
 
     // Wait for drive to request data transfer
-    while (!(_M2Loader_ReadStatusReg() & ATA_SR_DRQ))
+    while (!(_m2loader_read_status_reg() & ATA_SR_DRQ))
         ;
 
     // Read data from drive
-    _M2Loader_ReadBuffer(Buffer);
+    _m2loader_read_buffer(Buffer);
 
-    temp = _M2Loader_ReadStatusReg();
+    temp = _m2loader_read_status_reg();
     if (temp & ATA_SR_ERR)
     {
         return 1; // If the error bit was set, fail.
@@ -446,74 +446,74 @@ int _M2Loader_ReadSector(u64 lba, u32 *Buffer)
 
 // Writes sectors to the specified lba, for the specified slot
 // Returns 0 on success, -1 on failure.
-int _M2Loader_WriteSector(u64 lba, u32 *Buffer)
+int _m2loader_write_sector(u64 lba, u32 *Buffer)
 {
     u32 temp;
 
     // Wait for drive to be ready (BSY to clear)
-    while (_M2Loader_ReadStatusReg() & ATA_SR_BSY)
+    while (_m2loader_read_status_reg() & ATA_SR_BSY)
         ;
 
     // Select the device differently based on 28 or 48bit mode
-    if (M2LoaderDriveInfo.lba48Support)
+    if (m2loader_drive_info.lba48_support)
     {
         // Select the device (ATA_HEAD_USE_LBA is 0x40 for master, 0x50 for slave)
-        _M2Loader_WriteByte(ATA_REG_DEVICE, ATA_HEAD_USE_LBA);
+        _m2loader_write_byte(ATA_REG_DEVICE, ATA_HEAD_USE_LBA);
     }
     else
     {
         // Select the device (ATA_HEAD_USE_LBA is 0x40 for master, 0x50 for slave)
-        _M2Loader_WriteByte(ATA_REG_DEVICE, 0xE0 | (u8)((lba >> 24) & 0x0F));
+        _m2loader_write_byte(ATA_REG_DEVICE, 0xE0 | (u8)((lba >> 24) & 0x0F));
     }
 
     // check if drive supports LBA 48-bit
-    if (M2LoaderDriveInfo.lba48Support)
+    if (m2loader_drive_info.lba48_support)
     {
-        _M2Loader_WriteByte(ATA_REG_SECCOUNT, 0);                      // Sector count (Hi)
-        _M2Loader_WriteByte(ATA_REG_LBALO, (u8)((lba >> 24) & 0xFF));  // LBA 4
-        _M2Loader_WriteByte(ATA_REG_LBAMID, (u8)((lba >> 32) & 0xFF)); // LBA 4
-        _M2Loader_WriteByte(ATA_REG_LBAHI, (u8)((lba >> 40) & 0xFF));  // LBA 5
-        _M2Loader_WriteByte(ATA_REG_SECCOUNT, 1);                      // Sector count (Lo)
-        _M2Loader_WriteByte(ATA_REG_LBALO, (u8)(lba & 0xFF));          // LBA 1
-        _M2Loader_WriteByte(ATA_REG_LBAMID, (u8)((lba >> 8) & 0xFF));  // LBA 2
-        _M2Loader_WriteByte(ATA_REG_LBAHI, (u8)((lba >> 16) & 0xFF));  // LBA 3
+        _m2loader_write_byte(ATA_REG_SECCOUNT, 0);                      // Sector count (Hi)
+        _m2loader_write_byte(ATA_REG_LBALO, (u8)((lba >> 24) & 0xFF));  // LBA 4
+        _m2loader_write_byte(ATA_REG_LBAMID, (u8)((lba >> 32) & 0xFF)); // LBA 4
+        _m2loader_write_byte(ATA_REG_LBAHI, (u8)((lba >> 40) & 0xFF));  // LBA 5
+        _m2loader_write_byte(ATA_REG_SECCOUNT, 1);                      // Sector count (Lo)
+        _m2loader_write_byte(ATA_REG_LBALO, (u8)(lba & 0xFF));          // LBA 1
+        _m2loader_write_byte(ATA_REG_LBAMID, (u8)((lba >> 8) & 0xFF));  // LBA 2
+        _m2loader_write_byte(ATA_REG_LBAHI, (u8)((lba >> 16) & 0xFF));  // LBA 3
     }
     else
     {
-        _M2Loader_WriteByte(ATA_REG_SECCOUNT, 1);                     // Sector count
-        _M2Loader_WriteByte(ATA_REG_LBALO, (u8)(lba & 0xFF));         // LBA Lo
-        _M2Loader_WriteByte(ATA_REG_LBAMID, (u8)((lba >> 8) & 0xFF)); // LBA Mid
-        _M2Loader_WriteByte(ATA_REG_LBAHI, (u8)((lba >> 16) & 0xFF)); // LBA Hi
+        _m2loader_write_byte(ATA_REG_SECCOUNT, 1);                     // Sector count
+        _m2loader_write_byte(ATA_REG_LBALO, (u8)(lba & 0xFF));         // LBA Lo
+        _m2loader_write_byte(ATA_REG_LBAMID, (u8)((lba >> 8) & 0xFF)); // LBA Mid
+        _m2loader_write_byte(ATA_REG_LBAHI, (u8)((lba >> 16) & 0xFF)); // LBA Hi
     }
 
     // Write the appropriate write command
-    _M2Loader_WriteByte(ATA_REG_COMMAND, M2LoaderDriveInfo.lba48Support ? ATA_CMD_WRITESECTEXT : ATA_CMD_WRITESECT);
+    _m2loader_write_byte(ATA_REG_COMMAND, m2loader_drive_info.lba48_support ? ATA_CMD_WRITESECTEXT : ATA_CMD_WRITESECT);
 
     // Wait for BSY to clear
-    while ((temp = _M2Loader_ReadStatusReg()) & ATA_SR_BSY)
+    while ((temp = _m2loader_read_status_reg()) & ATA_SR_BSY)
         ;
 
     // If the error bit was set, fail.
     if (temp & ATA_SR_ERR)
     {
 #ifdef _M2LDR_DEBUG
-        print_gecko("Error: %02X", _M2Loader_ReadErrorReg());
+        print_gecko("Error: %02X", _m2loader_read_error_reg());
 #endif
 
         return 1;
     }
     // Wait for drive to request data transfer
-    while (!(_M2Loader_ReadStatusReg() & ATA_SR_DRQ))
+    while (!(_m2loader_read_status_reg() & ATA_SR_DRQ))
         ;
 
     // Write data to the drive
-    _M2Loader_WriteBuffer(Buffer);
+    _m2loader_write_buffer(Buffer);
 
     // Wait for the write to finish
-    while (_M2Loader_ReadStatusReg() & ATA_SR_BSY)
+    while (_m2loader_read_status_reg() & ATA_SR_BSY)
         ;
 
-    temp = _M2Loader_ReadStatusReg();
+    temp = _m2loader_read_status_reg();
     if (temp & ATA_SR_ERR)
     {
         return 1; // If the error bit was set, fail.
@@ -524,16 +524,16 @@ int _M2Loader_WriteSector(u64 lba, u32 *Buffer)
 
 // Wrapper to read a number of sectors
 // 0 on Success, -1 on Error
-int _M2Loader_ReadSectors(u64 sector, unsigned int numSectors, unsigned char *dest)
+int _m2loader_read_sectors(u64 sector, unsigned int num_sectors, unsigned char *dest)
 {
     int ret = 0;
-    while (numSectors)
+    while (num_sectors)
     {
 #ifdef _M2LDR_DEBUG
-        print_gecko("Reading, sec %08X, numSectors %i, dest %08X ..\r\n", (u32)(sector & 0xFFFFFFFF), numSectors, (u32)dest);
+        print_gecko("Reading, sec %08X, num_sectors %i, dest %08X ..\r\n", (u32)(sector & 0xFFFFFFFF), num_sectors, (u32)dest);
 #endif
 
-        if ((ret = _M2Loader_ReadSector(sector, (u32 *)dest)))
+        if ((ret = _m2loader_read_sector(sector, (u32 *)dest)))
         {
 #ifdef _M2LDR_DEBUG
             print_gecko("(%08X) Failed to read!..\r\n", ret);
@@ -543,12 +543,12 @@ int _M2Loader_ReadSectors(u64 sector, unsigned int numSectors, unsigned char *de
         }
 
 #ifdef _M2LDR_DEBUG
-        _M2Loader_PrintHddSector((u32 *)dest);
+        _m2loader_print_hdd_sector((u32 *)dest);
 #endif
 
         dest += 512;
         sector++;
-        numSectors--;
+        num_sectors--;
     }
 
     return 0;
@@ -556,12 +556,12 @@ int _M2Loader_ReadSectors(u64 sector, unsigned int numSectors, unsigned char *de
 
 // Wrapper to write a number of sectors
 // 0 on Success, -1 on Error
-int _M2Loader_WriteSectors(u64 sector, unsigned int numSectors, unsigned char *src)
+int _m2loader_write_sectors(u64 sector, unsigned int num_sectors, unsigned char *src)
 {
     int ret = 0;
-    while (numSectors)
+    while (num_sectors)
     {
-        if ((ret = _M2Loader_WriteSector(sector, (u32 *)src)))
+        if ((ret = _m2loader_write_sector(sector, (u32 *)src)))
         {
 #ifdef _M2LDR_DEBUG
             print_gecko("(%08X) Failed to write!..\r\n", ret);
@@ -572,54 +572,54 @@ int _M2Loader_WriteSectors(u64 sector, unsigned int numSectors, unsigned char *s
 
         src += 512;
         sector++;
-        numSectors--;
+        num_sectors--;
     }
 
     return 0;
 }
 
-bool M2Loader_IsDriveInserted() 
+bool m2loader_is_drive_inserted(void) 
 {
-    if (M2Loader_DriveInserted)
+    if (is_drive_inserted)
     {
         return true;
     }
 
-    if (_M2Loader_DriveIdentify())
+    if (_m2loader_drive_identify())
     {
         return false;
     }
 
-    M2Loader_DriveInserted = true;
+    is_drive_inserted = true;
 
     return true;
 }
 
-int M2Loader_Shutdown()
+int m2loader_shutdown(void)
 {
-    M2Loader_DriveInserted = 0;
+    is_drive_inserted = 0;
 
     return 1;
 }
 
 static bool __m2ldr_startup(void)
 {
-    return M2Loader_IsDriveInserted();
+    return m2loader_is_drive_inserted();
 }
 
 static bool __m2ldr_isInserted(void)
 {
-    return M2Loader_IsInserted() && M2Loader_IsDriveInserted();
+    return m2loader_is_inserted() && m2loader_is_drive_inserted();
 }
 
-static bool __m2ldr_readSectors(sec_t sector, sec_t numSectors, void *buffer)
+static bool __m2ldr_readSectors(sec_t sector, sec_t num_sectors, void *buffer)
 {
-    return !_M2Loader_ReadSectors((u64)sector, numSectors, buffer);
+    return !_m2loader_read_sectors((u64)sector, num_sectors, buffer);
 }
 
-static bool __m2ldr_writeSectors(sec_t sector, sec_t numSectors, void *buffer)
+static bool __m2ldr_writeSectors(sec_t sector, sec_t num_sectors, void *buffer)
 {
-    return !_M2Loader_WriteSectors((u64)sector, numSectors, buffer);
+    return !_m2loader_write_sectors((u64)sector, num_sectors, buffer);
 }
 
 static bool __m2ldr_clearStatus(void)

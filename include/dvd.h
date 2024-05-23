@@ -34,14 +34,14 @@
 #define NORMAL 0xA8000000
 #define DVDR   0xD0000000
 
-int init_dvd();
-void dvd_motor_off();
+int dvd_initialise_drive(void);
+void dvd_motor_off(void);
 u32 dvd_get_error(void);
-char *dvd_error_str();
-int dvd_read_id();
+char *dvd_error_str(void);
+int dvd_read_id(void);
 void dvd_read_bca(void* dst);
-int DVD_LowRead64(void* dst, u32 len, uint64_t offset);
-int DVD_LowRead64Datel(void* dst, u32 len, uint64_t offset, int isKnownDatel);
-void xeno_disable();
+int dvd_low_read_64(void* dst, u32 len, uint64_t offset);
+int dvd_low_read_64_datel(void* dst, u32 len, uint64_t offset, int is_known_datel);
+void dvd_xeno_disable(void);
 #endif
 
