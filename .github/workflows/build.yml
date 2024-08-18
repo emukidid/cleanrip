@@ -13,7 +13,10 @@ jobs:
 
     - name: Install dependencies
       run: |
-        dkp-pacman -S libogc2
+        dkp-pacman-key --recv-keys C8A2759C315CFBC3429CC2E422B803BA8AA3D7CE --keyserver keyserver.ubuntu.com
+        dkp-pacman-key --finger C8A2759C315CFBC3429CC2E422B803BA8AA3D7CE
+        dkp-pacman-key --lsign-key C8A2759C315CFBC3429CC2E422B803BA8AA3D7CE
+        dkp-pacman -S libogc2-ntfs
 
     - name: Build
       run: |
