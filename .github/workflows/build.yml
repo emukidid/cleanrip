@@ -18,7 +18,7 @@ jobs:
         dkp-pacman-key --lsign-key C8A2759C315CFBC3429CC2E422B803BA8AA3D7CE
         echo "[extremscorner-devkitpro]" >> /opt/devkitpro/pacman/etc/pacman.conf
         echo "Server = https://packages.extremscorner.org/devkitpro/linux/$arch" >> /opt/devkitpro/pacman/etc/pacman.conf
-        dkp-pacman -S libogc2-ntfs
+        dkp-pacman -Sy libogc2-ntfs
 
     - name: Build
       run: |
