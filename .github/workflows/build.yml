@@ -16,7 +16,7 @@ jobs:
         dkp-pacman-key --recv-keys C8A2759C315CFBC3429CC2E422B803BA8AA3D7CE --keyserver keyserver.ubuntu.com
         dkp-pacman-key --lsign-key C8A2759C315CFBC3429CC2E422B803BA8AA3D7CE
         sed -i '/^\[dkp-libs\]$/,$d' /opt/devkitpro/pacman/etc/pacman.conf
-        echo -e '[extremscorner-devkitpro]\nServer = https://packages.extremscorner.org/devkitpro/linux/$arch' >> /opt/devkitpro/pacman/etc/pacman.conf
+        echo "[extremscorner-devkitpro]\nServer = https://packages.extremscorner.org/devkitpro/linux/$arch" >> /opt/devkitpro/pacman/etc/pacman.conf
         dkp-pacman -Sy --noconfirm libogc2-ntfs
 
     - name: Build
