@@ -13,7 +13,7 @@ jobs:
 
     - name: Install dependencies
       run: |
-        dkp-pacman -S libogc2-libntfs ppc-mxml
+        dkp-pacman -S libogc2
 
     - name: Build
       run: |
