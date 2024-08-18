@@ -1,31 +1,33 @@
-name: Wii
+name: Build
 
 on: [push, pull_request, workflow_dispatch]
 
 jobs:
   build:
-    name: ubuntu-latest
+    name: Build
     runs-on: ubuntu-latest
     container: devkitpro/devkitppc:latest
- 
+
     steps:
-    - uses: actions/checkout@v4
-
-    - name: Install dependencies
+    - name: Install packages
       run: |
-        sed -i '/^\[dkp-libs\]$/,$d' /opt/devkitpro/pacman/etc/pacman.conf
-        dkp-pacman-key --recv-keys C8A2759C315CFBC3429CC2E422B803BA8AA3D7CE --keyserver keyserver.ubuntu.com
-        dkp-pacman-key --finger C8A2759C315CFBC3429CC2E422B803BA8AA3D7CE
-        dkp-pacman-key --lsign-key C8A2759C315CFBC3429CC2E422B803BA8AA3D7CE
-        echo "[extremscorner-devkitpro]" >> /opt/devkitpro/pacman/etc/pacman.conf
-        echo "Server = https://packages.extremscorner.org/devkitpro/linux/$arch" >> /opt/devkitpro/pacman/etc/pacman.conf
-        dkp-pacman -Sy --noconfirm libogc2-ntfs
-
-    - name: Build
-      run: |
-        make -j2
+        sudo apt-get update
+        sudo apt-get install -y --no-install-recommends gcc gcc-mingw-w64-i686 libc6-dev libc6-i386 p7zip-full xorriso
+        sudo dkp-pacman-key --recv-keys C8A2759C315CFBC3429CC2E422B803BA8AA3D7CE --keyserver keyserver.ubuntu.com
+        sudo dkp-pacman-key --lsign-key C8A2759C315CFBC3429CC2E422B803BA8AA3D7CE
+        sudo sed -i '/^\[dkp-libs\]$/,$d' /opt/devkitpro/pacman/etc/pacman.conf
+        sudo echo -e '[extremscorner-devkitpro]\nServer = https://packages.extremscorner.org/devkitpro/linux/$arch' >> /opt/devkitpro/pacman/etc/pacman.conf
+        sudo dkp-pacman -Sy
+        sudo dkp-pacman -S --noconfirm --ask 4 libogc2-ntfs
         
-    - name: Upload Artifacts
-      uses: actions/upload-artifact@v4
+    - name: Checkout
+      uses: actions/checkout@main
+
+    - name: Build artifacts
+      run: make
+
+    - name: Upload artifacts
+      uses: actions/upload-artifact@main
       with:
+        name: cleanrip
         path: .
