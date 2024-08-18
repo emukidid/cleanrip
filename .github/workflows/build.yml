@@ -11,14 +11,12 @@ jobs:
     steps:
     - name: Install packages
       run: |
-        sudo apt-get update
-        sudo apt-get install -y --no-install-recommends gcc gcc-mingw-w64-i686 libc6-dev libc6-i386 p7zip-full xorriso
         sudo dkp-pacman-key --recv-keys C8A2759C315CFBC3429CC2E422B803BA8AA3D7CE --keyserver keyserver.ubuntu.com
         sudo dkp-pacman-key --lsign-key C8A2759C315CFBC3429CC2E422B803BA8AA3D7CE
         sudo sed -i '/^\[dkp-libs\]$/,$d' /opt/devkitpro/pacman/etc/pacman.conf
         sudo echo -e '[extremscorner-devkitpro]\nServer = https://packages.extremscorner.org/devkitpro/linux/$arch' >> /opt/devkitpro/pacman/etc/pacman.conf
         sudo dkp-pacman -Sy
-        sudo dkp-pacman -S --noconfirm --ask 4 libogc2-ntfs
+        sudo dkp-pacman -S --noconfirm --ask 4 libogc2-git
         
     - name: Checkout
       uses: actions/checkout@main
