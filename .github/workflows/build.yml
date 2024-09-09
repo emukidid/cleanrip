@@ -24,8 +24,11 @@ jobs:
     - name: Build artifacts
       run: make
 
+    - name: Copy DOL
+      run: cp ./cleanrip.dol ./release/apps/CleanRip/boot.dol
+
     - name: Upload artifacts
       uses: actions/upload-artifact@main
       with:
         name: cleanrip
-        path: .
+        path: ./release/
