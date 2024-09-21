@@ -60,17 +60,16 @@
 /*** 2D Video Globals ***/
 extern GXRModeObj *vmode;	/*** Graphics Mode Object ***/
 extern u32 *xfb[2];			/*** Framebuffers ***/
-extern int whichfb;			/*** Frame buffer toggle ***/
-extern u32 iosversion;
+extern int which_fb;			/*** Frame buffer toggle ***/
+extern u32 ios_version;
 extern int verify_in_use;
 extern int verify_disc_type;
-extern int forceDatel;
 
-u32 get_buttons_pressed();
+u32 get_buttons_pressed(void);
 void print_gecko(const char* fmt, ...);
-const char* const get_game_name();
+const char* const get_game_name(void);
 
-enum discTypes
+enum DiscTypes
 {
 	IS_NGC_DISC=0,
 	IS_WII_DISC,
@@ -78,7 +77,7 @@ enum discTypes
 	IS_UNK_DISC
 };
 
-enum options
+enum DumpOptions
 {
 	NGC_SHRINK_ISO=0,
 	NGC_ALIGN_FILES,
@@ -88,7 +87,7 @@ enum options
 	WII_NEWFILE
 };
 
-enum shrinkOptions
+enum NGCShrinkOptions
 {
   SHRINK_NONE=0,
   SHRINK_PAD_GARBAGE,
@@ -96,14 +95,14 @@ enum shrinkOptions
   SHRINK_DELIM
 };
 
-enum alignOptions
+enum NGCAlignOptions
 {
   ALIGN_ALL=0,
   ALIGN_AUDIO,
   ALIGN_DELIM
 };
 
-enum alignBoundaryOptions
+enum NGCAlignBoundaryOptions
 {
   ALIGN_32=0,
   ALIGN_2,
@@ -111,7 +110,7 @@ enum alignBoundaryOptions
   ALIGNB_DELIM
 };
 
-enum dualOptions
+enum WiiDuallayerOptions
 {
   AUTO_DETECT=0,
   SINGLE_LAYER,
@@ -119,7 +118,7 @@ enum dualOptions
   DUAL_DELIM
 };
 
-enum chunkOptions
+enum FileChunkOptions
 {
   CHUNK_1GB=0,
   CHUNK_2GB,
@@ -128,18 +127,25 @@ enum chunkOptions
   CHUNK_DELIM
 };
 
-enum newFileOptions
+enum NewFileOptions
 {
   ASK_USER=0,
   AUTO_CHUNK,
   NEWFILE_DELIM
 };
 
-enum settingsAskStatus
+enum SettingsAskedStatus
 {
 	NOT_ASKED,
 	ANSWER_YES,
 	ANSWER_NO
+};
+
+enum ShutdownModes
+{
+  NO_SHUTDOWN=0,
+  POWER_OFF,
+  RETURN_TO_HBC,
 };
 
 #endif

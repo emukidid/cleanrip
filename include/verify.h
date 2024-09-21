@@ -21,13 +21,15 @@
 #ifndef VERIFY_H
 #define VERIFY_H
 
+#define MAX_VERIFY_DAT_SIZE (3*1024*1024)
+
 extern int net_initialized;
 
-void verify_init(char *mountPath);
-int verify_findMD5Sum(const char * md5, int disc_type);
+void verify_initialise(char *mount_path);
+int verify_find_md5(const char *md5, int disc_type);
 int verify_is_available(int disc_type);
-int verify_download(char *mountPath);
-char *verify_get_name();
+void verify_download_DAT(char *mount_path);
+char *verify_get_name(void);
 
 #endif
 
