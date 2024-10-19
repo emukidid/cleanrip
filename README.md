@@ -24,7 +24,7 @@ If you have any questions about CleanRip?, please make a thread over at http://w
 
 2. Install libogc2 library. libogc2 is a library for Wii and GameCube homebrew development: https://github.com/extremscorner/libogc2
 
-3. Install dependencies: `pacman -S libogc2-libntfs ppc-mxml`
+3. Install dependencies: `pacman -S libogc2-libntfs libogc2-libfat ppc-mxml`
   
 4. Build the project: Run `make` in the root directory of the project.
 
