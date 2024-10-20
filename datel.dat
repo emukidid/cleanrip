@@ -75,6 +75,91 @@
 		<rom name="NHL Hitz 2002 (USA).iso" size="1459978240" crc="53f2137a" md5="488d2a15d25da53fa4451a5e8471dfbc" sha1="64d8b607aa2b5fa5fbbb5bfb0be149080781370f"/>
 		<skipcrc crc100000="5D1B4684" skipfill="00"/>
 	</game>
+	<game name="Datel SD Media Launcher (USA)">
+		<category>Applications</category>
+		<description>Datel SD Media Launcher (USA)</description>
+		<rom name="Datel SD Media Launcher (USA).iso" size="1459978240" crc="bf4c64e6" md5="2cac9aa25f42efd866cb7d66df0aa074" sha1="41962e01b7dabb388522e35054027d372eb668af"/>
+		<skipcrc crc100000="068D1D83" skipfill="00"/>
+		<skip start="01F00000" stop="4FFFFFFF"/>
+		<skip start="50100000" stop="570FFFFF"/>
+	</game>
+	<game name="Datel SD Media Launcher (Japan)">
+		<category>Applications</category>
+		<description>Datel SD Media Launcher (Japan)</description>
+		<rom name="Datel SD Media Launcher (Japan).iso" size="1459978240" crc="4aa73dab" md5="6bae021c49607c54cc2757f06b157112" sha1="2675ce7a61069b059a9351c1b1af82358fc66b95"/>
+		<skipcrc crc100000="D0CDA8ED" skipfill="00"/>
+		<skip start="01F00000" stop="570FFFFF"/>
+	</game>
+	<game name="Datel Action Replay SD (USA)">
+		<category>Applications</category>
+		<description>Datel Action Replay SD (USA)</description>
+		<rom name="Datel Action Replay SD (USA).iso" size="1459978240" crc="F92A1810" md5="4abf74c4f555d21c21dbb4f95723726e" sha1="ffa4093d80928cca91e9c9550ea61068fb3c057b"/>
+		<skipcrc crc100000="CD995911" skipfill="00"/>
+		<skip start="01F00000" stop="570FFFFF"/>
+	</game>
+	<game name="Datel Action Replay SD (Europe)">
+		<category>Applications</category>
+		<description>Datel Action Replay SD (Europe)</description>
+		<rom name="Datel Action Replay SD (Europe).iso" size="1459978240" crc="33c2104f" md5="3430ef3c82cf055f287cabb8f38c0499" sha1="1f5fef72b72b0eba46791ef4720362ecb0222280"/>
+		<skipcrc crc100000="736C9537" skipfill="00"/>
+		<skip start="01F00000" stop="570FFFFF"/>
+	</game>
+	<game name="Datel Action Replay (v1.0E) (Europe)">
+		<category>Applications</category>
+		<description>Datel Action Replay (v1.0E) (Europe)</description>
+		<rom name="Datel Action Replay (v1.0E) (Europe).iso" size="1459978240" crc="0c8fe4ac" md5="7eb487e103d9e4126e3a3d9530bbeac3" sha1="be61366b1eae6d83891af4bb21c721f6f47a6392"/>
+		<skipcrc crc100000="43AFA4C4" skipfill="00"/>
+		<skip start="01F00000" stop="4FFFFFFF"/>
+		<skip start="50200000" stop="570FFFFF"/>
+	</game>
+	<game name="Karat Pro Action Replay (v1.1)">
+		<category>Applications</category>
+		<description>Karat Pro Action Replay (v1.1)</description>
+		<rom name="Karat Pro Action Replay (v1.1).iso" size="1459978240" crc="01453770" md5="0200be66f1c2ad2765e87c96d3a6be70" sha1="5fa2b07997dfff88a35fcc492994078c0c3e4d73"/>
+		<skipcrc crc100000="40E11F29" skipfill="00"/>
+		<skip start="01000000" stop="4FFFFFFF"/>
+		<skip start="502EF000" stop="570FFFFF"/>
+	</game>
+	<game name="Karat DATARO">
+		<category>Applications</category>
+		<description>Karat DATARO</description>
+		<rom name="Karat DATARO.iso" size="1459978240" crc="80598206" md5="9915520fc759e67cf1c1bed550c4ec76" sha1="fd44a807f3a9d75a03a3ac2e75f93538a515b199"/>
+		<skipcrc crc100000="" skipfill="00"/>
+		<skip start="01000000" stop="4FFFFFFF"/>
+		<skip start="50127000" stop="570FFFFF"/>
+	</game>
+	<game name="Cybergadget Advanced Connector">
+		<category>Applications</category>
+		<description>Cybergadget Advanced Connector</description>
+		<rom name="Cybergadget Advanced Connector.iso" size="1459978240" crc="d2253b41" md5="dcc57af91f31f1a8219e87bb360a6a91" sha1="9e9a4b3ea0d34e59383fc743871e1e02b03953e4"/>
+		<skipcrc crc100000="38E09C11" skipfill="00"/>
+		<skip start="01000000" stop="4FFFFFFF"/>
+		<skip start="50300000" stop="570FFFFF"/>
+	</game>
+	<game name="Datel MaxDrive">
+		<category>Applications</category>
+		<description>Datel MaxDrive</description>
+		<rom name="Datel MaxDrive.iso" size="1459978240" crc="c7c63709" md5="87f9276bc710916251e8629fd6999fe6" sha1="3871dea68ec6229672b0b6f72ade7015bda199c3"/>
+		<skipcrc crc100000="0B7F5E4E" skipfill="00"/>
+		<skip start="01000000" stop="4FFFFFFF"/>
+		<skip start="50100000" stop="570FFFFF"/>
+	</game>
+	<game name="Datel MaxDrive Pro">
+		<category>Applications</category>
+		<description>Datel MaxDrive Pro</description>
+		<rom name="Datel MaxDrive Pro.iso" size="1459978240" crc="167bc847" md5="a23ae6a92196c11ea7277100b169e2ef" sha1="620f39170a5ebb0fabe6118dc720d5f11cf457da"/>
+		<skipcrc crc100000="E2ADDCF9" skipfill="00"/>
+		<skip start="01000000" stop="4FFFFFFF"/>
+		<skip start="50100000" stop="570FFFFF"/>
+	</game>
+	<game name="Datel Powersaves">
+		<category>Applications</category>
+		<description>Datel Powersaves</description>
+		<rom name="Datel Powersaves.iso" size="1459978240" crc="5988c8a8" md5="77e16ad9a0dc4d87f2c9410afbc3ec8e" sha1="f014b99a7a912e0b2aca1f08d2e47082ce560901"/>
+		<skipcrc crc100000="25D6B24C" skipfill="00"/>
+		<skip start="01000000" stop="4FFFFFFF"/>
+		<skip start="500D8000" stop="570FFFFF"/>
+	</game>
 	<game name="Unknown Datel default">
 		<category>Applications</category>
 		<description>Unknown Datel default</description>
