@@ -124,7 +124,7 @@
 		<category>Applications</category>
 		<description>Karat DATARO</description>
 		<rom name="Karat DATARO.iso" size="1459978240" crc="80598206" md5="9915520fc759e67cf1c1bed550c4ec76" sha1="fd44a807f3a9d75a03a3ac2e75f93538a515b199"/>
-		<skipcrc crc100000="" skipfill="00"/>
+		<skipcrc crc100000="B3B75C8B" skipfill="00"/>
 		<skip start="01000000" stop="4FFFFFFF"/>
 		<skip start="50127000" stop="570FFFFF"/>
 	</game>
