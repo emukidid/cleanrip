@@ -120,18 +120,18 @@
 		<skip start="01000000" stop="4FFFFFFF"/>
 		<skip start="502EF000" stop="570FFFFF"/>
 	</game>
-	<game name="Karat DATARO">
+	<game name="Karat Sokukouryaku">
 		<category>Applications</category>
-		<description>Karat DATARO</description>
-		<rom name="Karat DATARO.iso" size="1459978240" crc="F3C0E26A" md5="ecb9182e2fe69c23f140ddcf73353bb8" sha1="e9da77e6115e2f8d9872be29a714bc2642e7587d"/>
+		<description>Karat Sokukouryaku</description>
+		<rom name="Karat Sokukouryaku.iso" size="1459978240" crc="F3C0E26A" md5="ecb9182e2fe69c23f140ddcf73353bb8" sha1="e9da77e6115e2f8d9872be29a714bc2642e7587d"/>
 		<skipcrc crc100000="B3B75C8B" skipfill="00"/>
 		<skip start="01000000" stop="4FFFFFFF"/>
 		<skip start="50127000" stop="570FFFFF"/>
 	</game>
-	<game name="Cybergadget Advanced Connector">
+	<game name="Cybergadget Advance Connector">
 		<category>Applications</category>
-		<description>Cybergadget Advanced Connector</description>
-		<rom name="Cybergadget Advanced Connector.iso" size="1459978240" crc="d2253b41" md5="dcc57af91f31f1a8219e87bb360a6a91" sha1="9e9a4b3ea0d34e59383fc743871e1e02b03953e4"/>
+		<description>Cybergadget Advance Connector</description>
+		<rom name="Cybergadget Advance Connector.iso" size="1459978240" crc="d2253b41" md5="dcc57af91f31f1a8219e87bb360a6a91" sha1="9e9a4b3ea0d34e59383fc743871e1e02b03953e4"/>
 		<skipcrc crc100000="38E09C11" skipfill="00"/>
 		<skip start="01000000" stop="4FFFFFFF"/>
 		<skip start="50300000" stop="570FFFFF"/>
@@ -152,10 +152,10 @@
 		<skip start="01000000" stop="4FFFFFFF"/>
 		<skip start="50100000" stop="570FFFFF"/>
 	</game>
-	<game name="Datel Powersaves">
+	<game name="Datel MAX Memory Powersaves Volume 1">
 		<category>Applications</category>
-		<description>Datel Powersaves</description>
-		<rom name="Datel Powersaves.iso" size="1459978240" crc="5988c8a8" md5="77e16ad9a0dc4d87f2c9410afbc3ec8e" sha1="f014b99a7a912e0b2aca1f08d2e47082ce560901"/>
+		<description>Datel MAX Memory Powersaves Volume 1</description>
+		<rom name="Datel MAX Memory Powersaves Volume 1.iso" size="1459978240" crc="5988c8a8" md5="77e16ad9a0dc4d87f2c9410afbc3ec8e" sha1="f014b99a7a912e0b2aca1f08d2e47082ce560901"/>
 		<skipcrc crc100000="25D6B24C" skipfill="00"/>
 		<skip start="01000000" stop="4FFFFFFF"/>
 		<skip start="500D8000" stop="570FFFFF"/>
