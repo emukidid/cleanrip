@@ -123,7 +123,7 @@
 	<game name="Karat DATARO">
 		<category>Applications</category>
 		<description>Karat DATARO</description>
-		<rom name="Karat DATARO.iso" size="1459978240" crc="80598206" md5="9915520fc759e67cf1c1bed550c4ec76" sha1="fd44a807f3a9d75a03a3ac2e75f93538a515b199"/>
+		<rom name="Karat DATARO.iso" size="1459978240" crc="F3C0E26A" md5="ecb9182e2fe69c23f140ddcf73353bb8" sha1="e9da77e6115e2f8d9872be29a714bc2642e7587d"/>
 		<skipcrc crc100000="B3B75C8B" skipfill="00"/>
 		<skip start="01000000" stop="4FFFFFFF"/>
 		<skip start="50127000" stop="570FFFFF"/>
