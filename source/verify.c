@@ -263,12 +263,14 @@ int verify_findMD5Sum(const char * md5orig, int disc_type) {
 	return 1;
 }
 
-char *verify_get_name() {
-	if(strlen(&gameName[0]) > 32) {
-		 gameName[30] = '.';
-		 gameName[31] = '.';
-		 gameName[32] = 0;
-	 }
+char *verify_get_name(int flag) {
+	if(flag != 0){
+		if(strlen(&gameName[0]) > 32) {
+			gameName[30] = '.';
+			gameName[31] = '.';
+			gameName[32] = 0;
+		}
+	}
 	return &gameName[0];
 }
 
