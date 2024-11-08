@@ -75,6 +75,14 @@
 		<rom name="NHL Hitz 2002 (USA).iso" size="1459978240" crc="53f2137a" md5="488d2a15d25da53fa4451a5e8471dfbc" sha1="64d8b607aa2b5fa5fbbb5bfb0be149080781370f"/>
 		<skipcrc crc100000="5D1B4684" skipfill="00"/>
 	</game>
+	<game name="Datel Freeloader (v1.06B) (Japan)">
+		<category>Applications</category>
+		<description>Datel Freeloader (Japan)</description>
+		<rom name="Datel Freeloader (Japan).iso" size="1459978240" crc="70b1c76f" md5="ecdbcaf15827d198c58446a35744f7df" sha1="4362eface3a8177f81ad63c477f024f59ad6ed3d"/>
+		<skipcrc crc100000="535e4c28" skipfill="00"/>
+		<skip start="01F00000" stop="4FFFFFFF"/>
+		<skip start="50100000" stop="570FFFFF"/>
+	</game>
 	<game name="Datel SD Media Launcher (USA)">
 		<category>Applications</category>
 		<description>Datel SD Media Launcher (USA)</description>
