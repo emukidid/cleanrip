@@ -213,29 +213,28 @@ int datel_findCrcSum(int crcorig) {
 					SkipFill = strtoul(crc, NULL, 16);
 					//print_gecko("Comparing game [%x] and crc [%x]\r\n",mxmlElementGetAttr(nameElem, "name"),mxmlElementGetAttr(crcElem, "crc100000"));
 					if (crcval == crcorig) {
-						snprintf(&gameName[0], 128, "%s", mxmlElementGetAttr(
-								nameElem, "name"));
+						snprintf(&gameName[0], 128, "%s", mxmlElementGetAttr(nameElem, "name"));
 						print_gecko("Found a match!\r\n");
-				mxml_index_t *skipiterator = mxmlIndexNew(gameElem, "skip", NULL);
-				mxml_node_t *skipElem = NULL;
-
-				//print_gecko("Item Pointer OK\r\n");
-				// iterate over all the <game> entries
-				while ((skipElem = mxmlIndexEnum(skipiterator)) != NULL) {
-					if (NumSkips >= MAX_SKIPS)
-						DrawYesNoDialog("datel crc", "TODO: Too many skips.  Fix source code.");
-					char skipstr[64];
-					memset(&skipstr[0], 0, 64);
-					strncpy(&skipstr[0], mxmlElementGetAttr(skipElem, "start"), 32);
-
-					SkipStart[NumSkips] = strtoull(skipstr, NULL, 16);
-
-					memset(&skipstr[0], 0, 64);
-					strncpy(&skipstr[0], mxmlElementGetAttr(skipElem, "stop"), 32);
-
-					SkipStop[NumSkips] = strtoull(skipstr, NULL, 16);
-					NumSkips++;
-				}
+	        				mxml_index_t *skipiterator = mxmlIndexNew(gameElem, "skip", NULL);
+	        				mxml_node_t *skipElem = NULL;
+	
+	        				//print_gecko("Item Pointer OK\r\n");
+	        				// iterate over all the <game> entries
+	        				while ((skipElem = mxmlIndexEnum(skipiterator)) != NULL) {
+	        					if (NumSkips >= MAX_SKIPS)
+	        						DrawYesNoDialog("datel crc", "TODO: Too many skips.  Fix source code.");
+	        					char skipstr[64];
+	        					memset(&skipstr[0], 0, 64);
+	        					strncpy(&skipstr[0], mxmlElementGetAttr(skipElem, "start"), 32);
+	
+	        					SkipStart[NumSkips] = strtoull(skipstr, NULL, 16);
+	
+	        					memset(&skipstr[0], 0, 64);
+	        					strncpy(&skipstr[0], mxmlElementGetAttr(skipElem, "stop"), 32);
+	
+	        					SkipStop[NumSkips] = strtoull(skipstr, NULL, 16);
+	        					NumSkips++;
+	        				}
 						return 1;
 					}
 				}
@@ -291,6 +290,43 @@ void dump_skips(char *mountPath, u32 crc100000) {
 	}
 }
 
+int datel_findMD5Sum(const char * md5orig) {
+
+	char *xmlPointer = datelDAT;
+	if(xmlPointer) {
+		mxml_node_t *pointer = datelXML;
+		
+		pointer = mxmlLoadString(NULL, xmlPointer, MXML_TEXT_CALLBACK);
+    	if (!pointer)
+    		return 0;
+    	    
+    	// open the <datafile>
+    	mxml_node_t *item = mxmlFindElement(pointer, pointer, "datafile", NULL, NULL, MXML_DESCEND);
+    	if (!item)
+    		return 0;
+    	mxml_node_t *md5Elem = mxmlFindElement(item, pointer, NULL, "md5", md5orig, MXML_DESCEND);
+    	if (!md5Elem)
+    		return 0; // We didnt find the md5 in the data file
+    	mxml_node_t *gameElem = mxmlGetParent(md5Elem);
+    	if (!gameElem)
+    		return 0;
+
+    	snprintf(&gameName[0], 128, "%s", mxmlElementGetAttr(gameElem, "name"));
+    	return 1;
+	}
+    return 0;
+}
+
+char *datel_get_name(int flag) {
+    if(flag != 0){
+        if(strlen(&gameName[0]) > 32) {
+    		 gameName[30] = '.';
+    		 gameName[31] = '.';
+    		 gameName[32] = 0;
+    	 }
+    }
+	return &gameName[0];
+}
 
 int datel_is_available() {
 	return datelDAT != NULL;
