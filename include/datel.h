@@ -29,6 +29,8 @@ char *datel_get_name();
 void datel_adjustStartStop(uint64_t* start, u32* length, u32* fill);
 void datel_addSkip(uint64_t start, u32 length);
 void dump_skips(char *mountPath, u32 crc100000);
+int datel_findMD5Sum(const char * md5orig);
+char *datel_get_name(int flag);
 
 #endif
 

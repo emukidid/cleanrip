@@ -1299,31 +1299,57 @@ int dump_game(int disc_type, int type, int fs) {
 			}
 			int verified = (verify_is_available(disc_type) && verify_findMD5Sum(&md5sum[0], disc_type));
 			if(verified){
-				//Rename
-		        	char tempstr[2048];
+				char tempstr[2048];
+				
 				if (opt_chunk_size < endLBA) {
 					for(int i = 0; i < chunk; i++){
 						sprintf(txtbuffer, "%s%s.part%i.iso", &mountPath[0], &gameName[0], i);
 						sprintf(tempstr,   "%s%s.part%i.iso", &mountPath[0], verify_get_name(0), i);
 						rename(txtbuffer, tempstr);
 					}
+					
 				} else {
 					sprintf(txtbuffer, "%s%s.iso", &mountPath[0], &gameName[0]);
 					sprintf(tempstr,   "%s%s.iso", &mountPath[0], verify_get_name(0));
 					rename(txtbuffer, tempstr);
 				}
 			}
+			if((disc_type == IS_DATEL_DISC)) {
+				verified = datel_findMD5Sum(&md5sum[0]); 
+				if(verified) {
+					char tempstr[2048];
+					sprintf(txtbuffer, "%s%s-dumpinfo.txt", &mountPath[0], &gameName[0]);
+					sprintf(tempstr,   "%s%s-dumpinfo.txt", &mountPath[0], datel_get_name(0));
+					rename(txtbuffer, tempstr);
+					
+					sprintf(txtbuffer, "%s%s.bca", &mountPath[0], &gameName[0]);
+					sprintf(tempstr,   "%s%s.bca", &mountPath[0], datel_get_name(0));
+					rename(txtbuffer, tempstr);
+					
+					sprintf(txtbuffer, "%s%s.iso", &mountPath[0], &gameName[0]);
+					sprintf(tempstr, "%s%s.iso", &mountPath[0], datel_get_name(0));
+					rename(txtbuffer, tempstr);
+				}
+			}
+			
 			sprintf(txtbuffer, "MD5: %s", verified ? "Verified OK" : "");
 			WriteCentre(230,txtbuffer);
-			WriteCentre(255,verified ? verify_get_name(1) : "Not Verified with redump.org");
+			if((disc_type == IS_DATEL_DISC)) {
+				WriteCentre(255,verified ? datel_get_name(1) : "Not Verified with datel.dat");
+			}
+			else {
+				WriteCentre(255,verified ? verify_get_name(1) : "Not Verified with redump.org");
+			}
 			WriteCentre(280,&md5sum[0]);
 			dump_info(&md5sum[0], &sha1sum[0], crc32, verified, diff_sec(startTime, gettime()));
+			
 		}
 		else {
 			dump_info(NULL, NULL, 0, 0, diff_sec(startTime, gettime()));
 		}
 		if((disc_type == IS_DATEL_DISC)) {
 			//Rename
+			//CRC計算しないまたはベリファイされなかった場合はcrc100000のファイル名に変更
 			char tempstr[2048];
 			sprintf(txtbuffer, "%s%s-dumpinfo.txt", &mountPath[0], &gameName[0]);
 			sprintf(tempstr,   "%sdatel_%08x-dumpinfo.txt", &mountPath[0], crc100000);
@@ -1336,7 +1362,7 @@ int dump_game(int disc_type, int type, int fs) {
 			sprintf(txtbuffer, "%s%s.iso", &mountPath[0], &gameName[0]);
 			sprintf(tempstr, "%sdatel_%08x.iso", &mountPath[0], crc100000);
 			rename(txtbuffer, tempstr);
-
+			
 			dump_skips(&mountPath[0], crc100000);
 		}
 		WriteCentre(315,"Press  A to continue  B to exit");
