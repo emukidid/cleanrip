@@ -16,8 +16,8 @@ jobs:
         sudo sed -i '/^\[dkp-libs\]$/,$d' /opt/devkitpro/pacman/etc/pacman.conf
         sudo echo -e '[extremscorner-devkitpro]\nServer = https://packages.extremscorner.org/devkitpro/linux/$arch' >> /opt/devkitpro/pacman/etc/pacman.conf
         sudo dkp-pacman -Sy
-        sudo dkp-pacman -S --noconfirm --ask 4 libogc2 libogc2-libfat libogc2-libntfs
-        
+        sudo dkp-pacman -S --noconfirm --ask 4 gamecube-tools-git libogc2 libogc2-libdvm libogc2-libntfs
+
     - name: Checkout
       uses: actions/checkout@main
 

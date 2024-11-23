@@ -17,7 +17,7 @@
 #define EXI_M2LOADER_ID 0x49444533
 #define DEVICE_TYPE_GC_M2LOADER (('M' << 24) | ('2' << 16) | ('L' << 8) | 'R')
 
-extern const DISC_INTERFACE __io_m2ldr;
+extern DISC_INTERFACE __io_m2ldr;
 
 // ATA status register bits
 #define ATA_SR_BSY 0x80
