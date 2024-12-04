@@ -919,15 +919,15 @@ void prompt_new_file(FILE **fp, int chunk, int type, int fs, int silent) {
 		if (fs == TYPE_FAT) {
 			fatUnmount("fat:");
 			if (type == TYPE_SD) {
-				sdcard->shutdown();
+				sdcard->shutdown(sdcard);
 			}
 #ifdef HW_DOL
 			else if (type == TYPE_M2LOADER) {
-				m2loader->shutdown();
+				m2loader->shutdown(m2loader);
 			}
 #else
 			else if (type == TYPE_USB) {
-				usb->shutdown();
+				usb->shutdown(usb);
 			}
 #endif
 		}
@@ -935,15 +935,15 @@ void prompt_new_file(FILE **fp, int chunk, int type, int fs, int silent) {
 			ntfsUnmount(mounts[0].name, true);
 			free(mounts);
 			if (type == TYPE_SD) {
-				sdcard->shutdown();
+				sdcard->shutdown(sdcard);
 			}
 #ifdef HW_DOL
 			else if (type == TYPE_M2LOADER) {
-				m2loader->shutdown();
+				m2loader->shutdown(m2loader);
 			}
 #else
 			else if (type == TYPE_USB) {
-				usb->shutdown();
+				usb->shutdown(usb);
 			}
 #endif
 		}
