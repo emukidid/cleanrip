@@ -3,7 +3,7 @@ A tool to backup your Gamecube/Wii Discs via IOS58
 Create 1:1 backups of your GC/Wii discs for archival purposes without any requirements for custom IOS (cIOS). Supports USB 2.0 / NTFS / exFAT & Front SD.
 
 # Support
-If you have any questions about CleanRip?, please make a thread over at http://www.gc-forever.com/
+If you have any questions about CleanRip, please make a thread over at http://www.gc-forever.com/
 
 # Features
 * exFAT/NTFS
