@@ -16,7 +16,7 @@
 #include <unistd.h>
 #include <ogcsys.h>
 #include <network.h>
-#include <ogc/lwp_watchdog.h>
+#include <ogc/timesupp.h>
 #include <sys/types.h>
 #include <sys/errno.h>
 #include <fcntl.h>

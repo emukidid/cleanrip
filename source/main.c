@@ -29,7 +29,7 @@
 #include <unistd.h>
 #include <malloc.h>
 #include <stdarg.h>
-#include <ogc/lwp_watchdog.h>
+#include <ogc/timesupp.h>
 #include <ogc/machine/processor.h>
 #include "FrameBufferMagic.h"
 #include "IPLFontWrite.h"
@@ -55,17 +55,17 @@
 static ntfs_md *mounts = NULL;
 
 #ifdef HW_RVL
-const DISC_INTERFACE* sdcard = &__io_wiisd;
-const DISC_INTERFACE* usb = &__io_usbstorage;
+static DISC_INTERFACE* sdcard = &__io_wiisd;
+static DISC_INTERFACE* usb = &__io_usbstorage;
 #endif
 #ifdef HW_DOL
 #include <sdcard/gcsd.h>
 #include <sdcard/card_cmn.h>
 #include <sdcard/card_io.h>
 static int sdcard_slot = 0;
-const DISC_INTERFACE* sdcard = &__io_gcsda;
-const DISC_INTERFACE* m2loader = &__io_m2ldr;
-const DISC_INTERFACE* usb = NULL;
+static DISC_INTERFACE* sdcard = &__io_gcsda;
+static DISC_INTERFACE* m2loader = &__io_m2ldr;
+static DISC_INTERFACE* usb = NULL;
 #endif
 
 static int calcChecksums = 0;
@@ -493,7 +493,7 @@ int select_sd_gecko_slot() {
 	return slot;
 }
 
-const DISC_INTERFACE* get_sd_card_handler(int slot) {
+DISC_INTERFACE* get_sd_card_handler(int slot) {
 	switch (slot) {
 		case 1:
 			return &__io_gcsdb;
@@ -519,15 +519,15 @@ static int initialise_device(int type, int fs) {
 		DrawFrameStart();
 		DrawEmptyBox(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
 #endif
-		WriteCentre(255, "Insert a SD FAT32/NTFS formatted device");
+		WriteCentre(255, "Insert a SD FAT/NTFS formatted device");
 	}
 #ifdef HW_DOL
 	else if (type == TYPE_M2LOADER) {
-		WriteCentre(255, "Insert a M.2 FAT32/NTFS formatted device");
+		WriteCentre(255, "Insert a M.2 FAT/NTFS formatted device");
 	}
 #else
 	else if (type == TYPE_USB) {
-		WriteCentre(255, "Insert a USB FAT32/NTFS formatted device");
+		WriteCentre(255, "Insert a USB FAT/NTFS formatted device");
 	}
 #endif
 	WriteCentre(315, "Press  A to continue  B to exit");
@@ -597,11 +597,6 @@ static int initialise_device(int type, int fs) {
 			ret = 1;
 		}
 	}
-#ifdef HW_DOL
-	if (type == TYPE_SD) {
-		sdgecko_setSpeed(sdcard_slot, EXI_SPEED32MHZ);
-	}
-#endif
 	return ret;
 }
 
@@ -917,7 +912,7 @@ void prompt_new_file(FILE **fp, int chunk, int type, int fs, int silent) {
 	fclose(*fp);
 	if(silent == ASK_USER) {
 		if (fs == TYPE_FAT) {
-			fatUnmount("fat:");
+			fatUnmount("fat:/");
 			if (type == TYPE_SD) {
 				sdcard->shutdown(sdcard);
 			}

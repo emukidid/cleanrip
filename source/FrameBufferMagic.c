@@ -82,10 +82,8 @@ void init_textures()
 	TPL_GetTexture(&btnbTPL,btnb,&btnbTexObj);
 	TPL_OpenTPLFromMemory(&boxinnerTPL, (void *)boxinner_tpl, boxinner_tpl_size);
 	TPL_GetTexture(&boxinnerTPL,boxinner,&boxinnerTexObj);
-	GX_InitTexObjWrapMode(&boxinnerTexObj, GX_CLAMP, GX_CLAMP);
 	TPL_OpenTPLFromMemory(&boxouterTPL, (void *)boxouter_tpl, boxouter_tpl_size);
 	TPL_GetTexture(&boxouterTPL,boxouter,&boxouterTexObj);
-	GX_InitTexObjWrapMode(&boxouterTexObj, GX_CLAMP, GX_CLAMP);
 }
 
 void drawInit()
