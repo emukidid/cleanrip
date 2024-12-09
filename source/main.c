@@ -685,6 +685,8 @@ int detect_duallayer_disc() {
 /* the user must specify the device type */
 int device_type() {
 	int selected_type = 0;
+	
+	while ((get_buttons_pressed() & PAD_BUTTON_A));
 	while (1) {
 		DrawFrameStart();
 		DrawEmptyBox(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
