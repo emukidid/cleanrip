@@ -13,16 +13,16 @@
 	<game name="Datel Advanced Game Port (USA)">
 		<category>Applications</category>
 		<description>Datel Advanced Game Port (USA)</description>
-		<rom name="Datel Advanced Game Port (USA).iso" size="1459978240" crc="a2c19b34" md5="b243f748e5fb3d69a0c179987c40420a" sha1="731bd1fc43d6f9cc2e542c1dd6b280e2af3ec1da"/>
-		<skipcrc crc100000="3B60B95A" skipfill="00"/>
+		<rom name="Datel Advanced Game Port (USA).iso" size="1459978240" crc="38fbd370" md5="da06f3a9dad511f77ea5baa786588288" sha1="305fe256e4927b1e8fb54a02e886197b97263508"/>
+		<skipcrc crc100000="3B60B95A" skipfill="55"/>
 		<skip start="01F00000" stop="4FFFFFFF"/>
 		<skip start="50300000" stop="570FFFFF"/>
 	</game>
 	<game name="Datel Advanced Game Port with Cheat Construction Kit (USA)">
 		<category>Applications</category>
 		<description>Datel Advanced Game Port with Cheat Construction Kit (USA)</description>
-		<rom name="Datel Advanced Game Port with Construction Kit (USA).iso" size="1459978240" crc="299b0e92" md5="641a541482216f7ed7787afe94c8da55" sha1="5c80bac589fecdc2085f794b16c7a7120a3af347"/>
-		<skipcrc crc100000="B5B5592A" skipfill="00"/>
+		<rom name="Datel Advanced Game Port with Construction Kit (USA).iso" size="1459978240" crc="f9450866" md5="c8a95eb91168de341237a7450c090865" sha1="ed9f3c29f061b5fde7ec989af515020b241a8fb7"/>
+		<skipcrc crc100000="B5B5592A" skipfill="55"/>
 		<skip start="01F00000" stop="088FFFFF"/>
 		<skip start="08A00000" stop="090FFFFF"/>
 		<skip start="09200000" stop="098FFFFF"/>
@@ -32,7 +32,8 @@
 		<skip start="0B200000" stop="0B8FFFFF"/>
 		<skip start="0BA00000" stop="0C0FFFFF"/>
 		<skip start="0C200000" stop="0C8FFFFF"/>
-		<skip start="0CA00000" stop="0D8FFFFF"/>
+		<skip start="0CA00000" stop="0D1AFFFF"/>
+		<skip start="0D200000" stop="0D8FFFFF"/>
 		<skip start="0DA00000" stop="0E0FFFFF"/>
 		<skip start="0E200000" stop="0E8FFFFF"/>
 		<skip start="0EA00000" stop="0F0FFFFF"/>
@@ -61,6 +62,14 @@
 		<skip start="01F00000" stop="4FFFFFFF"/>
 		<skip start="50100000" stop="570FFFFF"/>
 	</game>
+	<game name="Datel Action Replay (v1.06)">
+		<category>Applications</category>
+		<description>Datel Action Replay (v1.06)</description>
+		<rom name="Datel Action Replay (v1.06).iso" size="1459978240" crc="872f96e4" md5="f89229e8ac5673e85cd296046d0ec804" sha1="c2ab52a11169f39a60a0776137276648d8dda130"/>
+		<skipcrc crc100000="22D62F40" skipfill="55"/>
+		<skip start="01F00000" stop="4FFFFFFF"/>
+		<skip start="50300000" stop="570FFFFF"/>
+	</game>
 	<game name="Datel Action Replay (v1.14A)">
 		<category>Applications</category>
 		<description>Datel Action Replay (v1.14A)</description>
@@ -75,20 +84,27 @@
 		<rom name="NHL Hitz 2002 (USA).iso" size="1459978240" crc="53f2137a" md5="488d2a15d25da53fa4451a5e8471dfbc" sha1="64d8b607aa2b5fa5fbbb5bfb0be149080781370f"/>
 		<skipcrc crc100000="5D1B4684" skipfill="00"/>
 	</game>
-	<game name="Datel Freeloader (v1.06B) (Japan)">
+	<game name="Datel Freeloader (v1.06B)">
 		<category>Applications</category>
-		<description>Datel Freeloader (Japan)</description>
-		<rom name="Datel Freeloader (Japan).iso" size="1459978240" crc="9cb4c020" md5="c8440aa82a0f4305db814a85c890a69d" sha1="4cebfed36ea6f52588c716634ac4c4c020795a4a"/>
-		<skipcrc crc100000="535e4c28" skipfill="55"/>
+		<description>Datel Freeloader (v1.06B)</description>
+		<rom name="Datel Freeloader (v1.06B).iso" size="1459978240" crc="9cb4c020" md5="c8440aa82a0f4305db814a85c890a69d" sha1="4cebfed36ea6f52588c716634ac4c4c020795a4a"/>
+		<skipcrc crc100000="535E4C28" skipfill="55"/>
 		<skip start="01F00000" stop="4FFFFFFF"/>
 		<skip start="50100000" stop="570FFFFF"/>
+	</game>
+	<game name="Datel Freeloader (USA)">
+		<category>Applications</category>
+		<description>Datel Freeloader (USA)</description>
+		<rom name="Datel Freeloader (USA).iso" size="1459978240" crc="d78d4257" md5="32a1e0919aadb9e814d07177428ceb53" sha1="290945962e429ed9da89ca8506d006a913495fec"/>
+		<skipcrc crc100000="4BBAECC9" skipfill="55"/>
+		<skip start="01F00000" stop="570FFFFF"/>
 	</game>
 	<game name="Datel SD Media Launcher (USA)">
 		<category>Applications</category>
 		<description>Datel SD Media Launcher (USA)</description>
 		<rom name="Datel SD Media Launcher (USA).iso" size="1459978240" crc="534963a9" md5="a4b65d0f5e1482f8b15ee99b1f309db6" sha1="9b84f5009bb04b86763330a316c74c0b2204d398"/>
 		<skipcrc crc100000="068D1D83" skipfill="55"/>
-		<skip start="01F00000" stop="4FFFFFFF"/><!--GC redumpは01EF0000 -->
+		<skip start="01F00000" stop="4FFFFFFF"/>
 		<skip start="50100000" stop="570FFFFF"/>
 	</game>
 	<game name="Datel SD Media Launcher (Japan)">
@@ -96,7 +112,7 @@
 		<description>Datel SD Media Launcher (Japan)</description>
 		<rom name="Datel SD Media Launcher (Japan).iso" size="1459978240" crc="7b642b57" md5="4e260af6d573045186b8794587a466a5" sha1="cf5c5e8b9e073a3bbf993cce3910aa0814d9eb96"/>
 		<skipcrc crc100000="D0CDA8ED" skipfill="55"/>
-		<skip start="01F00000" stop="570FFFFF"/><!--GC redumpは01EF0000 -->
+		<skip start="01F00000" stop="570FFFFF"/>
 	</game>
 	<game name="Datel Action Replay SD (USA)">
 		<category>Applications</category>
@@ -118,7 +134,7 @@
 		<description>Datel Action Replay (v1.0E) (Europe)</description>
 		<rom name="Datel Action Replay (v1.0E) (Europe).iso" size="1459978240" crc="03eba636" md5="34f1ea25e476aebce0cbe3ef6f92a2f1" sha1="7e141f84183afe60a31317fabcfcd6764e0fd3fb"/>
 		<skipcrc crc100000="43AFA4C4" skipfill="55"/>
-		<skip start="01F00000" stop="4FFFFFFF"/><!--GC redumpは01EF0000 -->
+		<skip start="01F00000" stop="4FFFFFFF"/>
 		<skip start="50200000" stop="570FFFFF"/>
 	</game>
 	<game name="Karat Pro Action Replay (v1.1)">
@@ -174,6 +190,14 @@
 		<skip start="0AF00000" stop="0B0FFFFF"/>
 		<skip start="0B500000" stop="4FFFFFFF"/>
 		<skip start="50100000" stop="570FFFFF"/>
+	</game>
+	<game name="Datel CD avec les Codes Action Replay Exclusivement pour le Jeu The Legend of Zelda The Wind Waker">
+		<category>Applications</category>
+		<description>Datel CD avec les Codes Action Replay Exclusivement pour le Jeu The Legend of Zelda The Wind Waker</description>
+		<rom name="Datel CD avec les Codes Action Replay Exclusivement pour le Jeu The Legend of Zelda The Wind Waker.iso" size="1459978240" crc="e584a9f1" md5="2881bce3b401482fc548723730583985" sha1="041a57690305fad36334b3c70a2f44edaed84e8b"/>
+		<skipcrc crc100000="34D32A42" skipfill="55"/>
+		<skip start="01F00000" stop="4FFFFFFF"/>
+		<skip start="50300000" stop="570FFFFF"/>
 	</game>
 	<game name="Unknown Datel default">
 		<category>Applications</category>
