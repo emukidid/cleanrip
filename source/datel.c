@@ -170,78 +170,79 @@ void datel_download(char *mountPath) {
 int datel_findCrcSum(int crcorig) {
 
 	NumSkips = 0;
-	print_gecko("Looking for CRC [%x]\r\n", crcorig);
-	char *xmlPointer = datelDAT;
-	if(xmlPointer) {
-		mxml_node_t *pointer = datelXML;
-		
-		pointer = mxmlLoadString(NULL, xmlPointer, MXML_TEXT_CALLBACK);
-		
-		print_gecko("Looking in the Datel XML\r\n");
+	print_gecko("[datel_findCrcSum()]\r\nLooking for CRC in the Datel XML [%x]\r\n", crcorig);
+	char* xmlPointer = datelDAT;
+
+	if (xmlPointer) {
+		mxml_node_t* pointer = datelXML;
+
+		//pointer = mxmlLoadString(NULL, xmlPointer, MXML_TEXT_CALLBACK);
+
+		//print_gecko("Looking in the Datel XML\r\n");
 		if (pointer) {
 			// open the <datafile>
-			mxml_node_t *item = mxmlFindElement(pointer, pointer, "datafile", NULL,
-					NULL, MXML_DESCEND);
-			print_gecko("DataFile Pointer OK\r\n");
+			mxml_node_t* item = mxmlFindElement(pointer, pointer, "datafile", NULL, NULL, MXML_DESCEND);
 			if (item) {
-				mxml_index_t *iterator = mxmlIndexNew(item, "game", NULL);
-				mxml_node_t *gameElem = NULL;
+				//print_gecko("DataFile Pointer OK\r\n");
+				mxml_index_t* iterator = mxmlIndexNew(item, "game", NULL);
+				mxml_node_t* gameElem = NULL;
 
 				//print_gecko("Item Pointer OK\r\n");
 				// iterate over all the <game> entries
 				while ((gameElem = mxmlIndexEnum(iterator)) != NULL) {
 					// get the crc and compare it
-					mxml_node_t *crcElem = mxmlFindElement(gameElem, gameElem,
-							NULL, "crc100000", NULL, MXML_DESCEND);
+					mxml_node_t* crcElem = mxmlFindElement(gameElem, gameElem, NULL, "crc100000", NULL, MXML_DESCEND);
 					// get the name too
-					mxml_node_t *nameElem = mxmlFindElement(gameElem, gameElem,
-							NULL, "name", NULL, MXML_DESCEND);
-					mxml_node_t *fillElem = mxmlFindElement(gameElem, gameElem,
-							NULL, "skipfill", NULL, MXML_DESCEND);
+					mxml_node_t* nameElem = mxmlFindElement(gameElem, gameElem, NULL, "name", NULL, MXML_DESCEND);
+					mxml_node_t* fillElem = mxmlFindElement(gameElem, gameElem, NULL, "skipfill", NULL, MXML_DESCEND);
 
 					char crc[64];
 					memset(&crc[0], 0, 64);
 					strncpy(&crc[0], mxmlElementGetAttr(crcElem, "crc100000"), 32);
 
 					int crcval = strtoul(crc, NULL, 16);
-					if (!strncmp(crc, "default", 7))
-						crcval = crcorig;
-
-					memset(&crc[0], 0, 64);
-					strncpy(&crc[0], mxmlElementGetAttr(fillElem, "skipfill"), 32);
-
-					SkipFill = strtoul(crc, NULL, 16);
-					//print_gecko("Comparing game [%x] and crc [%x]\r\n",mxmlElementGetAttr(nameElem, "name"),mxmlElementGetAttr(crcElem, "crc100000"));
+					//if (!strncmp(crc, "default", 7))
+					//	crcval = crcorig;
+					//print_gecko("Comparing game [%x] and crc [%x]\r\n", mxmlElementGetAttr(nameElem, "name"), mxmlElementGetAttr(crcElem, "crc100000"));
 					if (crcval == crcorig) {
-						snprintf(&gameName[0], 128, "%s", mxmlElementGetAttr(
-								nameElem, "name"));
-						print_gecko("Found a match!\r\n");
-				mxml_index_t *skipiterator = mxmlIndexNew(gameElem, "skip", NULL);
-				mxml_node_t *skipElem = NULL;
+						snprintf(&gameName[0], 128, "%s", mxmlElementGetAttr(nameElem, "name"));
+						print_gecko("Found a match! [%s]\r\n", gameName);
 
-				//print_gecko("Item Pointer OK\r\n");
-				// iterate over all the <game> entries
-				while ((skipElem = mxmlIndexEnum(skipiterator)) != NULL) {
-					if (NumSkips >= MAX_SKIPS)
-						DrawYesNoDialog("datel crc", "TODO: Too many skips.  Fix source code.");
-					char skipstr[64];
-					memset(&skipstr[0], 0, 64);
-					strncpy(&skipstr[0], mxmlElementGetAttr(skipElem, "start"), 32);
+						memset(&crc[0], 0, 64);
+						strncpy(&crc[0], mxmlElementGetAttr(fillElem, "skipfill"), 32);
+						SkipFill = strtoul(crc, NULL, 16);
+						print_gecko("SkipFill = 0x%.2X\r\n", SkipFill);
+						
+						mxml_index_t* skipiterator = mxmlIndexNew(gameElem, "skip", NULL);
+						mxml_node_t* skipElem = NULL;
 
-					SkipStart[NumSkips] = strtoull(skipstr, NULL, 16);
+						//print_gecko("Item Pointer OK\r\n");
+						// iterate over all the <game> entries
+						while ((skipElem = mxmlIndexEnum(skipiterator)) != NULL) {
+							if (NumSkips >= MAX_SKIPS) {
+								DrawYesNoDialog("datel crc", "TODO: Too many skips.  Fix source code.");
+							}
+							char skipstr[64];
 
-					memset(&skipstr[0], 0, 64);
-					strncpy(&skipstr[0], mxmlElementGetAttr(skipElem, "stop"), 32);
+							memset(&skipstr[0], 0, 64);
+							strncpy(&skipstr[0], mxmlElementGetAttr(skipElem, "start"), 32);
+							SkipStart[NumSkips] = strtoull(skipstr, NULL, 16);
 
-					SkipStop[NumSkips] = strtoull(skipstr, NULL, 16);
-					NumSkips++;
-				}
+							memset(&skipstr[0], 0, 64);
+							strncpy(&skipstr[0], mxmlElementGetAttr(skipElem, "stop"), 32);
+							SkipStop[NumSkips] = strtoull(skipstr, NULL, 16);
+
+							print_gecko("Skip %.8X-%.8X\r\n", (u32)(SkipStart[NumSkips] & 0xFFFFFFFF), (u32)(SkipStop[NumSkips] & 0xFFFFFFFF));
+							NumSkips++;
+						}
 						return 1;
 					}
 				}
 			}
 		}
 	}
+	print_gecko("Not Found\r\n");
+    
 	return 0;
 }
 
