@@ -1045,6 +1045,21 @@ void dump_info(char *md5, char *sha1, u32 crc32, int verified, u32 seconds) {
 	}
 }
 
+void renameFile(char* mountPath, char* befor, char* after, char* base) {
+	char tempstr[2048];
+
+	if (mountPath == NULL || befor == NULL || after == NULL || base == NULL) return;
+
+	sprintf(txtbuffer, "%s%s%s", &mountPath[0], &befor[0], &base[0]);
+	sprintf(tempstr, "%s%s%s", &mountPath[0], &after[0], &base[0]);
+	remove(&tempstr[0]);
+	if (rename(txtbuffer, tempstr) == 0) {
+		print_gecko("Renamed: %s\r\n\t->%s\r\n", txtbuffer, tempstr);
+	}
+	else {
+		print_gecko("Rename failed: %s\r\n", txtbuffer);
+	}
+}
 #define MSG_COUNT 8
 #define THREAD_PRIO 128
 
@@ -1306,6 +1321,12 @@ int dump_game(int disc_type, int type, int fs) {
 		}
 		if((disc_type == IS_DATEL_DISC)) {
 			dump_skips(&mountPath[0], crc100000);
+			
+			char tempstr[32];
+			sprintf(tempstr, "datel_%08x", crc100000);
+			renameFile(&mountPath[0], &gameName[0], &tempstr[0], ".bca");
+			renameFile(&mountPath[0], &gameName[0], &tempstr[0], ".iso");
+			renameFile(&mountPath[0], &gameName[0], &tempstr[0], "-dumpinfo.txt");
 		}
 		WriteCentre(315,"Press  A to continue  B to exit");
 		dvd_motor_off();
