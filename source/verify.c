@@ -34,10 +34,7 @@
 #include "http.h"
 #include "main.h"
 
-// Pointers to the two files
-static char *ngcDAT = NULL;
 #ifdef HW_RVL
-static char *wiiDAT = NULL;
 int net_initialized = 0;
 static int dontAskAgain = 0;
 #endif
@@ -50,49 +47,30 @@ static mxml_node_t *wiiXML = NULL;
 #endif
 static char gameName[256];
 
-void verify_init(char *mountPath) {
+void verify_init(const char *mountPath) {
 	if (verify_initialized) {
 		return;
 	}
-	
-	if(ngcDAT) {
-		if(ngcXML) {
-			mxmlDelete(ngcXML);
-			free(ngcXML);
-		}
-		free(ngcDAT);
+
+	if (ngcXML) {
+		mxmlDelete(ngcXML);
+		ngcXML = NULL;
 	}
+
 #ifdef HW_RVL
-	if(wiiDAT) {
-		free(wiiDAT);
-		if(wiiXML) {
-			mxmlDelete(wiiXML);
-			free(wiiXML);
-		}
+	if (wiiXML) {
+		mxmlDelete(wiiXML);
+		wiiXML = NULL;
 	}
 #endif
 
 	mxmlSetErrorCallback((mxml_error_cb_t)print_gecko);
-	FILE *fp = NULL;
 	// Check for the Gamecube Redump.org DAT and read it
 	sprintf(txtbuffer, "%sgc.dat", mountPath);
-	fp = fopen(txtbuffer, "rb");
+	FILE *fp = fopen(txtbuffer, "rb");
 	if (fp) {
-		fseek(fp, 0, SEEK_END);
-		int size = ftell(fp);
-		fseek(fp, 0, SEEK_SET);
-		if (size > 0) {
-			ngcDAT = (char*) memalign(32, size);
-			if (ngcDAT) {
-				fread(ngcDAT, 1, size, fp);
-			}		
-		}
+		ngcXML = mxmlLoadFile(NULL, fp, MXML_OPAQUE_CALLBACK);
 		fclose(fp);
-		fp = NULL;
-	}
-
-	if (ngcDAT) {
-		ngcXML = mxmlLoadString(NULL, ngcDAT, MXML_OPAQUE_CALLBACK);
 	}
 
 #ifdef HW_RVL
@@ -100,36 +78,27 @@ void verify_init(char *mountPath) {
 	sprintf(txtbuffer, "%swii.dat", mountPath);
 	fp = fopen(txtbuffer, "rb");
 	if (fp) {
-		fseek(fp, 0L, SEEK_END);
-		int size = ftell(fp);
-		fseek(fp, 0, SEEK_SET);
-		if (size > 0) {
-			wiiDAT = (char*) memalign(32, size);
-			if (wiiDAT) {
-				fread(wiiDAT, 1, size, fp);
-			}
-		}	
+		wiiXML = mxmlLoadFile(NULL, fp, MXML_OPAQUE_CALLBACK);
 		fclose(fp);
-		fp = NULL;
 	}
-	
-	if (wiiDAT) {
-		wiiXML = mxmlLoadString(NULL, wiiDAT, MXML_OPAQUE_CALLBACK);
+
+	if (!wiiXML) {
+		print_gecko("Wii DAT File not found\r\n");
+		return;
 	}
 #endif // #ifdef HW_RVL
 
-#ifdef HW_RVL
-	print_gecko("DAT Files [NGC: %s] [Wii: %s]\r\n", ngcDAT ? "YES":"NO", wiiDAT ? "YES":"NO");
-	verify_initialized = ((ngcDAT&&ngcXML) && (wiiDAT&&wiiXML));
-#else
-	print_gecko("DAT Files [NGC: %s]\r\n", ngcDAT ? "YES":"NO");
-	verify_initialized = (ngcDAT&&ngcXML);
-#endif
+	if (!ngcXML) {
+		print_gecko("NGC DAT File not found\r\n");
+		return;
+	}
+
+	verify_initialized = 1;
 }
 
 #ifdef HW_RVL
 // If there was some new files obtained, return 1, else 0
-void verify_download(char *mountPath) {
+void verify_download(const char *mountPath) {
 	if(dontAskAgain) {
 		return;
 	}
@@ -227,7 +196,7 @@ void verify_download(char *mountPath) {
 }
 #endif
 
-int verify_findMD5Sum(const char * md5orig, int disc_type) {
+int verify_findMD5Sum(const char *md5orig, int disc_type) {
 
 	print_gecko("Looking for MD5 [%s]\r\n", md5orig);
 
@@ -274,8 +243,8 @@ char *verify_get_name() {
 
 int verify_is_available(int disc_type) {
 #ifdef HW_RVL
-	return (disc_type == IS_NGC_DISC) ? (ngcDAT != NULL) : (wiiDAT != NULL);
+	return (disc_type == IS_NGC_DISC) ? (ngcXML != NULL) : (wiiXML != NULL);
 #else
-	return (disc_type == IS_NGC_DISC) ? (ngcDAT != NULL) : 0;
+	return (disc_type == IS_NGC_DISC) ? (ngcXML != NULL) : 0;
 #endif
 }
