@@ -143,10 +143,14 @@ u32 dvd_get_error(void) {
 	return dvd[8];
 }
 
-void dvd_motor_off() {
+void dvd_motor_off(int eject) {
+#ifndef HW_RVL
+	// Lets not tempt fate on GameCube
+	eject = 0;
+#endif
 	dvd[0] = 0x2E;
 	dvd[1] = 0;
-	dvd[2] = 0xe3000000;
+	dvd[2] = 0xe3000000 | ((eject & 1) << 17);
 	dvd[3] = 0;
 	dvd[4] = 0;
 	dvd[5] = 0;

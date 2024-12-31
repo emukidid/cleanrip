@@ -35,7 +35,7 @@
 #define DVDR   0xD0000000
 
 int init_dvd();
-void dvd_motor_off();
+void dvd_motor_off(int eject);
 u32 dvd_get_error(void);
 char *dvd_error_str();
 int dvd_read_id();

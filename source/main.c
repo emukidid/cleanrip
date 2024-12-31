@@ -945,7 +945,7 @@ void prompt_new_file(FILE **fp, int chunk, int type, int fs, int silent) {
 #endif
 		}
 		// Stop the disc if we're going to wait on the user
-		dvd_motor_off();
+		dvd_motor_off(0);
 	}
 
 	if(silent == ASK_USER) {
@@ -1278,7 +1278,7 @@ int dump_game(int disc_type, int type, int fs) {
 		sprintf(txtbuffer, "%s",dvd_error_str());
 		WriteCentre(255,txtbuffer);
 		WriteCentre(315,"Press  A  to continue");
-		dvd_motor_off();
+		dvd_motor_off(1);
 		wait_press_A();
 		return 0;
 	}
@@ -1288,7 +1288,7 @@ int dump_game(int disc_type, int type, int fs) {
 		sprintf(txtbuffer, "Copy Cancelled");
 		WriteCentre(255,txtbuffer);
 		WriteCentre(315,"Press  A  to continue");
-		dvd_motor_off();
+		dvd_motor_off(0);
 		wait_press_A();
 		return 0;
 	}
@@ -1329,7 +1329,7 @@ int dump_game(int disc_type, int type, int fs) {
 			renameFile(&mountPath[0], &gameName[0], &tempstr[0], "-dumpinfo.txt");
 		}
 		WriteCentre(315,"Press  A to continue  B to exit");
-		dvd_motor_off();
+		dvd_motor_off(1);
 		wait_press_A_exit_B();
 	}
 	return 1;
