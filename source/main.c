@@ -1346,9 +1346,12 @@ int dump_game(int disc_type, int type, int fs) {
 			
 			char tempstr[32];
 			sprintf(tempstr, "datel_%08x", crc100000);
-			renameFile(&mountPath[0], &gameName[0], &tempstr[0], ".bca");
 			renameFile(&mountPath[0], &gameName[0], &tempstr[0], ".iso");
 			renameFile(&mountPath[0], &gameName[0], &tempstr[0], "-dumpinfo.txt");
+			renameFile(&mountPath[0], &gameName[0], &tempstr[0], ".skp");
+#ifdef HW_RVL
+			renameFile(&mountPath[0], &gameName[0], &tempstr[0], ".bca");
+#endif
 		}
 		WriteCentre(315,"Press  A to continue  B to exit");
 		dvd_motor_off(1);
