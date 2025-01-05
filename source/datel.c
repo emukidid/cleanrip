@@ -291,6 +291,57 @@ void dump_skips(char *mountPath, u32 crc100000) {
 	}
 }
 
+int datel_findMD5Sum(const char* md5orig) {
+
+	print_gecko("[datel_findMD5Sum()]\r\nLooking for MD5 [%s]\r\n", md5orig);
+
+	char* xmlPointer = datelDAT;
+	if (xmlPointer) {
+		mxml_node_t* pointer = datelXML;
+
+		pointer = mxmlLoadString(NULL, xmlPointer, MXML_TEXT_CALLBACK);
+		if (!pointer)
+			return 0;
+
+		print_gecko("Looking in the Datel XML\r\n");
+		// open the <datafile>
+		mxml_node_t* item = mxmlFindElement(pointer, pointer, "datafile", NULL, NULL, MXML_DESCEND);
+		if (!item) {
+			print_gecko("Not Found\r\n");
+			return 0;
+		}
+
+		print_gecko("DataFile Pointer OK\r\n");
+		mxml_node_t* md5Elem = mxmlFindElement(item, pointer, NULL, "md5", md5orig, MXML_DESCEND);
+		if (!md5Elem) {
+			print_gecko("Not Found\r\n");
+			return 0; // We didnt find the md5 in the data file
+		}
+
+		mxml_node_t* gameElem = mxmlGetParent(md5Elem);
+		if (!gameElem) {
+			print_gecko("Not Found\r\n");
+			return 0;
+		}
+
+		snprintf(&gameName[0], 128, "%s", mxmlElementGetAttr(gameElem, "name"));
+		print_gecko("Found a match! [%s]\r\n", gameName);
+
+		return 1;
+	}
+	return 0;
+}
+
+char* datel_get_name(int flag) {
+	if (flag != 0) {
+		if (strlen(&gameName[0]) > 32) {
+			gameName[30] = '.';
+			gameName[31] = '.';
+			gameName[32] = 0;
+		}
+	}
+	return &gameName[0];
+}
 
 int datel_is_available() {
 	return datelDAT != NULL;
