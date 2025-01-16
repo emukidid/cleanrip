@@ -620,12 +620,16 @@ static int identify_disc() {
 	} else {
 		sprintf(&gameName[0], "disc%i", dumpCounter);
 	}
-	if ((*(volatile u32*) (readbuf+0x1C)) == NGC_MAGIC) {
+	if ((*(volatile u32*)(readbuf + 0x1C)) == NGC_MAGIC) {
+		print_gecko("NGC disc\r\n");
 		return IS_NGC_DISC;
 	}
-	if ((*(volatile u32*) (readbuf+0x18)) == WII_MAGIC) {
+	if ((*(volatile u32*)(readbuf + 0x18)) == WII_MAGIC) {
+		print_gecko("Wii disc\r\n");
 		return IS_WII_DISC;
-	} else {
+	}
+	else {
+		print_gecko("Unkown disc\r\n");
 		return IS_UNK_DISC;
 	}
 }
@@ -673,12 +677,21 @@ static int force_disc() {
 */
 int detect_duallayer_disc() {
 	char *readBuf = (char*)memalign(32,64);
-	uint64_t offsetToSecondLayer = (uint64_t)WII_D5_SIZE << 11;
-	int ret = WII_D5_SIZE;
-	if (DVD_LowRead64(readBuf, 64, offsetToSecondLayer) == 0) {
+	int ret = WII_D1_SIZE;
+	uint64_t offset = (uint64_t)WII_D1_SIZE << 11;
+	if (DVD_LowRead64(readBuf, 64, offset) == 0) {
+		ret = WII_D5_SIZE;
+	}
+	offset = (uint64_t)WII_D5_SIZE << 11;//offsetToSecondLayer
+	if (DVD_LowRead64(readBuf, 64, offset) == 0) {
 		ret = WII_D9_SIZE;
 	}
 	free(readBuf);
+
+	print_gecko("Detect: %s\r\n", (ret == WII_D1_SIZE) ? "Wii mini DVD size"
+		: (ret == WII_D5_SIZE) ? "Wii Single Layer"
+		: "Wii Dual Layer");
+
 	return ret;
 }
 
@@ -793,10 +806,12 @@ char *getDualLayerOption() {
 	int opt = options_map[WII_DUAL_LAYER];
 	if (opt == AUTO_DETECT)
 		return "Auto";
+	else if (opt == SINGLE_MINI)
+		return "1.4GB";
 	else if (opt == SINGLE_LAYER)
-		return "No";
+		return "4.4GB";
 	else if (opt == DUAL_LAYER)
-		return "Yes";
+		return "8GB";
 	return 0;
 }
 
@@ -875,13 +890,13 @@ static void get_settings(int disc_type) {
 		*/
 		}
 		// Wii Settings
-		else if(disc_type == IS_WII_DISC) {
-			WriteFont(80, 160+(32*1), "Dual Layer");
-			DrawSelectableButton(vmode->fbWidth-220, 160+(32*1), -1, 160+(32*1)+30, getDualLayerOption(), (!currentSettingPos) ? B_SELECTED:B_NOSELECT, -1);
-			WriteFont(80, 160+(32*2), "Chunk Size");
-			DrawSelectableButton(vmode->fbWidth-220, 160+(32*2), -1, 160+(32*2)+30, getChunkSizeOption(), (currentSettingPos==1) ? B_SELECTED:B_NOSELECT, -1);
-			WriteFont(80, 160+(32*3), "New device per chunk");
-			DrawSelectableButton(vmode->fbWidth-220, 160+(32*3), -1, 160+(32*3)+30, getNewFileOption(), (currentSettingPos==2) ? B_SELECTED:B_NOSELECT, -1);
+		else if (disc_type == IS_WII_DISC) {
+			WriteFont(80, 160 + (32 * 1), "Dump Size");
+			DrawSelectableButton(vmode->fbWidth - 220, 160 + (32 * 1), -1, 160 + (32 * 1) + 30, getDualLayerOption(), (!currentSettingPos) ? B_SELECTED : B_NOSELECT, -1);
+			WriteFont(80, 160 + (32 * 2), "Chunk Size");
+			DrawSelectableButton(vmode->fbWidth - 220, 160 + (32 * 2), -1, 160 + (32 * 2) + 30, getChunkSizeOption(), (currentSettingPos == 1) ? B_SELECTED : B_NOSELECT, -1);
+			WriteFont(80, 160 + (32 * 3), "New device per chunk");
+			DrawSelectableButton(vmode->fbWidth - 220, 160 + (32 * 3), -1, 160 + (32 * 3) + 30, getNewFileOption(), (currentSettingPos == 2) ? B_SELECTED : B_NOSELECT, -1);
 		}
 		WriteCentre(370,"Press  A  to continue");
 		DrawAButton(265,360);
@@ -1099,9 +1114,10 @@ int dump_game(int disc_type, int type, int fs) {
 
 	u32 startLBA = 0;
 	u32 endLBA = (disc_type == IS_NGC_DISC || disc_type == IS_DATEL_DISC) ? NGC_DISC_SIZE
-			: (options_map[WII_DUAL_LAYER] == AUTO_DETECT ? detect_duallayer_disc()
-				: (options_map[WII_DUAL_LAYER] == DUAL_LAYER ? WII_D9_SIZE 
-					: WII_D5_SIZE));
+		: (options_map[WII_DUAL_LAYER] == AUTO_DETECT ? detect_duallayer_disc()
+			: (options_map[WII_DUAL_LAYER] == SINGLE_MINI ? WII_D1_SIZE
+				: (options_map[WII_DUAL_LAYER] == DUAL_LAYER ? WII_D9_SIZE
+					: WII_D5_SIZE)));
 
 	// Work out the chunk size
 	u32 chunk_size_wii = options_map[WII_CHUNK_SIZE];
@@ -1117,7 +1133,7 @@ int dump_game(int disc_type, int type, int fs) {
 		opt_chunk_size = (chunk_size_wii + 1) * ONE_GIGABYTE;
 	}
 
-	if (disc_type == IS_NGC_DISC || disc_type == IS_DATEL_DISC) {
+	if (disc_type == IS_NGC_DISC || disc_type == IS_DATEL_DISC || options_map[WII_DUAL_LAYER] == SINGLE_MINI) {
 		opt_chunk_size = NGC_DISC_SIZE;
 	}
 
@@ -1330,9 +1346,12 @@ int dump_game(int disc_type, int type, int fs) {
 			
 			char tempstr[32];
 			sprintf(tempstr, "datel_%08x", crc100000);
-			renameFile(&mountPath[0], &gameName[0], &tempstr[0], ".bca");
 			renameFile(&mountPath[0], &gameName[0], &tempstr[0], ".iso");
 			renameFile(&mountPath[0], &gameName[0], &tempstr[0], "-dumpinfo.txt");
+			renameFile(&mountPath[0], &gameName[0], &tempstr[0], ".skp");
+#ifdef HW_RVL
+			renameFile(&mountPath[0], &gameName[0], &tempstr[0], ".bca");
+#endif
 		}
 		WriteCentre(315,"Press  A to continue  B to exit");
 		dvd_motor_off(1);

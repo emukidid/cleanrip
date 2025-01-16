@@ -42,6 +42,7 @@
 #define ONE_GIGABYTE    0x080000
 
 #define NGC_DISC_SIZE   0x0AE0B0
+#define WII_D1_SIZE     NGC_DISC_SIZE //Freeloader Wii (mini DVD size)
 #define WII_D5_SIZE     0x230480
 #define WII_D9_SIZE     0x3F69C0
 
@@ -114,6 +115,7 @@ enum alignBoundaryOptions
 enum dualOptions
 {
   AUTO_DETECT=0,
+  SINGLE_MINI,
   SINGLE_LAYER,
   DUAL_LAYER,
   DUAL_DELIM
