@@ -201,7 +201,8 @@ int verify_findMD5Sum(const char *md5orig, int disc_type) {
 	print_gecko("Looking for MD5 [%s]\r\n", md5orig);
 
 #ifdef HW_RVL
-	mxml_node_t *pointer = (disc_type == IS_NGC_DISC)  ? ngcXML : wiiXML;
+	mxml_node_t *pointer = (disc_type == IS_NGC_DISC)  ? ngcXML
+		: (disc_type == IS_WII_DISC) ? wiiXML : NULL;
 #else
 	mxml_node_t *pointer = (disc_type == IS_NGC_DISC)  ? ngcXML : NULL;
 #endif
@@ -232,18 +233,21 @@ int verify_findMD5Sum(const char *md5orig, int disc_type) {
 	return 1;
 }
 
-char *verify_get_name() {
-	if(strlen(&gameName[0]) > 32) {
-		 gameName[30] = '.';
-		 gameName[31] = '.';
-		 gameName[32] = 0;
-	 }
+char *verify_get_name(int flag) {
+	if (flag != 0) {
+		if (strlen(&gameName[0]) > 32) {
+			gameName[30] = '.';
+			gameName[31] = '.';
+			gameName[32] = 0;
+		}
+	}
 	return &gameName[0];
 }
 
 int verify_is_available(int disc_type) {
 #ifdef HW_RVL
-	return (disc_type == IS_NGC_DISC) ? (ngcXML != NULL) : (wiiXML != NULL);
+	return (disc_type == IS_NGC_DISC) ? (ngcXML != NULL)
+		: (disc_type == IS_WII_DISC) ? (wiiXML != NULL) : 0;
 #else
 	return (disc_type == IS_NGC_DISC) ? (ngcXML != NULL) : 0;
 #endif

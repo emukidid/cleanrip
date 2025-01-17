@@ -264,7 +264,9 @@ void wait_press_A_exit_B() {
 		while (!(get_buttons_pressed() & (PAD_BUTTON_A | PAD_BUTTON_B)));
 		if (get_buttons_pressed() & PAD_BUTTON_A) {
 			break;
-		} else if (get_buttons_pressed() & PAD_BUTTON_B) {
+		}
+		else if (get_buttons_pressed() & PAD_BUTTON_B) {
+			print_gecko("Exit\r\n");
 			exit(0);
 		}
 	}
@@ -454,6 +456,7 @@ static int initialise_dvd() {
 		DrawFrameStart();
 		DrawEmptyBox(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
 		WriteCentre(255, "No disc detected");
+		print_gecko("No disc detected\r\n");
 		DrawFrameFinish();
 		sleep(3);
 	}
@@ -1035,7 +1038,7 @@ void dump_bca() {
 	}
 }
 
-void dump_info(char *md5, char *sha1, u32 crc32, int verified, u32 seconds) {
+void dump_info(char *md5, char *sha1, u32 crc32, int verified, u32 seconds, char* name) {
 	char infoLine[1024];
 	char timeLine[256];
 	memset(infoLine, 0, 1024);
@@ -1057,7 +1060,14 @@ void dump_info(char *md5, char *sha1, u32 crc32, int verified, u32 seconds) {
 						  "Version: 1.0%i\r\nChecksum calculations disabled\r\nDuration: %u min. %u sec\r\nDumped at: %s.\r\n",
 				V_MAJOR,V_MID,V_MINOR,&gameName[0],&internalName[0], *(u8*)0x80000007, seconds/60, seconds%60, timeLine);
 	}
-	sprintf(txtbuffer, "%s%s-dumpinfo.txt", &mountPath[0], &gameName[0]);
+
+	if (name != NULL) {
+		sprintf(txtbuffer, "%s%s-dumpinfo.txt", &mountPath[0], &name[0]);
+	}
+	else {
+		sprintf(txtbuffer, "%s%s-dumpinfo.txt", &mountPath[0], &gameName[0]);
+	}
+	
 	remove(&txtbuffer[0]);
 	FILE *fp = fopen(txtbuffer, "wb");
 	if (fp) {
@@ -1298,6 +1308,7 @@ int dump_game(int disc_type, int type, int fs) {
 		DrawFrameStart();
 		DrawEmptyBox (30,180, vmode->fbWidth-38, 350, COLOR_BLACK);
 		sprintf(txtbuffer, "%s",dvd_error_str());
+		print_gecko("Error: %s\r\n",txtbuffer);
 		WriteCentre(255,txtbuffer);
 		WriteCentre(315,"Press  A  to continue");
 		dvd_motor_off(1);
@@ -1308,6 +1319,7 @@ int dump_game(int disc_type, int type, int fs) {
 		DrawFrameStart();
 		DrawEmptyBox (30,180, vmode->fbWidth-38, 350, COLOR_BLACK);
 		sprintf(txtbuffer, "Copy Cancelled");
+		print_gecko("%s\r\n",txtbuffer);
 		WriteCentre(255,txtbuffer);
 		WriteCentre(315,"Press  A  to continue");
 		dvd_motor_off(0);
@@ -1319,7 +1331,14 @@ int dump_game(int disc_type, int type, int fs) {
 		DrawFrameStart();
 		DrawEmptyBox (30,180, vmode->fbWidth-38, 350, COLOR_BLACK);
 		WriteCentre(190,txtbuffer);
-		if(calcChecksums) {
+
+		int verified = 0;
+		char tempstr[32];
+
+		if ((disc_type == IS_DATEL_DISC)) {
+				dump_skips(&mountPath[0], crc100000);
+		}
+		if (calcChecksums) {
 			char md5sum[64];
 			char sha1sum[64];
 			memset(&md5sum[0], 0, 64);
@@ -1331,17 +1350,55 @@ int dump_game(int disc_type, int type, int fs) {
 			else {
 				sprintf(sha1sum, "Error computing SHA-1");
 			}
-			int verified = (verify_is_available(disc_type) && verify_findMD5Sum(&md5sum[0], disc_type));
+
+			char* name = NULL;
+			verified = (verify_is_available(disc_type) && verify_findMD5Sum(&md5sum[0], disc_type));
+			if (verified) {
+				if (opt_chunk_size < endLBA) {
+					for (int i = 0; i < chunk; i++) {
+						sprintf(tempstr, ".part%i.iso", i);
+						renameFile(&mountPath[0], &gameName[0], verify_get_name(0), &tempstr[0]);
+					}
+				}
+				else {
+					renameFile(&mountPath[0], &gameName[0], verify_get_name(0), ".iso");
+				}
+#ifdef HW_RVL
+				renameFile(&mountPath[0], &gameName[0], verify_get_name(0), ".bca");
+#endif
+
+				name = verify_get_name(0);
+			}
+			if ((disc_type == IS_DATEL_DISC)) {
+				verified = datel_findMD5Sum(&md5sum[0]);
+				if (verified) {
+					renameFile(&mountPath[0], &gameName[0], datel_get_name(0), ".iso");
+					renameFile(&mountPath[0], &gameName[0], datel_get_name(0), ".skp");
+#ifdef HW_RVL
+					renameFile(&mountPath[0], &gameName[0], datel_get_name(0), ".bca");
+#endif
+					name = datel_get_name(0);
+				}
+			}
+
+			dump_info(&md5sum[0], &sha1sum[0], crc32, verified, diff_sec(startTime, gettime()), name);
+
+			print_gecko("MD5: %s\r\n", verified ? "Verified OK" : "Not Verified ");
+
 			sprintf(txtbuffer, "MD5: %s", verified ? "Verified OK" : "");
-			WriteCentre(230,txtbuffer);
-			WriteCentre(255,verified ? verify_get_name() : "Not Verified with redump.org");
-			WriteCentre(280,&md5sum[0]);
-			dump_info(&md5sum[0], &sha1sum[0], crc32, verified, diff_sec(startTime, gettime()));
+			WriteCentre(230, txtbuffer);
+			if ((disc_type == IS_DATEL_DISC)) {
+				WriteCentre(255, verified ? datel_get_name(1) : "Not Verified with datel.dat");
+			}
+			else {
+				WriteCentre(255, verified ? verify_get_name(1) : "Not Verified with redump.org");
+			}
+			WriteCentre(280, &md5sum[0]);
 		}
 		else {
-			dump_info(NULL, NULL, 0, 0, diff_sec(startTime, gettime()));
+			dump_info(NULL, NULL, 0, 0, diff_sec(startTime, gettime()), NULL);
 		}
-		if((disc_type == IS_DATEL_DISC)) {
+		if ((disc_type == IS_DATEL_DISC) && !(verified)) {
 			dump_skips(&mountPath[0], crc100000);
 			
 			char tempstr[32];
