@@ -49,6 +49,9 @@
 #include <ogc/usbstorage.h>
 #include <sdcard/wiisd_io.h>
 #include <wiiuse/wpad.h>
+
+#include "libpatcher.h"
+#include "patches.h"
 #endif
 
 #include <ntfs.h>
@@ -293,6 +296,10 @@ void ShutdownWii() {
 
 /* start up the GameCube/Wii */
 static void Initialise() {
+// /dev/sha IOS exploit to disable AHBPROT
+#ifdef HW_RVL
+	apply_patches();
+#endif
 	// Initialise the video system
 	VIDEO_Init();
 
