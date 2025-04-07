@@ -16,7 +16,7 @@ If you have any questions about CleanRip, please make a thread over at http://ww
 * Wii (or GC)
 * Wii/GC Controller
 * USB or SD storage device (>1.35GB free space)
-* HBC 1.0.8 or greater installed 
+* A method of booting homebrew (Homebrew Channel recommended)
 
 # Build
 

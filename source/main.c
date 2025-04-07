@@ -33,6 +33,7 @@
 #include <ogc/machine/processor.h>
 #include "FrameBufferMagic.h"
 #include "IPLFontWrite.h"
+#include "ios.h"
 #include "gc_dvd.h"
 #include "verify.h"
 #include "datel.h"
@@ -293,6 +294,9 @@ void ShutdownWii() {
 
 /* start up the GameCube/Wii */
 static void Initialise() {
+#ifdef HW_RVL
+	disable_ahbprot();
+#endif
 	// Initialise the video system
 	VIDEO_Init();
 
@@ -1418,7 +1422,11 @@ int dump_game(int disc_type, int type, int fs) {
 }
 
 int main(int argc, char **argv) {
-
+#ifdef HW_RVL
+	// disable ahbprot and reload IOS to clear up memory
+	IOS_ReloadIOS(IOS_GetVersion());
+	disable_ahbprot();
+#endif
 	Initialise();
 #ifdef HW_RVL
 	iosversion = IOS_GetVersion();
