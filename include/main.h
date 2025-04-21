@@ -55,7 +55,7 @@
 
 // Version info
 #define V_MAJOR			2
-#define V_MID			2
+#define V_MID			3
 #define V_MINOR			0
 
 /*** 2D Video Globals ***/
