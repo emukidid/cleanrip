@@ -23,7 +23,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
-#include <ogc/dvd.h>
+#include <ogc/dvdlow.h>
 #include <malloc.h>
 #include <string.h>
 #include <gccore.h>
@@ -47,7 +47,9 @@ volatile u32* dvd = (volatile u32*)0xCC006000;
 int init_dvd() {
 	// Gamecube Mode
 #ifdef HW_DOL
-	DVD_Reset(DVD_RESETHARD);
+	DVD_LowReset(DVD_RESETHARD);
+	usleep(1150000);
+	DVD_LowReset(DVD_RESETHARD);
 	dvd_read_id();
 	if (!dvd_get_error()) {
 		xeno_disable();
