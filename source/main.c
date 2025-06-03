@@ -273,7 +273,7 @@ void wait_press_A_exit_B() {
 	}
 }
 
-static void InvalidatePADS() {
+static void InvalidatePADS(u32 retrace) {
 	padNeedScan = wpadNeedScan = 1;
 }
 

@@ -25,7 +25,6 @@ void datel_init(char *mountPath);
 int datel_findCrcSum(int crc);
 int datel_is_available(int disc_type);
 int datel_download(char *mountPath);
-char *datel_get_name();
 void datel_adjustStartStop(uint64_t* start, u32* length, u32* fill);
 void datel_addSkip(uint64_t start, u32 length);
 void dump_skips(char *mountPath, u32 crc100000);
