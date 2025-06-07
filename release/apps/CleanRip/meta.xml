@@ -2,7 +2,7 @@
 <app version="1">
   <name>CleanRip</name>
   <coder>emu_kidid</coder>
-  <version>2.3.0</version>
+  <version>2.3.1</version>
   <release_date>20240202</release_date>
   <short_description>Wii/GC Disc Ripper Tool</short_description> 
   <long_description>
@@ -17,7 +17,6 @@
     - Wii
     - Wii/GC Controller
     - USB or SD storage device (>1.35GB free space)
-    - HBC 1.0.8 or greater installed
 </long_description> 
 <ahb_access />
 </app>
