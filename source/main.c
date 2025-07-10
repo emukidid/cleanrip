@@ -277,17 +277,6 @@ static void InvalidatePADS(u32 retrace) {
 	padNeedScan = wpadNeedScan = 1;
 }
 
-/* check for ahbprot */
-int have_hw_access() {
-	if (read32(HW_ARMIRQMASK) && read32(HW_ARMIRQFLAG)) {
-		// disable DVD irq for starlet
-		mask32(HW_ARMIRQMASK, 1<<18, 0);
-		print_gecko("AHBPROT access OK\r\n");
-		return 1;
-	}
-	return 0;
-}
-
 void ShutdownWii() {
 	shutdown = 1;
 }
@@ -383,7 +372,7 @@ static int FindIOS(u32 ios) {
 
 /* check for AHBPROT & IOS58 */
 static void hardware_checks() {
-	if (!have_hw_access()) {
+	if (!AHBPROT_DISABLED) {
 		DrawFrameStart();
 		DrawEmptyBox(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
 		WriteCentre(190, "AHBPROT check failed");
@@ -400,10 +389,22 @@ static void hardware_checks() {
 		DrawFrameStart();
 		DrawEmptyBox(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
 		WriteCentre(190, "IOS Version check failed");
-		WriteCentre(255, "IOS 58 exists but is not in use");
+		WriteCentre(255, "IOS58 exists but is not in use");
 		WriteCentre(280, "Dumping to USB will be SLOW!");
 		WriteCentre(315, "Press  A to continue  B to exit");
 		wait_press_A_exit_B();
+		// We should just ask them to reload into IOS58. This is probably due to them installing HBC via the HackMii Installer, but them not having IOS58 installed therefore it using IOS61, or whatever else it could use.
+		int reloadIntoIOS58 = DrawYesNoDialog("Would you like to use IOS58?", "This allows for USB 2.0 speeds.");
+		if (reloadIntoIOS58) {
+			WPAD_Shutdown(); // Shut down Wii Remote input (WPAD)
+			IOS_ReloadIOS(58);
+			iosversion = 58;
+			disable_ahbprot(); // We must also re-run the IOS exploit, as reloading IOS re-enables AHBPROT.
+			WPAD_Init(); // Reinit WPAD
+		}
+		else {
+			// Just continue
+		}
 	}
 	if (!ios58exists) {
 		DrawFrameStart();
