@@ -64,7 +64,7 @@ static DISC_INTERFACE* usb = &__io_usbstorage;
 #include <sdcard/card_cmn.h>
 #include <sdcard/card_io.h>
 static int sdcard_slot = 0;
-static DISC_INTERFACE* sdcard = &__io_gcsda;
+static DISC_INTERFACE* sdcard = NULL;
 static DISC_INTERFACE* m2loader = &__io_m2ldr;
 static DISC_INTERFACE* usb = NULL;
 #endif
@@ -503,11 +503,11 @@ int select_sd_gecko_slot() {
 DISC_INTERFACE* get_sd_card_handler(int slot) {
 	switch (slot) {
 		case 1:
-			return &__io_gcsdb;
+			return get_io_gcsdb();
 		case 2:
-			return &__io_gcsd2;
+			return get_io_gcsd2();
 		default: /* Also handles case 0 */
-			return &__io_gcsda;
+			return get_io_gcsda();
 	}
 }
 #endif
