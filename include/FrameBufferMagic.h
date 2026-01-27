@@ -1,8 +1,8 @@
 /**
  * CleanRip - FrameBufferMagic.h
- * Copyright (C) 2010 emu_kidid
+ * Copyright (C) 2010-2026 emu_kidid
  *
- * CleanRip homepage: http://code.google.com/p/cleanrip/
+ * CleanRip homepage: https://github.com/emukidid/cleanrip/
  * email address: emukidid@gmail.com
  *
  *
@@ -38,8 +38,12 @@
 #define BUTTON_COLOUR_INNER COLOR_BLUE
 #define BUTTON_COLOUR_OUTER COLOR_SILVER
 
+#define MESSAGE_BOX_WIDTH  572
+#define MESSAGE_BOX_HEIGHT 170
 #define PROGRESS_BOX_WIDTH  572
 #define PROGRESS_BOX_HEIGHT 170
+#define PROGRESS_BOX_DETAILED_WIDTH  572
+#define PROGRESS_BOX_DETAILED_HEIGHT 240
 #define PROGRESS_BOX_BAR    COLOR_GREEN
 #define PROGRESS_BOX_BARALL COLOR_RED
 #define PROGRESS_BOX_BACK   COLOR_BLUE
@@ -54,7 +58,8 @@ enum TextureId
 void init_textures();
 void DrawFrameStart();
 void DrawFrameFinish();
-void DrawProgressBar(int percent, char *message);
+void DrawProgressBar(int percent, char *message, int discType);
+void DrawProgressDetailed(int percent, char *message, int startMb, int endMb, char *discTypeStr, int calculateCheckSums, int discType);
 void DrawMessageBox(int type, char *message);
 void DrawRawFont(int x, int y, char *message);
 void DrawSelectableButton(int x1, int y1, int x2, int y2, char *message, int mode, u32 color);

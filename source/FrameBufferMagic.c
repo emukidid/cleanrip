@@ -1,10 +1,10 @@
 /**
  * CleanRip - FrameBufferMagic.c
- * Copyright (C) 2010 emu_kidid
+ * Copyright (C) 2010-2026 emu_kidid
  *
  * Framebuffer routines for drawing
  *
- * CleanRip homepage: http://code.google.com/p/cleanrip/
+ * CleanRip homepage: https://github.com/emukidid/cleanrip
  * email address: emukidid@gmail.com
  *
  *
@@ -27,9 +27,11 @@
 #include <malloc.h>
 #include <gccore.h>
 #include <ogc/exi.h>
+#include <math.h>
 #include "FrameBufferMagic.h"
 #include "IPLFontWrite.h"
 #include "main.h"
+#include "verify.h"
 
 #include "backdrop_tpl.h"
 #include "backdrop.h"
@@ -221,6 +223,192 @@ void DrawBButton(int x, int y) {
 	DrawImage(TEX_BTNB, x, y, 36, 36, 0, 0.0f, 1.0f, 0.0f, 1.0f);
 }
 
+#define DISC_SEGMENTS 64
+static void DrawRingGradient(
+    float cx, float cy, float depth,
+    float innerR, float outerR,
+    GXColor innerColor,
+    GXColor outerColor
+) {
+    float angleStep = (2.0f * M_PI) / DISC_SEGMENTS;
+
+    GX_Begin(GX_TRIANGLESTRIP, GX_VTXFMT0, (DISC_SEGMENTS + 1) * 2);
+
+    for (int i = 0; i <= DISC_SEGMENTS; i++) {
+        float a  = i * angleStep;
+        float ca = cosf(a);
+        float sa = sinf(a);
+
+        float ix = cx + ca * innerR;
+        float iy = cy + sa * innerR;
+
+        float ox = cx + ca * outerR;
+        float oy = cy + sa * outerR;
+
+        GX_Position3f32(ix, iy, depth);
+        GX_Color4u8(innerColor.r, innerColor.g, innerColor.b, innerColor.a);
+        GX_TexCoord2f32(0.0f, 0.0f);
+
+        GX_Position3f32(ox, oy, depth);
+        GX_Color4u8(outerColor.r, outerColor.g, outerColor.b, outerColor.a);
+        GX_TexCoord2f32(0.0f, 0.0f);
+    }
+
+    GX_End();
+}
+
+static void DrawSpecularArc(
+    float cx, float cy, float depth,
+    float innerR, float outerR,
+    float startAngle, float endAngle,
+    GXColor color
+) {
+    GX_Begin(GX_TRIANGLESTRIP, GX_VTXFMT0, (DISC_SEGMENTS + 1) * 2);
+
+    for (int i = 0; i <= DISC_SEGMENTS; i++) {
+        float t = (float)i / (float)DISC_SEGMENTS;
+        float a = startAngle + t * (endAngle - startAngle);
+
+        float ca = cosf(a);
+        float sa = sinf(a);
+
+        // Fade alpha toward edges of arc
+        GXColor fade = color;
+        fade.a = (u8)(color.a * (1.0f - fabsf(t - 0.5f) * 2.0f));
+
+        float ix = cx + ca * innerR;
+        float iy = cy + sa * innerR;
+
+        float ox = cx + ca * outerR;
+        float oy = cy + sa * outerR;
+
+        GX_Position3f32(ix, iy, depth);
+        GX_Color4u8(fade.r, fade.g, fade.b, fade.a);
+        GX_TexCoord2f32(0.0f, 0.0f);
+
+        GX_Position3f32(ox, oy, depth);
+        GX_Color4u8(fade.r, fade.g, fade.b, fade.a);
+        GX_TexCoord2f32(0.0f, 0.0f);
+    }
+
+    GX_End();
+}
+
+static void DrawRing(
+    float cx, float cy, float depth,
+    float innerR, float outerR,
+    GXColor color
+) {
+    float angleStep = (2.0f * M_PI) / DISC_SEGMENTS;
+
+    GX_Begin(GX_TRIANGLESTRIP, GX_VTXFMT0, (DISC_SEGMENTS + 1) * 2);
+
+    for (int i = 0; i <= DISC_SEGMENTS; i++) {
+        float a  = i * angleStep;
+        float ca = cosf(a);
+        float sa = sinf(a);
+
+        float ix = cx + ca * innerR;
+        float iy = cy + sa * innerR;
+
+        float ox = cx + ca * outerR;
+        float oy = cy + sa * outerR;
+
+        GX_Position3f32(ix, iy, depth);
+        GX_Color4u8(color.r, color.g, color.b, color.a);
+        GX_TexCoord2f32(0.0f, 0.0f);
+
+        GX_Position3f32(ox, oy, depth);
+        GX_Color4u8(color.r, color.g, color.b, color.a);
+        GX_TexCoord2f32(0.0f, 0.0f);
+    }
+
+    GX_End();
+}
+
+
+void DrawDiscPercent(
+    float cx, float cy, float depth,
+    float innerRadius, float outerRadius,
+    int percentage,
+    GXColor fillColor,
+    float originX, float originY, bool isDualLayer
+) {
+    drawInit();
+    GX_SetTevOp(GX_TEVSTAGE0, GX_PASSCLR);
+
+    float diameter = outerRadius * 2.0f;
+    float ox = cx - diameter * originX;
+    float oy = cy - diameter * originY;
+
+    float centerX = ox + outerRadius;
+    float centerY = oy + outerRadius;
+
+    float r_clear_inner  = innerRadius;
+    float r_mirror_start = innerRadius + (outerRadius - innerRadius) * 0.10f;
+    float r_data_start   = innerRadius + (outerRadius - innerRadius) * 0.25f;
+    float r_outer_clear  = outerRadius - (outerRadius - innerRadius) * 0.05f;
+
+    GXColor col_clear_inner = (GXColor){220,220,220,80};
+    GXColor col_mirror = (GXColor){200,200,200,255};
+    GXColor col_data = (GXColor){200, 185, 120, 255};
+    GXColor col_clear_outer = (GXColor){220,220,220,60};
+
+    // Mirror ring, data start, data and data end areas
+    DrawRing(centerX, centerY, depth, r_clear_inner, r_mirror_start, col_clear_inner);
+    DrawRing(centerX, centerY, depth, r_mirror_start, r_data_start, col_mirror);
+    DrawRing(centerX, centerY, depth, r_data_start, r_outer_clear, col_data);
+    DrawRing(centerX, centerY, depth, r_outer_clear, outerRadius, col_clear_outer);
+	
+	// Data area gradient
+	GXColor dataInner = (GXColor){225, 210, 160, 255};
+	GXColor dataOuter = (GXColor){180, 165, 120, 255};
+
+	DrawRingGradient(centerX, centerY, depth,
+					 r_data_start, r_outer_clear,
+					 dataInner, dataOuter);
+
+	// Arc to give it some shine
+	GXColor highlight = (GXColor){255, 255, 255, 120};
+	DrawSpecularArc(centerX, centerY, depth - 0.002f,
+					r_data_start, r_outer_clear,
+					20.0f * M_PI / 180.0f,
+					70.0f * M_PI / 180.0f,
+					highlight);
+
+	// Progress overlay drawing
+	
+	// Special dual layer progress overlay
+	if(isDualLayer) {
+		if(percentage > 50) {
+			// draw the first layer as done.
+			float fillOuter =
+				r_data_start + (r_outer_clear - r_data_start) * 1.0f;
+
+			DrawRing(centerX, centerY, depth - 0.001f,
+					 r_data_start, fillOuter,
+					 fillColor);
+			
+			percentage = (percentage - 50) * 2;
+			fillColor = (GXColor){fillColor.r, fillColor.g, fillColor.b, 225};
+		}
+		else {
+			percentage = percentage * 2;
+		}
+	}
+	// regular percentage overlay
+	if (percentage > 0) {
+		float p = (float)percentage / 100.0f;
+
+		float fillOuter =
+			r_data_start + (r_outer_clear - r_data_start) * p;
+
+		DrawRing(centerX, centerY, depth - 0.001f,
+				 r_data_start, fillOuter,
+				 fillColor);
+	}
+}
+
 void _DrawBackdrop() {
 	char iosStr[256];
 	DrawImage(TEX_BACKDROP, 0, 0, 640, 480, 0, 0.0f, 1.0f, 0.0f, 1.0f);
@@ -232,16 +420,13 @@ void _DrawBackdrop() {
 	WriteFont(510, 40, "GameCube");
 #endif
 
-	sprintf(iosStr, "v%i.%i.%i by emu_kidid", V_MAJOR,V_MID,V_MINOR);
-	WriteFont(225, 40, iosStr);
-	if (verify_in_use) {
-		if(verify_disc_type == IS_NGC_DISC) {
-			WriteCentre(440, "Gamecube Redump.org DAT in use");
-		}
-		else if(verify_disc_type == IS_WII_DISC) {
-			WriteCentre(440, "Wii Redump.org DAT in use");
-		}
+	if(V_MINOR) {
+		sprintf(iosStr, "v%i.%i.%i by emu_kidid", V_MAJOR,V_MID,V_MINOR);
 	}
+	else {
+		sprintf(iosStr, "v%i.%i by emu_kidid", V_MAJOR,V_MID);
+	}
+	WriteFont(225, 40, iosStr);
 }
 
 // Externally accessible functions
@@ -265,7 +450,20 @@ void DrawFrameFinish() {
 	if(vmode->viTVMode&VI_NON_INTERLACE) VIDEO_WaitVSync();
 }
 
-void DrawProgressBar(int percent, char *message) {
+void DrawDatInfo(int disc_type) {
+	if (verify_type_in_use == VERIFY_REDUMP_DAT_GC) {
+			WriteCentre(440, "Gamecube Redump.org DAT in use");
+	}
+	else if(verify_type_in_use == VERIFY_REDUMP_DAT_WII) {
+		WriteCentre(440, "Wii Redump.org DAT in use");
+	}
+	else {
+		sprintf(txtbuffer, "Internal CRC list in use (%s)", verify_get_internal_updated(disc_type));
+		WriteCentre(440, txtbuffer);
+	}
+}
+
+void DrawProgressBar(int percent, char *message, int discType) {
 	int x1 = ((640/2) - (PROGRESS_BOX_WIDTH/2));
 	int x2 = ((640/2) + (PROGRESS_BOX_WIDTH/2));
 	int y1 = ((480/2) - (PROGRESS_BOX_HEIGHT/2));
@@ -288,14 +486,58 @@ void DrawProgressBar(int percent, char *message) {
 	WriteFontStyled(640/2, middleY, message, scale, true, defaultColor);
 	sprintf(txtbuffer,"%d %% complete",percent);
 	WriteFontStyled(640/2, middleY+30, txtbuffer, 1.0f, true, defaultColor);
+	
+	DrawDatInfo(discType);
+}
+
+void DrawProgressDetailed(int percent, char *message, int startMb, int endMb, char *discTypeStr, int calculateCheckSums, int discType) {
+	int x1 = ((640/2) - (PROGRESS_BOX_DETAILED_WIDTH/2));
+	int x2 = ((640/2) + (PROGRESS_BOX_DETAILED_WIDTH/2));
+	int y1 = ((480/2) - (PROGRESS_BOX_DETAILED_HEIGHT/2));
+	int y2 = ((480/2) + (PROGRESS_BOX_DETAILED_HEIGHT/2));
+  	GXColor fillColor = (GXColor) {0,0,0,GUI_MSGBOX_ALPHA}; //black
+	GXColor borderColor = (GXColor) {200,200,200,GUI_MSGBOX_ALPHA}; //silver
+	
+	DrawSimpleBox( x1, y1, x2-x1, y2-y1, 0, fillColor, borderColor); 
+	int numLines = 1;
+
+	for (int i = 0; message[i]; i++)
+		if (message[i] == '\n')
+			numLines++;
+
+	int startY = ((y2+y1)/2) - ((numLines*24)/2);
+	char *tok = strtok(message,"\n");
+	while(tok != NULL) {
+		WriteFontStyled(x1 + 20, startY, tok, 0.85f, false, defaultColor);
+		tok = strtok(NULL,"\n");
+		startY+=24;
+	}
+	sprintf(txtbuffer,"%s disc", discTypeStr);
+	WriteFontStyled(x1 + 20, y1 + 10, txtbuffer, 1.0f, false, defaultColor);
+
+	sprintf(txtbuffer,"%04d", startMb);
+	WriteFontStyled(x2 - 190, y1 + 10, txtbuffer, 0.75f, false, defaultColor);
+	sprintf(txtbuffer,"/ %d MB", endMb);
+	WriteFontStyled(x2 - 130, y1 + 10, txtbuffer, 0.75f, false, defaultColor);
+	DrawDiscPercent(480, 240, 0,
+			20, 90,
+			percent,
+			(GXColor){0,200,200,180},
+			0.5f, 0.5f, endMb > 8000);
+	sprintf(txtbuffer,"%d %%",percent);
+	WriteFontStyled(x2 - 140, y2-24, txtbuffer, 0.75f, false, defaultColor);
+	
+	WriteFontStyled(x1 + 20, y2-72, calculateCheckSums ? "Calcs: CRC32/MD5/SHA-1" : "Calcs: CRC32", 0.75f, false, defaultColor);
+	WriteFontStyled(x1 + 20, y2-24, "Press B to cancel", 0.75f, false, defaultColor);
+	DrawDatInfo(discType);
 }
 
 void DrawMessageBox(int type, char *message) 
 {
-	int x1 = ((640/2) - (PROGRESS_BOX_WIDTH/2));
-	int x2 = ((640/2) + (PROGRESS_BOX_WIDTH/2));
-	int y1 = ((480/2) - (PROGRESS_BOX_HEIGHT/2));
-	int y2 = ((480/2) + (PROGRESS_BOX_HEIGHT/2));
+	int x1 = ((640/2) - (MESSAGE_BOX_WIDTH/2));
+	int x2 = ((640/2) + (MESSAGE_BOX_WIDTH/2));
+	int y1 = ((480/2) - (MESSAGE_BOX_HEIGHT/2));
+	int y2 = ((480/2) + (MESSAGE_BOX_HEIGHT/2));
 	int middleY = y2-y1 < 23 ? y1+3 : (y2+y1)/2-12;
 	
   	GXColor fillColor = (GXColor) {0,0,0,GUI_MSGBOX_ALPHA}; //black

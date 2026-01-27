@@ -1,10 +1,10 @@
 /**
  * CleanRip - IPLFontWrite.c
- * Copyright (C) 2010 emu_kidid
+ * Copyright (C) 2010-2026 emu_kidid
  *
  * Font blitter for IPL fonts
  *
- * CleanRip homepage: http://code.google.com/p/cleanrip/
+ * CleanRip homepage: https://github.com/emukidid/cleanrip
  * email address: emukidid@gmail.com
  *
  *

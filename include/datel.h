@@ -1,8 +1,8 @@
 /**
  * CleanRip - datel.h
- * Copyright (C) 2010 emu_kidid
+ * Copyright (C) 2010-2026 emu_kidid
  *
- * CleanRip homepage: http://code.google.com/p/cleanrip/
+ * CleanRip homepage: https://github.com/emukidid/cleanrip/
  * email address: emukidid@gmail.com
  *
  *

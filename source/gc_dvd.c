@@ -1,10 +1,10 @@
 /**
  * CleanRip - gc_dvd.c (originally from Cube64/Wii64)
- * Copyright (C) 2007, 2008, 2009, 2010 emu_kidid
+ * Copyright (C) 2007 - 2026 emu_kidid
  *
  * DVD Reading support for GC/Wii
  *
- * CleanRip homepage: http://code.google.com/p/cleanrip
+ * CleanRip homepage: https://github.com/emukidid/cleanrip
  * email address: emukidid@gmail.com
  *
  *

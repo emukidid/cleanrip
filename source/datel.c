@@ -1,10 +1,10 @@
 /**
  * CleanRip - verify.c
- * Copyright (C) 2010 emu_kidid
+ * Copyright (C) 2010-2026 emu_kidid
  *
  * Uses redump.org .dat files to verify MD5 sums using XML
  *
- * CleanRip homepage: http://code.google.com/p/cleanrip/
+ * CleanRip homepage: https://github.com/emukidid/cleanrip
  * email address: emukidid@gmail.com
  *
  *

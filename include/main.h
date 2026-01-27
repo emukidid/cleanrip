@@ -1,8 +1,8 @@
 /**
  * CleanRip - main.h
- * Copyright (C) 2010 emu_kidid
+ * Copyright (C) 2010-2026 emu_kidid
  *
- * CleanRip homepage: http://code.google.com/p/cleanrip/
+ * CleanRip homepage: https://github.com/emukidid/cleanrip
  * email address: emukidid@gmail.com
  *
  *
@@ -30,10 +30,6 @@
 #define WII_MAGIC 0x5D1C9EA3
 #define NGC_MAGIC 0xC2339F3D
 
-#define TYPE_USB 0
-#define TYPE_SD 1
-#define TYPE_M2LOADER 2
-
 #define TYPE_FAT 0
 #define TYPE_NTFS 1
 
@@ -55,21 +51,22 @@
 
 // Version info
 #define V_MAJOR			2
-#define V_MID			3
-#define V_MINOR			1
+#define V_MID			4
+#define V_MINOR			0
 
 /*** 2D Video Globals ***/
 extern GXRModeObj *vmode;	/*** Graphics Mode Object ***/
 extern u32 *xfb[2];			/*** Framebuffers ***/
 extern int whichfb;			/*** Frame buffer toggle ***/
 extern u32 iosversion;
-extern int verify_in_use;
-extern int verify_disc_type;
+extern int verify_type_in_use;
 extern int forceDatel;
+extern int isDumping;
 
 u32 get_buttons_pressed();
 void print_gecko(const char* fmt, ...);
 const char* const get_game_name();
+char *getDiscTypeStr(int disc_type, bool isDualLayer);
 
 enum discTypes
 {
@@ -87,29 +84,6 @@ enum options
 	WII_DUAL_LAYER,
 	WII_CHUNK_SIZE,
 	WII_NEWFILE
-};
-
-enum shrinkOptions
-{
-  SHRINK_NONE=0,
-  SHRINK_PAD_GARBAGE,
-  SHRINK_ALL,
-  SHRINK_DELIM
-};
-
-enum alignOptions
-{
-  ALIGN_ALL=0,
-  ALIGN_AUDIO,
-  ALIGN_DELIM
-};
-
-enum alignBoundaryOptions
-{
-  ALIGN_32=0,
-  ALIGN_2,
-  ALIGN_512,
-  ALIGNB_DELIM
 };
 
 enum dualOptions

@@ -1,10 +1,10 @@
 /**
  * CleanRip - verify.c
- * Copyright (C) 2010 emu_kidid
+ * Copyright (C) 2010-2026 emu_kidid
  *
  * Uses redump.org .dat files to verify MD5 sums using XML
  *
- * CleanRip homepage: http://code.google.com/p/cleanrip/
+ * CleanRip homepage: https://github.com/emukidid/cleanrip
  * email address: emukidid@gmail.com
  *
  *
@@ -33,8 +33,11 @@
 #include "IPLFontWrite.h"
 #include "http.h"
 #include "main.h"
+#include "crcs_gc.h"
+#include "verify.h"
 
 #ifdef HW_RVL
+#include "crcs_wii.h"
 int net_initialized = 0;
 static int dontAskAgain = 0;
 #endif
@@ -233,6 +236,31 @@ int verify_findMD5Sum(const char *md5orig, int disc_type) {
 	return 1;
 }
 
+int verify_findCrc32(u32 crc32, int disc_type) {
+
+	print_gecko("Looking for CRC32 [%08X] (%s)\r\n", crc32, (disc_type == IS_NGC_DISC) ? "GameCube":"Wii");
+	if(disc_type == IS_NGC_DISC) {
+		for(int i = 0; i < gameCubeCrcListNumEntries; i++) {
+			if(gameCubeCrcList[i] == crc32) {
+				print_gecko("Found a match!\r\n");
+				return 1;
+			}
+		}
+	}
+#ifdef HW_RVL
+	if(disc_type == IS_WII_DISC) {
+		for(int i = 0; i < wiiCrcListNumEntries; i++) {
+			if(wiiCrcList[i] == crc32) {
+				print_gecko("Found a match!\r\n");
+				return 1;
+			}
+		}
+	}
+#endif
+	print_gecko("Failed to find a match!\r\n");
+	return 0;
+}
+
 char *verify_get_name(int flag) {
 	if (flag != 0) {
 		if (strlen(&gameName[0]) > 32) {
@@ -246,9 +274,28 @@ char *verify_get_name(int flag) {
 
 int verify_is_available(int disc_type) {
 #ifdef HW_RVL
-	return (disc_type == IS_NGC_DISC) ? (ngcXML != NULL)
-		: (disc_type == IS_WII_DISC) ? (wiiXML != NULL) : 0;
+	if(ngcXML != NULL && (disc_type == IS_NGC_DISC)) {
+		return VERIFY_REDUMP_DAT_GC;
+	}
+	if(wiiXML != NULL && (disc_type == IS_WII_DISC)) {
+		return VERIFY_REDUMP_DAT_WII;
+	}
+	return VERIFY_INTERNAL_CRC;
 #else
-	return (disc_type == IS_NGC_DISC) ? (ngcXML != NULL) : 0;
+	if(ngcXML != NULL && (disc_type == IS_NGC_DISC)) {
+		return VERIFY_REDUMP_DAT_GC;
+	}
+	return VERIFY_INTERNAL_CRC;
 #endif
+}
+
+char *verify_get_internal_updated(int disc_type) {
+	if(verify_type_in_use == VERIFY_INTERNAL_CRC) {
+#ifdef HW_RVL
+		return disc_type == IS_NGC_DISC ? gameCubeCrcLastUpdated : wiiCrcLastUpdated;
+#else
+		return disc_type == IS_NGC_DISC ? gameCubeCrcLastUpdated : "N/A";
+#endif
+	}
+	return "N/A";
 }

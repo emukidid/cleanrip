@@ -1,10 +1,10 @@
 /**
  * CleanRip - main.c
- * Copyright (C) 2010 emu_kidid
+ * Copyright (C) 2010-2026 emu_kidid
  *
  * Main driving code behind the disc ripper
  *
- * CleanRip homepage: http://code.google.com/p/cleanrip/
+ * CleanRip homepage: https://github.com/emukidid/cleanrip
  * email address: emukidid@gmail.com
  *
  *
@@ -58,6 +58,11 @@ static ntfs_md *mounts = NULL;
 #ifdef HW_RVL
 static DISC_INTERFACE* sdcard = &__io_wiisd;
 static DISC_INTERFACE* usb = &__io_usbstorage;
+enum {
+	TYPE_USB = 0,
+	TYPE_SD,
+	TYPE_READONLY
+};
 #endif
 #ifdef HW_DOL
 #include <sdcard/gcsd.h>
@@ -66,9 +71,14 @@ static DISC_INTERFACE* usb = &__io_usbstorage;
 static int sdcard_slot = 0;
 static DISC_INTERFACE* sdcard = NULL;
 static DISC_INTERFACE* m2loader = &__io_m2ldr;
-static DISC_INTERFACE* usb = NULL;
+enum {
+	TYPE_SD = 0,
+	TYPE_M2LOADER,
+	TYPE_READONLY
+};
 #endif
 
+static int selected_device = 0;
 static int calcChecksums = 0;
 static int dumpCounter = 0;
 static char gameName[32];
@@ -79,12 +89,13 @@ static char padNeedScan = 0;
 int print_usb = 0;
 int shutdown = 0;
 int whichfb = 0;
+int isDumping = 0;
 u32 iosversion = -1;
-int verify_in_use = 0;
-int verify_disc_type = 0;
+int verify_type_in_use = 0;
 GXRModeObj *vmode = NULL;
 u32 *xfb[2] = { NULL, NULL };
 int options_map[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
+int newProgressDisplay = 1;
 
 enum {
 	MSG_SETFILE,
@@ -114,12 +125,13 @@ static void* writer_thread(void* _msgq) {
 				fp = (FILE*)msg->data;
 				break;
 			case MSG_WRITE:
-				if (fp && fwrite(msg->data, msg->length, 1, fp)!=1) {
-					// write error, signal it by pushing a NULL message to the front
-					MQ_Jam(msg->ret_box, (mqmsg_t)NULL, MQ_MSG_BLOCK);
-					return NULL;
+				if(selected_device != TYPE_READONLY) {
+					if (fp && fwrite(msg->data, msg->length, 1, fp)!=1) {
+						// write error, signal it by pushing a NULL message to the front
+						MQ_Jam(msg->ret_box, (mqmsg_t)NULL, MQ_MSG_BLOCK);
+						return NULL;
+					}
 				}
-
 				// release the block so it can be reused
 				MQ_Send(msg->ret_box, (mqmsg_t)msg, MQ_MSG_BLOCK);
 				break;
@@ -178,6 +190,10 @@ u32 get_wii_buttons_pressed(u32 buttons) {
 	if (wiiPad->btns_h & WPAD_BUTTON_A) {
 		buttons |= PAD_BUTTON_A;
 	}
+	
+	if (wiiPad->btns_h & WPAD_BUTTON_1) {
+		buttons |= PAD_BUTTON_Y;
+	}
 
 	if (wiiPad->btns_h & WPAD_BUTTON_LEFT) {
 		buttons |= PAD_BUTTON_LEFT;
@@ -219,6 +235,10 @@ u32 get_buttons_pressed() {
 	if (gcPad & PAD_BUTTON_B) {
 		buttons |= PAD_BUTTON_B;
 	}
+	
+	if (gcPad & PAD_BUTTON_Y) {
+		buttons |= PAD_BUTTON_Y;
+	}
 
 	if (gcPad & PAD_BUTTON_A) {
 		buttons |= PAD_BUTTON_A;
@@ -255,10 +275,13 @@ void wait_press_A() {
 	while (!(get_buttons_pressed() & PAD_BUTTON_A));
 }
 
-void wait_press_A_exit_B() {
+void wait_press_A_exit_B(bool tryAgain) {
 	// Draw the A and B buttons
 	DrawAButton(195, 310);
 	DrawBButton(390, 310);
+	WriteFont(120, 315, "Press");
+	WriteFont(235, 315, tryAgain ? "to retry" : "to continue");
+	WriteFont(435, 315, "to exit");
 	DrawFrameFinish();
 	while ((get_buttons_pressed() & (PAD_BUTTON_A | PAD_BUTTON_B)));
 	while (1) {
@@ -402,8 +425,7 @@ static void hardware_checks() {
 		WriteCentre(190, "IOS Version check failed");
 		WriteCentre(255, "IOS 58 exists but is not in use");
 		WriteCentre(280, "Dumping to USB will be SLOW!");
-		WriteCentre(315, "Press  A to continue  B to exit");
-		wait_press_A_exit_B();
+		wait_press_A_exit_B(false);
 	}
 	if (!ios58exists) {
 		DrawFrameStart();
@@ -411,8 +433,7 @@ static void hardware_checks() {
 		WriteCentre(190, "IOS Version check failed");
 		WriteCentre(255, "Please install IOS58");
 		WriteCentre(280, "Dumping to USB will be SLOW!");
-		WriteCentre(315, "Press  A to continue  B to exit");
-		wait_press_A_exit_B();
+		wait_press_A_exit_B(false);
 	}
 }
 #endif
@@ -433,9 +454,8 @@ static void show_disclaimer() {
 	WriteCentre(230, "The author is not responsible for any");
 	WriteCentre(255, "damages that could occur to any");
 	WriteCentre(280, "removable device used within this program");
-	WriteCentre(315, "Press  A to continue  B to exit");
 	sleep(5);
-	wait_press_A_exit_B();
+	wait_press_A_exit_B(false);
 }
 
 /* Initialise the dvd drive + disc */
@@ -447,8 +467,7 @@ static int initialise_dvd() {
 #else
 	WriteCentre(255, "Insert a GC/Wii DVD Disc");
 #endif
-	WriteCentre(315, "Press  A to continue  B to exit");
-	wait_press_A_exit_B();
+	wait_press_A_exit_B(false);
 
 	DrawFrameStart();
 	DrawEmptyBox(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
@@ -474,7 +493,7 @@ int select_sd_gecko_slot() {
 	while (1) {
 		DrawFrameStart();
 		DrawEmptyBox(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
-		WriteCentre(255, "Please select SDGecko Slot");
+		WriteCentre(255, "Please select SD location");
 		DrawSelectableButton(100, 310, -1, 340, "Slot A", slot == 0 ? B_SELECTED : B_NOSELECT, -1);
 		DrawSelectableButton(240, 310, -1, 340, "Slot B", slot == 1 ? B_SELECTED : B_NOSELECT, -1);
 		DrawSelectableButton(380, 310, -1, 340, "SD2SP2", slot == 2 ? B_SELECTED : B_NOSELECT, -1);
@@ -513,12 +532,12 @@ DISC_INTERFACE* get_sd_card_handler(int slot) {
 #endif
 
 /* Initialise the device */
-static int initialise_device(int type, int fs) {
+static int initialise_device(int fs) {
 	int ret = 0;
 
 	DrawFrameStart();
 	DrawEmptyBox(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
-	if (type == TYPE_SD) {
+	if (selected_device == TYPE_SD) {
 #ifdef HW_DOL
 		sdcard_slot = select_sd_gecko_slot();
 		sdcard = get_sd_card_handler(sdcard_slot);
@@ -529,19 +548,18 @@ static int initialise_device(int type, int fs) {
 		WriteCentre(255, "Insert a SD FAT/NTFS formatted device");
 	}
 #ifdef HW_DOL
-	else if (type == TYPE_M2LOADER) {
+	else if (selected_device == TYPE_M2LOADER) {
 		WriteCentre(255, "Insert a M.2 FAT/NTFS formatted device");
 	}
 #else
-	else if (type == TYPE_USB) {
+	else if (selected_device == TYPE_USB) {
 		WriteCentre(255, "Insert a USB FAT/NTFS formatted device");
 	}
 #endif
-	WriteCentre(315, "Press  A to continue  B to exit");
-	wait_press_A_exit_B();
+	wait_press_A_exit_B(false);
 
 	if (fs == TYPE_FAT) {
-		switch (type) {
+		switch (selected_device) {
 			case TYPE_SD:
 				ret = fatMountSimple("fat", sdcard);
 				break;
@@ -560,14 +578,13 @@ static int initialise_device(int type, int fs) {
 			DrawEmptyBox(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
 			sprintf(txtbuffer, "Error Mounting Device [%08X]", ret);
 			WriteCentre(255, txtbuffer);
-			WriteCentre(315, "Press A to try again  B to exit");
-			wait_press_A_exit_B();
+			wait_press_A_exit_B(true);
 		}
 		sprintf(&mountPath[0], "fat:/");
 	}
 	else if (fs == TYPE_NTFS) {
 		int mountCount = 0;
-		switch (type) {
+		switch (selected_device) {
 			case TYPE_SD:
 				mountCount = ntfsMountDevice(sdcard, &mounts, NTFS_DEFAULT | NTFS_RECOVER);
 				break;
@@ -588,11 +605,10 @@ static int initialise_device(int type, int fs) {
 			if (mountCount == -1) {
 				sprintf(txtbuffer, "Error whilst mounting devices (%i)", errno);
 			} else {
-				sprintf(txtbuffer, "No NTFS volume(s) were found and/or mounted");
+				sprintf(txtbuffer, "No NTFS volume(s) were found or mounted");
 			}
 			WriteCentre(255, txtbuffer);
-			WriteCentre(315, "Press A to try again  B to exit");
-			wait_press_A_exit_B();
+			wait_press_A_exit_B(true);
 		} else {
 			sprintf(txtbuffer, "%s Mounted", ntfsGetVolumeName(mounts[0].name));
 			WriteCentre(230, txtbuffer);
@@ -703,8 +719,8 @@ int detect_duallayer_disc() {
 }
 
 /* the user must specify the device type */
-int device_type() {
-	int selected_type = 0;
+void select_device_type() {
+	selected_device = 0;
 	
 	while ((get_buttons_pressed() & PAD_BUTTON_A));
 	while (1) {
@@ -712,26 +728,32 @@ int device_type() {
 		DrawEmptyBox(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
 		WriteCentre(255, "Please select the device type");
 #ifdef HW_DOL
-		DrawSelectableButton(140, 310, -1, 340, "SD Card",
-				(selected_type == 0) ? B_SELECTED : B_NOSELECT, -1);
-		DrawSelectableButton(380, 310, -1, 340, "M.2 Loader",
-				(selected_type == 1) ? B_SELECTED : B_NOSELECT, -1);
+		DrawSelectableButton(90, 310, -1, 340, "SD Card",
+				(selected_device == TYPE_SD) ? B_SELECTED : B_NOSELECT, -1);
+		DrawSelectableButton(225, 310, -1, 340, "M.2 Loader",
+				(selected_device == TYPE_M2LOADER) ? B_SELECTED : B_NOSELECT, -1);
 #endif
 #ifdef HW_RVL
 		DrawSelectableButton(100, 310, -1, 340, "USB",
-				(selected_type == 0) ? B_SELECTED : B_NOSELECT, -1);
-		DrawSelectableButton(380, 310, -1, 340, "Front SD",
-				(selected_type == 1) ? B_SELECTED : B_NOSELECT, -1);
+				(selected_device == TYPE_USB) ? B_SELECTED : B_NOSELECT, -1);
+		DrawSelectableButton(210, 310, -1, 340, "Front SD",
+				(selected_device == TYPE_SD) ? B_SELECTED : B_NOSELECT, -1);
 #endif
+		DrawSelectableButton(390, 310, -1, 340, "Read Only",
+				(selected_device == TYPE_READONLY) ? B_SELECTED : B_NOSELECT, -1);
+		if(selected_device == TYPE_READONLY) {
+			WriteFontStyled(320, 370, "Reads a disc from start to end,", 0.65f, true, defaultColor);
+			WriteFontStyled(320, 390, "and verifies it against an internal checksum list.", 0.65f, true, defaultColor);
+		}
 		DrawFrameFinish();
 		while (!(get_buttons_pressed() & (PAD_BUTTON_RIGHT | PAD_BUTTON_LEFT
 				| PAD_BUTTON_B | PAD_BUTTON_A)));
 		u32 btns = get_buttons_pressed();
 
 		if (btns & PAD_BUTTON_RIGHT)
-			selected_type ^= 1;
+			selected_device = selected_device == 2 ? 0 : (selected_device+1);
 		if (btns & PAD_BUTTON_LEFT)
-			selected_type ^= 1;
+			selected_device = selected_device == 0 ? 2 : (selected_device-1);
 
 		if (btns & PAD_BUTTON_A)
 			break;
@@ -740,13 +762,6 @@ int device_type() {
 				| PAD_BUTTON_B | PAD_BUTTON_A)));
 	}
 	while ((get_buttons_pressed() & PAD_BUTTON_A));
-
-#ifdef HW_DOL
-	return selected_type == 0 ? TYPE_SD : TYPE_M2LOADER;
-#endif
-#ifdef HW_RVL
-	return selected_type == 0 ? TYPE_USB : TYPE_SD;
-#endif
 }
 
 /* the user must specify the file system type */
@@ -776,37 +791,6 @@ int filesystem_type() {
 	}
 	while ((get_buttons_pressed() & PAD_BUTTON_A));
 	return type;
-}
-
-char *getShrinkOption() {
-	int opt = options_map[NGC_SHRINK_ISO];
-	if (opt == SHRINK_ALL)
-		return "Shrink All";
-	else if (opt == SHRINK_PAD_GARBAGE)
-		return "Wipe Garbage";
-	else if (opt == SHRINK_NONE)
-		return "No";
-	return 0;
-}
-
-char *getAlignOption() {
-	int opt = options_map[NGC_ALIGN_FILES];
-	if (opt == ALIGN_ALL)
-		return "Align All";
-	else if (opt == ALIGN_AUDIO)
-		return "Audio Only";
-	return 0;
-}
-
-char *getAlignmentBoundaryOption() {
-	int opt = options_map[NGC_ALIGN_BOUNDARY];
-	if (opt == ALIGN_32)
-		return "32Kb";
-	else if (opt == ALIGN_2)
-		return "2KB";
-	else if (opt == ALIGN_512)
-		return "512B";
-	return 0;
 }
 
 char *getDualLayerOption() {
@@ -850,12 +834,6 @@ int getMaxPos(int option_pos) {
 		return DUAL_DELIM;
 	case WII_CHUNK_SIZE:
 		return CHUNK_DELIM;
-	case NGC_ALIGN_BOUNDARY:
-		return ALIGNB_DELIM;
-	case NGC_ALIGN_FILES:
-		return ALIGN_DELIM;
-	case NGC_SHRINK_ISO:
-		return SHRINK_DELIM;
 	case WII_NEWFILE:
 		return NEWFILE_DELIM;
 	}
@@ -885,19 +863,8 @@ static void get_settings(int disc_type) {
 				disc_type == IS_WII_DISC ? "Wii" : "Gamecube");
 		WriteCentre(130, txtbuffer);
 
-		// Gamecube Settings
-		if (disc_type == IS_NGC_DISC) {
-		/*
-			WriteFont(80, 160 + (32* 1 ), "Shrink ISO");
-			DrawSelectableButton(vmode->fbWidth-220, 160+(32*1), -1, 160+(32*1)+30, getShrinkOption(), (!currentSettingPos) ? B_SELECTED:B_NOSELECT);
-			WriteFont(80, 160+(32*2), "Align Files");
-			DrawSelectableButton(vmode->fbWidth-220, 160+(32*2), -1, 160+(32*2)+30, getAlignOption(), (currentSettingPos==1) ? B_SELECTED:B_NOSELECT);
-			WriteFont(80, 160+(32*3), "Alignment boundary");
-			DrawSelectableButton(vmode->fbWidth-220, 160+(32*3), -1, 160+(32*3)+30, getAlignmentBoundaryOption(), (currentSettingPos==2) ? B_SELECTED:B_NOSELECT);
-		*/
-		}
 		// Wii Settings
-		else if (disc_type == IS_WII_DISC) {
+		if (disc_type == IS_WII_DISC) {
 			WriteFont(80, 160 + (32 * 1), "Dump Size");
 			DrawSelectableButton(vmode->fbWidth - 220, 160 + (32 * 1), -1, 160 + (32 * 1) + 30, getDualLayerOption(), (!currentSettingPos) ? B_SELECTED : B_NOSELECT, -1);
 			WriteFont(80, 160 + (32 * 2), "Chunk Size");
@@ -931,21 +898,21 @@ static void get_settings(int disc_type) {
 	while(get_buttons_pressed() & PAD_BUTTON_B);
 }
 
-void prompt_new_file(FILE **fp, int chunk, int type, int fs, int silent) {
+void prompt_new_file(FILE **fp, int chunk, int fs, int silent) {
 	// Close the file and unmount the fs
 	fclose(*fp);
 	if(silent == ASK_USER) {
 		if (fs == TYPE_FAT) {
 			fatUnmount("fat:/");
-			if (type == TYPE_SD) {
+			if (selected_device == TYPE_SD) {
 				sdcard->shutdown(sdcard);
 			}
 #ifdef HW_DOL
-			else if (type == TYPE_M2LOADER) {
+			else if (selected_device == TYPE_M2LOADER) {
 				m2loader->shutdown(m2loader);
 			}
 #else
-			else if (type == TYPE_USB) {
+			else if (selected_device == TYPE_USB) {
 				usb->shutdown(usb);
 			}
 #endif
@@ -953,15 +920,15 @@ void prompt_new_file(FILE **fp, int chunk, int type, int fs, int silent) {
 		else if (fs == TYPE_NTFS) {
 			ntfsUnmount(mounts[0].name, true);
 			free(mounts);
-			if (type == TYPE_SD) {
+			if (selected_device == TYPE_SD) {
 				sdcard->shutdown(sdcard);
 			}
 #ifdef HW_DOL
-			else if (type == TYPE_M2LOADER) {
+			else if (selected_device == TYPE_M2LOADER) {
 				m2loader->shutdown(m2loader);
 			}
 #else
-			else if (type == TYPE_USB) {
+			else if (selected_device == TYPE_USB) {
 				usb->shutdown(usb);
 			}
 #endif
@@ -976,21 +943,44 @@ void prompt_new_file(FILE **fp, int chunk, int type, int fs, int silent) {
 				DrawFrameStart();
 				DrawEmptyBox(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
 				WriteCentre(255, "Insert a device for the next chunk");
-				WriteCentre(315, "Press  A to continue  B to exit");
-				wait_press_A_exit_B();
+				wait_press_A_exit_B(false);
 
 			if (fs == TYPE_FAT) {
 				int i = 0;
 				for (i = 0; i < 10; i++) {
-					ret = fatMountSimple("fat", type == TYPE_USB ? usb : sdcard);
+					switch (selected_device) {
+						case TYPE_SD:
+							ret = fatMountSimple("fat", sdcard);
+							break;
+#ifdef HW_DOL
+						case TYPE_M2LOADER:
+							ret = fatMountSimple("fat", m2loader);
+							break;
+#else
+						case TYPE_USB:
+							ret = fatMountSimple("fat", usb);
+							break;
+#endif
+					}
 					if (ret == 1) {
 						break;
 					}
 				}
 			}
 			else if (fs == TYPE_NTFS) {
-				int mountCount = ntfsMountDevice(type == TYPE_USB ? usb : sdcard,
-						&mounts, NTFS_DEFAULT | NTFS_RECOVER);
+				int mountCount = 0;
+				if(selected_device == TYPE_SD) {
+					mountCount = ntfsMountDevice(sdcard, &mounts, NTFS_DEFAULT | NTFS_RECOVER);
+				}
+#ifdef HW_DOL
+				if(selected_device == TYPE_M2LOADER) {
+					mountCount = ntfsMountDevice(m2loader, &mounts, NTFS_DEFAULT | NTFS_RECOVER);
+				}
+#else
+				if(selected_device ==  TYPE_USB) {
+					mountCount = ntfsMountDevice(usb, &mounts, NTFS_DEFAULT | NTFS_RECOVER);
+				}
+#endif
 				if (mountCount && mountCount != -1) {
 					sprintf(&mountPath[0], "%s:/", mounts[0].name);
 					ret = 1;
@@ -1003,8 +993,7 @@ void prompt_new_file(FILE **fp, int chunk, int type, int fs, int silent) {
 				DrawEmptyBox(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
 				sprintf(txtbuffer, "Error Mounting Device [%08X]", ret);
 				WriteCentre(255, txtbuffer);
-				WriteCentre(315, "Press A to try again  B to exit");
-				wait_press_A_exit_B();
+				wait_press_A_exit_B(true);
 			}
 		} while (ret != 1);
 	}
@@ -1043,6 +1032,10 @@ void dump_bca() {
 }
 
 void dump_info(char *md5, char *sha1, u32 crc32, int verified, u32 seconds, char* name) {
+	if(selected_device == TYPE_READONLY) {
+		return;
+	}
+	
 	char infoLine[1024];
 	char timeLine[256];
 	memset(infoLine, 0, 1024);
@@ -1095,11 +1088,26 @@ void renameFile(char* mountPath, char* befor, char* after, char* base) {
 		print_gecko("Rename failed: %s\r\n", txtbuffer);
 	}
 }
+
+char *getDiscTypeStr(int disc_type, bool isDualLayer) {
+	if(disc_type == IS_NGC_DISC) {
+		return "GameCube";
+	}
+	if(disc_type == IS_DATEL_DISC) {
+		return "Datel";
+	}
+	if(disc_type == IS_WII_DISC) {
+		return isDualLayer ? "Wii (dual layer)" : "Wii";
+	}
+	return "Unknown";
+}
+
 #define MSG_COUNT 8
 #define THREAD_PRIO 128
 
-int dump_game(int disc_type, int type, int fs) {
+int dump_game(int disc_type, int fs) {
 
+	isDumping = 1;
 	md5_state_t state;
 	md5_byte_t digest[16];
 	SHA1Context sha;
@@ -1138,7 +1146,7 @@ int dump_game(int disc_type, int type, int fs) {
 	u32 opt_chunk_size;
 	if (chunk_size_wii == CHUNK_MAX) {
 		// use 4GB chunks max for FAT drives
-		if (fs == TYPE_FAT) {
+		if (selected_device != TYPE_READONLY && fs == TYPE_FAT) {
 			opt_chunk_size = 4 * ONE_GIGABYTE - (opt_read_size>>11) - 1;
 		} else {
 			opt_chunk_size = endLBA + (opt_read_size>>11);
@@ -1153,7 +1161,9 @@ int dump_game(int disc_type, int type, int fs) {
 
 	// Dump the BCA for Nintendo discs
 #ifdef HW_RVL
-	dump_bca();
+	if(selected_device != TYPE_READONLY) {
+		dump_bca();
+	}
 #endif
 
 	// Create the read buffers
@@ -1168,26 +1178,29 @@ int dump_game(int disc_type, int type, int fs) {
 	crc32 = 0;
 
 	// There will be chunks, name accordingly
-	if (opt_chunk_size < endLBA) {
-		sprintf(txtbuffer, "%s%s.part0.iso", &mountPath[0], &gameName[0]);
-	} else {
-		sprintf(txtbuffer, "%s%s.iso", &mountPath[0], &gameName[0]);
+	FILE *fp = NULL;
+	if(selected_device != TYPE_READONLY) {
+		if (opt_chunk_size < endLBA) {
+			sprintf(txtbuffer, "%s%s.part0.iso", &mountPath[0], &gameName[0]);
+		} else {
+			sprintf(txtbuffer, "%s%s.iso", &mountPath[0], &gameName[0]);
+		}
+		remove(&txtbuffer[0]);
+		fp = fopen(&txtbuffer[0], "wb");
+		if (fp == NULL) {
+			DrawFrameStart();
+			DrawEmptyBox(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
+			WriteCentre(230, "Failed to create file:");
+			WriteCentre(255, txtbuffer);
+			WriteCentre(315, "Exiting in 5 seconds");
+			DrawFrameFinish();
+			sleep(5);
+			exit(0);
+		}
+		msg.command = MSG_SETFILE;
+		msg.data = fp;
+		MQ_Send(msgq, (mqmsg_t)&msg, MQ_MSG_BLOCK);
 	}
-	remove(&txtbuffer[0]);
-	FILE *fp = fopen(&txtbuffer[0], "wb");
-	if (fp == NULL) {
-		DrawFrameStart();
-		DrawEmptyBox(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
-		WriteCentre(230, "Failed to create file:");
-		WriteCentre(255, txtbuffer);
-		WriteCentre(315, "Exiting in 5 seconds");
-		DrawFrameFinish();
-		sleep(5);
-		exit(0);
-	}
-	msg.command = MSG_SETFILE;
-	msg.data = fp;
-	MQ_Send(msgq, (mqmsg_t)&msg, MQ_MSG_BLOCK);
 
 	int ret = 0;
 	u32 lastLBA = 0;
@@ -1195,41 +1208,44 @@ int dump_game(int disc_type, int type, int fs) {
 	u64 startTime = gettime();
 	int chunk = 1;
 	int isKnownDatel = 0;
+	char *discTypeStr = getDiscTypeStr(disc_type, endLBA == WII_D9_SIZE);
 
 	while (!ret && (startLBA < endLBA)) {
 		MQ_Receive(blockq, (mqmsg_t*)&wmsg, MQ_MSG_BLOCK);
-		if (wmsg==NULL) { // asynchronous write error
-			LWP_JoinThread(writer, NULL);
-			fclose(fp);
-			DrawFrameStart();
-			DrawEmptyBox(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
-			WriteCentre(255, "Write Error!");
-			WriteCentre(315, "Exiting in 10 seconds");
-			DrawFrameFinish();
-			sleep(10);
-			exit(1);
-		}
+		if(selected_device != TYPE_READONLY) {
+			if (wmsg==NULL) { // asynchronous write error
+				LWP_JoinThread(writer, NULL);
+				fclose(fp);
+				DrawFrameStart();
+				DrawEmptyBox(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
+				WriteCentre(255, "Write Error!");
+				WriteCentre(315, "Exiting in 10 seconds");
+				DrawFrameFinish();
+				sleep(10);
+				exit(1);
+			}
 
-		if (startLBA > (opt_chunk_size * chunk)) {
-			// wait for writing to finish
-			vu32 sema = 0;
-			msg.command = MSG_FLUSH;
-			msg.data = (void*)&sema;
-			MQ_Send(msgq, (mqmsg_t)&msg, MQ_MSG_BLOCK);
-			while (!sema)
-				LWP_YieldThread();
+			if (startLBA > (opt_chunk_size * chunk)) {
+				// wait for writing to finish
+				vu32 sema = 0;
+				msg.command = MSG_FLUSH;
+				msg.data = (void*)&sema;
+				MQ_Send(msgq, (mqmsg_t)&msg, MQ_MSG_BLOCK);
+				while (!sema)
+					LWP_YieldThread();
 
-			// open new file
-			u64 wait_begin = gettime();
-			prompt_new_file(&fp, chunk, type, fs, silent);
-			// pretend the wait didn't happen
-			startTime -= (gettime() - wait_begin);
+				// open new file
+				u64 wait_begin = gettime();
+				prompt_new_file(&fp, chunk, fs, silent);
+				// pretend the wait didn't happen
+				startTime -= (gettime() - wait_begin);
 
-			// set writing file
-			msg.command = MSG_SETFILE;
-			msg.data = fp;
-			MQ_Send(msgq, (mqmsg_t)&msg, MQ_MSG_BLOCK);
-			chunk++;
+				// set writing file
+				msg.command = MSG_SETFILE;
+				msg.data = fp;
+				MQ_Send(msgq, (mqmsg_t)&msg, MQ_MSG_BLOCK);
+				chunk++;
+			}	
 		}
 
 		opt_read_size = (startLBA + (opt_read_size>>11)) <= endLBA ? opt_read_size : ((u32)((endLBA-startLBA)<<11));
@@ -1240,19 +1256,20 @@ int dump_game(int disc_type, int type, int fs) {
 		wmsg->ret_box = blockq;
 
 		// Read from Disc
-		if(disc_type == IS_DATEL_DISC)
-			ret = DVD_LowRead64Datel(wmsg->data, (u32)opt_read_size, (u64)startLBA << 11, isKnownDatel);
-		else
-			ret = DVD_LowRead64(wmsg->data, (u32)opt_read_size, (u64)startLBA << 11);
+		//if(disc_type == IS_DATEL_DISC)
+		//	ret = DVD_LowRead64Datel(wmsg->data, (u32)opt_read_size, (u64)startLBA << 11, isKnownDatel);
+		//else
+		//	ret = DVD_LowRead64(wmsg->data, (u32)opt_read_size, (u64)startLBA << 11);
+		usleep(50);
 		MQ_Send(msgq, (mqmsg_t)wmsg, MQ_MSG_BLOCK);
 		if(calcChecksums) {
 			// Calculate MD5
 			md5_append(&state, (const md5_byte_t *) (wmsg+1), (u32) opt_read_size);
 			// Calculate SHA-1
 			SHA1Input(&sha, (const unsigned char *) (wmsg+1), (u32) opt_read_size);
-			// Calculate CRC32
-			crc32 = Crc32_ComputeBuf( crc32, wmsg+1, (u32) opt_read_size);
 		}
+		// Always calculate CRC32
+		crc32 = Crc32_ComputeBuf( crc32, wmsg+1, (u32) opt_read_size);
 
 		if(disc_type == IS_DATEL_DISC && (((u64)startLBA<<11) + opt_read_size == 0x100000)){
 			crc100000 = crc32;
@@ -1264,16 +1281,20 @@ int dump_game(int disc_type, int type, int fs) {
 			}
 			sprintf(txtbuffer, "%s CRC100000=%08X", (isKnownDatel ? "Known":"Unknown"), crc100000);
 			WriteCentre(255, txtbuffer);
-			WriteCentre(315, "Press  A to continue  B to exit");
 			u64 waitTimeStart = gettime();
-			wait_press_A_exit_B();
+			wait_press_A_exit_B(false);
 			startTime += (gettime() - waitTimeStart);	// Don't throw time off because we'd paused here
 		}
 
 		check_exit_status();
+	
+		u32 pressedButtons = get_buttons_pressed();
 
-		if (get_buttons_pressed() & PAD_BUTTON_B) {
+		if (pressedButtons & PAD_BUTTON_B) {
 			ret = -61;
+		}
+		if (pressedButtons & PAD_BUTTON_Y) {
+			newProgressDisplay ^= 1;
 		}
 		// Update status every second
 		u64 curTime = gettime();
@@ -1281,14 +1302,24 @@ int dump_game(int disc_type, int type, int fs) {
 		if (timePassed >= 1000) {
 			u32 bytes_since_last_read = (u32)(((startLBA - lastLBA)<<11) * (1000.0f/timePassed));
 			u64 remainder = (((u64)endLBA - startLBA)<<11) - opt_read_size;
-
 			u32 etaTime = (remainder / bytes_since_last_read);
-			sprintf(txtbuffer, "%dMB %4.2fKB/s - ETA %02d:%02d:%02d",
-					(int) (((u64) ((u64) startLBA << 11)) / (1024*1024)),
-				(float)bytes_since_last_read/1024.0f,
-				(int)((etaTime/3600)%60),(int)((etaTime/60)%60),(int)(etaTime%60));
 			DrawFrameStart();
-			DrawProgressBar((int)((float)((float)startLBA/(float)endLBA)*100), txtbuffer);
+			if(newProgressDisplay) {
+				sprintf(txtbuffer, "Rate: %4.2fKB/s\nETA: %02d:%02d:%02d",
+					(float)bytes_since_last_read/1024.0f,
+					(int)((etaTime/3600)%60),(int)((etaTime/60)%60),(int)(etaTime%60));
+					
+					DrawProgressDetailed((int)((float)((float)startLBA/(float)endLBA)*100), txtbuffer, 
+						(int) (((u64) ((u64) startLBA << 11)) / (1024*1024)),
+						(int) (((u64) ((u64) endLBA << 11)) / (1024*1024)), discTypeStr, calcChecksums, disc_type);
+			}
+			else {
+				sprintf(txtbuffer, "%dMB %4.2fKB/s - ETA %02d:%02d:%02d",
+					(int) (((u64) ((u64) startLBA << 11)) / (1024*1024)),
+					(float)bytes_since_last_read/1024.0f,
+					(int)((etaTime/3600)%60),(int)((etaTime/60)%60),(int)(etaTime%60));
+				DrawProgressBar((int)((float)((float)startLBA/(float)endLBA)*100), txtbuffer, disc_type);
+			}
       		DrawFrameFinish();
   			lastCheckedTime = curTime;
 			lastLBA = startLBA;
@@ -1302,7 +1333,9 @@ int dump_game(int disc_type, int type, int fs) {
 	// signal writer to finish
 	MQ_Send(msgq, (mqmsg_t)NULL, MQ_MSG_BLOCK);
 	LWP_JoinThread(writer, NULL);
-	fclose(fp);
+	if(selected_device != TYPE_READONLY) {
+		fclose(fp);
+	}
 
 	free(buffer);
 	MQ_Close(blockq);
@@ -1331,9 +1364,12 @@ int dump_game(int disc_type, int type, int fs) {
 		return 0;
 	}
 	else {
-		sprintf(txtbuffer,"Copy completed in %u mins. Press A",diff_sec(startTime, gettime())/60);
 		DrawFrameStart();
+		DrawProgressDetailed((int)((float)((float)startLBA/(float)endLBA)*100), "Finished", 
+						(int) (((u64) ((u64) startLBA << 11)) / (1024*1024)),
+						(int) (((u64) ((u64) endLBA << 11)) / (1024*1024)), discTypeStr, calcChecksums, disc_type);
 		DrawEmptyBox (30,180, vmode->fbWidth-38, 350, COLOR_BLACK);
+		sprintf(txtbuffer,"Copy completed in %u mins. Press A",diff_sec(startTime, gettime())/60);
 		WriteCentre(190,txtbuffer);
 
 		int verified = 0;
@@ -1342,11 +1378,11 @@ int dump_game(int disc_type, int type, int fs) {
 		if ((disc_type == IS_DATEL_DISC)) {
 				dump_skips(&mountPath[0], crc100000);
 		}
+		char md5sum[64];
+		char sha1sum[64];
+		memset(&md5sum[0], 0, 64);
+		memset(&sha1sum[0], 0, 64);
 		if (calcChecksums) {
-			char md5sum[64];
-			char sha1sum[64];
-			memset(&md5sum[0], 0, 64);
-			memset(&sha1sum[0], 0, 64);
 			int i; for (i=0; i<16; i++) sprintf(&md5sum[i*2],"%02x",digest[i]);
 			if(SHA1Result(&sha)) {
 				for (i=0; i<5; i++) sprintf(&sha1sum[i*8],"%08x",sha.Message_Digest[i]);
@@ -1354,52 +1390,62 @@ int dump_game(int disc_type, int type, int fs) {
 			else {
 				sprintf(sha1sum, "Error computing SHA-1");
 			}
-
-			char* name = NULL;
-			verified = (verify_is_available(disc_type) && verify_findMD5Sum(&md5sum[0], disc_type));
-			if (verified) {
-				if (opt_chunk_size < endLBA) {
-					for (int i = 0; i < chunk; i++) {
-						sprintf(tempstr, ".part%i.iso", i);
-						renameFile(&mountPath[0], &gameName[0], verify_get_name(0), &tempstr[0]);
-					}
-				}
-				else {
-					renameFile(&mountPath[0], &gameName[0], verify_get_name(0), ".iso");
-				}
-#ifdef HW_RVL
-				renameFile(&mountPath[0], &gameName[0], verify_get_name(0), ".bca");
-#endif
-
-				name = verify_get_name(0);
-			}
-			if ((disc_type == IS_DATEL_DISC)) {
-				verified = datel_findMD5Sum(&md5sum[0]);
-				if (verified) {
-					renameFile(&mountPath[0], &gameName[0], datel_get_name(0), ".iso");
-					renameFile(&mountPath[0], &gameName[0], datel_get_name(0), ".skp");
-#ifdef HW_RVL
-					renameFile(&mountPath[0], &gameName[0], datel_get_name(0), ".bca");
-#endif
-					name = datel_get_name(0);
-				}
-			}
-
-			dump_info(&md5sum[0], &sha1sum[0], crc32, verified, diff_sec(startTime, gettime()), name);
-
-			print_gecko("MD5: %s\r\n", verified ? "Verified OK" : "Not Verified ");
-
-			sprintf(txtbuffer, "MD5: %s", verified ? "Verified OK" : "");
-			WriteCentre(230, txtbuffer);
-			if ((disc_type == IS_DATEL_DISC)) {
-				WriteCentre(255, verified ? datel_get_name(1) : "Not Verified with datel.dat");
-			}
-			else {
-				WriteCentre(255, verified ? verify_get_name(1) : "Not Verified with redump.org");
-			}
-			WriteCentre(280, &md5sum[0]);
+		}
+		char* name = NULL;
+		int availableVerificationType = verify_is_available(disc_type);
+		if(availableVerificationType != VERIFY_INTERNAL_CRC && calcChecksums) {
+			verified = verify_findMD5Sum(&md5sum[0], disc_type);
 		}
 		else {
+			verified = verify_findCrc32(crc32, disc_type);
+		}
+		if (verified && availableVerificationType != VERIFY_INTERNAL_CRC) {
+			if (opt_chunk_size < endLBA) {
+				for (int i = 0; i < chunk; i++) {
+					sprintf(tempstr, ".part%i.iso", i);
+					renameFile(&mountPath[0], &gameName[0], verify_get_name(0), &tempstr[0]);
+				}
+			}
+			else {
+				renameFile(&mountPath[0], &gameName[0], verify_get_name(0), ".iso");
+			}
+#ifdef HW_RVL
+			renameFile(&mountPath[0], &gameName[0], verify_get_name(0), ".bca");
+#endif
+
+			name = verify_get_name(0);
+		}
+		if ((disc_type == IS_DATEL_DISC)) {
+			verified = datel_findMD5Sum(&md5sum[0]);
+			if (verified) {
+				renameFile(&mountPath[0], &gameName[0], datel_get_name(0), ".iso");
+				renameFile(&mountPath[0], &gameName[0], datel_get_name(0), ".skp");
+#ifdef HW_RVL
+				renameFile(&mountPath[0], &gameName[0], datel_get_name(0), ".bca");
+#endif
+				name = datel_get_name(0);
+			}
+		}
+		if(calcChecksums) {
+			dump_info(&md5sum[0], &sha1sum[0], crc32, verified, diff_sec(startTime, gettime()), name);
+			print_gecko("MD5: %s\r\n", verified ? "Verified OK" : "Not Verified ");
+
+		}
+		sprintf(txtbuffer, "%s: %s", (availableVerificationType != VERIFY_INTERNAL_CRC) ? "MD5" : "CRC32", verified ? "Verified OK" : "");
+		WriteCentre(230, txtbuffer);
+		if ((disc_type == IS_DATEL_DISC)) {
+			WriteCentre(255, verified ? datel_get_name(1) : "Not Verified with datel.dat");
+		}
+		else {
+			if(verified) {
+				WriteCentre(255, (availableVerificationType != VERIFY_INTERNAL_CRC) ? verify_get_name(1) : "Verified disc dump");
+			}
+			else {
+				WriteCentre(255, "Not verified with redump DAT");
+			}
+		}
+		WriteCentre(280, &md5sum[0]);
+		if(!calcChecksums) {
 			dump_info(NULL, NULL, 0, 0, diff_sec(startTime, gettime()), NULL);
 		}
 		if ((disc_type == IS_DATEL_DISC) && !(verified)) {
@@ -1414,9 +1460,8 @@ int dump_game(int disc_type, int type, int fs) {
 			renameFile(&mountPath[0], &gameName[0], &tempstr[0], ".bca");
 #endif
 		}
-		WriteCentre(315,"Press  A to continue  B to exit");
 		dvd_motor_off(1);
-		wait_press_A_exit_B();
+		wait_press_A_exit_B(false);
 	}
 	return 1;
 }
@@ -1452,18 +1497,19 @@ int main(int argc, char **argv) {
 
 	int reuseSettings = NOT_ASKED;
 	while (1) {
-		int type, fs, ret;
+		int fs = 0, ret = 0;
 		if(reuseSettings == NOT_ASKED || reuseSettings == ANSWER_NO) {
-			type = device_type();
-			fs = filesystem_type();
-
-			ret = -1;
-			do {
-				ret = initialise_device(type, fs);
-			} while (ret != 1);
+			select_device_type();
+			if (selected_device != TYPE_READONLY) {
+				fs = filesystem_type();
+				ret = -1;
+				do {
+					ret = initialise_device(fs);
+				} while (ret != 1);
+			}			
 		}
 
-		if(calcChecksums) {
+		if(selected_device != TYPE_READONLY && calcChecksums) {
 			// Try to load up redump.org dat files
 			verify_init(&mountPath[0]);
 #ifdef HW_RVL
@@ -1488,12 +1534,12 @@ int main(int argc, char **argv) {
 		}
 
 		if(reuseSettings == NOT_ASKED || reuseSettings == ANSWER_NO) {
-			if (disc_type == IS_WII_DISC) {
+			if (disc_type == IS_WII_DISC && selected_device != TYPE_READONLY) {
 				get_settings(disc_type);
 			}
 		
 			// Ask the user if they want to force Datel check this time?
-			if(DrawYesNoDialog("Is this a unlicensed datel disc?",
+			if(selected_device != TYPE_READONLY && DrawYesNoDialog("Is this a unlicensed datel disc?",
 								 "(Will attempt auto-detect if no)")) {
 				disc_type = IS_DATEL_DISC;
 				datel_init(&mountPath[0]);
@@ -1512,11 +1558,10 @@ int main(int argc, char **argv) {
 			}
 		}
 
-		verify_in_use = verify_is_available(disc_type);
-		verify_disc_type = disc_type;
-
-		ret = dump_game(disc_type, type, fs);
-		verify_in_use = 0;
+		verify_type_in_use = verify_is_available(disc_type);
+		ret = dump_game(disc_type, fs);
+		isDumping = 0;
+		verify_type_in_use = 0;
 		dumpCounter += (ret ? 1 : 0);
 		
 		DrawFrameStart();
@@ -1524,8 +1569,7 @@ int main(int argc, char **argv) {
 		sprintf(txtbuffer, "%i disc(s) dumped", dumpCounter);
 		WriteCentre(190, txtbuffer);
 		WriteCentre(255, "Dump another disc?");
-		WriteCentre(315, "Press  A to continue  B to exit");
-		wait_press_A_exit_B();
+		wait_press_A_exit_B(false);
 	}
 
 	return 0;

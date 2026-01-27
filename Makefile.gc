@@ -16,7 +16,7 @@ include $(DEVKITPRO)/libogc2/gamecube_rules
 # INCLUDES is a list of directories containing extra header files
 #---------------------------------------------------------------------------------
 TARGET		:=	cleanrip-gc
-BUILD		:=	build
+BUILD		:=	build_gc
 SOURCES		:=	source source/sha1-c source/crc32 source/http source/m2loader
 DATA		:=	data
 INCLUDES	:=	include source/sha1-c source/crc32 source/http source/m2loader

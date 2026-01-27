@@ -1,8 +1,8 @@
 /**
  * CleanRip - verify.h
- * Copyright (C) 2010 emu_kidid
+ * Copyright (C) 2010-2026 emu_kidid
  *
- * CleanRip homepage: http://code.google.com/p/cleanrip/
+ * CleanRip homepage: https://github.com/emukidid/cleanrip
  * email address: emukidid@gmail.com
  *
  *
@@ -23,11 +23,19 @@
 
 extern int net_initialized;
 
-void verify_init(char *mountPath);
+enum {
+	VERIFY_INTERNAL_CRC=0,
+	VERIFY_REDUMP_DAT_GC,
+	VERIFY_REDUMP_DAT_WII
+};
+
+void verify_init(const char *mountPath);
+int verify_findCrc32(u32 crc32, int disc_type);
 int verify_findMD5Sum(const char * md5, int disc_type);
 int verify_is_available(int disc_type);
-int verify_download(char *mountPath);
+void verify_download(const char *mountPath);
 char *verify_get_name(int flag);
+char *verify_get_internal_updated(int disc_type);
 
 #endif
 
