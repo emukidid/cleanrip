@@ -1147,8 +1147,13 @@ int dump_game(int disc_type, int fs) {
 	if (chunk_size_wii == CHUNK_MAX) {
 		// use 4GB chunks max for FAT drives
 		if (selected_device != TYPE_READONLY && fs == TYPE_FAT) {
+			long file_size_bits = pathconf("fat:/", _PC_FILESIZEBITS);
+			if (file_size_bits <= 33) {
 			opt_chunk_size = 4 * ONE_GIGABYTE - (opt_read_size>>11) - 1;
 		} else {
+			opt_chunk_size = endLBA + (opt_read_size>>11);
+		}
+	} else {
 			opt_chunk_size = endLBA + (opt_read_size>>11);
 		}
 	} else {
