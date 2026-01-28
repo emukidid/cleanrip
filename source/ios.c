@@ -8,6 +8,8 @@
 #include <ogc/ipc.h>
 #include <ogc/cache.h>
 
+#include "ios.h"
+
 static const u32 stage0[] = {
     0x4903468D,	/* ldr r1, =0x10100000; mov sp, r1; */
     0x49034788,	/* ldr r1, =entrypoint; blx r1; */
@@ -28,8 +30,6 @@ static const u32 stage1[] = {
     0xE12FFF1E, // bx  lr
 };
 
-#define DISABLE_AHBPROT_PAYLOAD_SIZE (sizeof(disable_ahbprot_payload) / sizeof(disable_ahbprot_payload[0]))
-#define AHBPROT_DISABLED			(*(vu32*)0xcd800064 == 0xFFFFFFFF)
 
 bool is_dolphin()
 {

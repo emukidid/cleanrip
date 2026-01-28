@@ -2,8 +2,8 @@
 <app version="1">
   <name>CleanRip</name>
   <coder>emu_kidid</coder>
-  <version>2.3.1</version>
-  <release_date>20240202</release_date>
+  <version>2.4</version>
+  <release_date>20260202</release_date>
   <short_description>Wii/GC Disc Ripper Tool</short_description> 
   <long_description>
     A tool to backup your Gamecube/Wii Discs via IOS58

@@ -41,7 +41,57 @@ static u32 read_cmd = NORMAL;
 #ifdef HW_RVL
 volatile u32* dvd = (volatile u32*) 0xCD806000;
 #else
+char cached_bca[64] __attribute__((aligned(32)));
 volatile u32* dvd = (volatile u32*)0xCC006000;
+#endif
+
+#ifdef HW_DOL
+void dvd_unlock()
+{
+	dvd[0] |= 0x00000014;
+	dvd[1] = 0;
+	dvd[2] = 0xFF014D41;
+	dvd[3] = 0x54534849;	//MATS
+	dvd[4] = 0x54410200;	//HITA
+	dvd[7] = 1;
+	while (dvd[7] & 1);
+	
+	dvd[0] |= 0x00000014;
+	dvd[1] = 0;
+	dvd[2] = 0xFF004456;
+	dvd[3] = 0x442D4741;	//DVD-
+	dvd[4] = 0x4D450300;	//GAME
+	dvd[7] = 1;
+	while (dvd[7] & 1);
+}
+
+u32 dvd_readmem_32(u32 addr)
+{
+	dvd[0] = 0x2E;
+	dvd[1] = 0;
+	dvd[2] = 0xFE010000;	
+	dvd[3] = addr;
+	dvd[4] = 0x00010000;	
+	dvd[8] = 0;
+	dvd[7] = 1;
+
+	while (dvd[7] & 1);
+	return dvd[8];
+}
+
+int dvd_readmem_array(u32 addr, void* buf, u32 size)
+{
+	u32* ptr = (u32*)buf;
+	int rem = size;
+
+	while (rem>0)
+	{
+		*ptr++ = dvd_readmem_32(addr);
+		addr += 4;
+		rem -= 4;
+	}
+	return 0;
+}
 #endif
 
 int init_dvd() {
@@ -50,6 +100,9 @@ int init_dvd() {
 	DVD_LowReset(DVD_RESETHARD);
 	usleep(1150000);
 	DVD_LowReset(DVD_RESETHARD);
+	dvd_unlock();
+	memset(cached_bca, 0, 64);
+	dvd_readmem_array(0x415460, cached_bca, 64);
 	dvd_read_id();
 	if (!dvd_get_error()) {
 		xeno_disable();
@@ -128,12 +181,16 @@ int dvd_read_id() {
 
 void dvd_read_bca(void* dst)
 {
+#ifdef HW_RVL
 	dvd[2] = 0xDA000000;
 	dvd[5] = (unsigned long)dst & 0x1FFFFFFF;
 	dvd[6] = 0x40;
 	dvd[7] = 3;
 	DCInvalidateRange(dst, 64);
 	while (dvd[7] & 1);
+#else
+	memcpy(dst, cached_bca, 64);
+#endif
 }
 
 
