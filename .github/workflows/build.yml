@@ -21,14 +21,21 @@ jobs:
     - name: Checkout
       uses: actions/checkout@main
 
-    - name: Build artifacts
+    - name: Build artifacts (Wii)
       run: make
+      
+    - name: Build artifacts (GC)
+      run: make -f Makefile.gc
 
     - name: Copy DOL
       run: cp ./cleanrip.dol ./release/apps/CleanRip/boot.dol
+      
+    - name: Copy DOL
+      run: cp ./cleanrip-gc.dol ./release/cleanrip-gc.dol
 
     - name: Upload artifacts
       uses: actions/upload-artifact@main
       with:
         name: cleanrip
         path: ./release/
+
