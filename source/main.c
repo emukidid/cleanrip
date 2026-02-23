@@ -1557,7 +1557,7 @@ int main(int argc, char **argv) {
 #endif
 				calcChecksums = 1;
 			}
-			if ((disc_type = IS_DATEL_DISC) && DrawYesNoDialog("Ignore disc read errors?",
+			if ((disc_type == IS_DATEL_DISC) && DrawYesNoDialog("Ignore disc read errors?",
 				"(Recommended for Wii Freeloader)")) {
 				ignoreReadErrors = 1;
 			}
