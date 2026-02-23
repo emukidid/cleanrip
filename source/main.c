@@ -81,6 +81,7 @@ enum {
 static int selected_device = 0;
 static int calcChecksums = 0;
 static int dumpCounter = 0;
+static int ignoreReadErrors = 0;
 static char gameName[32];
 static char internalName[512];
 static char mountPath[512];
@@ -1261,10 +1262,14 @@ int dump_game(int disc_type, int fs) {
 		wmsg->ret_box = blockq;
 
 		// Read from Disc
-		if(disc_type == IS_DATEL_DISC)
+		if (disc_type == IS_DATEL_DISC) {
 			ret = DVD_LowRead64Datel(wmsg->data, (u32)opt_read_size, (u64)startLBA << 11, isKnownDatel);
+			if(ignoreReadErrors)
+				ret = 0;
+		}
 		else
 			ret = DVD_LowRead64(wmsg->data, (u32)opt_read_size, (u64)startLBA << 11);
+		
 		usleep(50);
 		MQ_Send(msgq, (mqmsg_t)wmsg, MQ_MSG_BLOCK);
 		if(calcChecksums) {
@@ -1552,6 +1557,11 @@ int main(int argc, char **argv) {
 #endif
 				calcChecksums = 1;
 			}
+			if ((disc_type = IS_DATEL_DISC) && DrawYesNoDialog("Ignore disc read errors?",
+				"(Recommended for Wii Freeloader)")) {
+				ignoreReadErrors = 1;
+			}
+			else ignoreReadErrors = 0;
 		}
 		
 		if(reuseSettings == NOT_ASKED) {
