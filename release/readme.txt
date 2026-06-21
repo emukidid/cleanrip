@@ -60,8 +60,8 @@ What is it?
 A tool to backup your Gamecube/Wii Discs using IOS58 and no need for cIOS.
 
 FAQ:
-Q. How do I use the redump.org verification to see if my rips are good?
-A. Go to www.redump.org, click on downloads and then download the 
+Q. How do I use the redump.info verification to see if my rips are good?
+A. Go to www.redump.info, click on downloads and then download the 
    "Nintendo GameCube datfile" and the "Nintendo Wii datfile". Extract the .dat from the
    zip archives and place them on the root of the device you will be dumping to.
    They must be named gc.dat (Gamecube) and wii.dat (Wii), otherwise they will not be found.
@@ -69,8 +69,8 @@ A. Go to www.redump.org, click on downloads and then download the
    you update the DAT files on your disk regularly.
 
 Q. CleanRip tells me that my dump is not verified, is this a bad rip?
-A. It might be. To be sure, go to redump.org and have a look at the game you're trying to rip.
-   If it doesn't exist on redump.org, then feel free to sign up to the forum and submit 
+A. It might be. To be sure, go to redump.info and have a look at the game you're trying to rip.
+   If it doesn't exist on redump.info, then feel free to sign up to the forum and submit 
    your rip checksum. If it does exist, then make sure you've turned off any Gamecube/Wii
    region patching from your modchip and also that the disc is as clean as can be. It might
    help to try ripping it on another wii if possible.
@@ -88,7 +88,7 @@ Features:
 - BCA ripping to disk
 - File Splitting (1,2,3GB (or Maximum file size - only on NTFS))
 - MD5 sum is saved to disk
-- Redump.org in-program verification for known rips
+- Redump.info in-program verification for known rips
 
 
 Requirements:

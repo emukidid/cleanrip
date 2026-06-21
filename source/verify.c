@@ -2,7 +2,7 @@
  * CleanRip - verify.c
  * Copyright (C) 2010-2026 emu_kidid
  *
- * Uses redump.org .dat files to verify MD5 sums using XML
+ * Uses redump.info .dat files to verify MD5 sums using XML
  *
  * CleanRip homepage: https://github.com/emukidid/cleanrip
  * email address: emukidid@gmail.com
@@ -109,12 +109,12 @@ void verify_download(const char *mountPath) {
 	int res = 0;
 	// Ask the user if they want to update from the web
 	if(verify_initialized) {
-		char *line1 = "redump.org DAT files found";
+		char *line1 = "redump.info DAT files found";
 		char *line2 = "Check for updated DAT files?";
 		res = DrawYesNoDialog(line1, line2);
 	}
 	else {
-		char *line1 = "redump.org DAT files not found";
+		char *line1 = "redump.info DAT files not found";
 		char *line2 = "Download them now?";
 		res = DrawYesNoDialog(line1, line2);
 	}

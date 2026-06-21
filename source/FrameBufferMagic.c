@@ -452,10 +452,10 @@ void DrawFrameFinish() {
 
 void DrawDatInfo(int disc_type) {
 	if (verify_type_in_use == VERIFY_REDUMP_DAT_GC) {
-			WriteCentre(440, "Gamecube Redump.org DAT in use");
+		WriteCentre(440, "GameCube Redump.info DAT in use");
 	}
 	else if(verify_type_in_use == VERIFY_REDUMP_DAT_WII) {
-		WriteCentre(440, "Wii Redump.org DAT in use");
+		WriteCentre(440, "Wii Redump.info DAT in use");
 	}
 	else {
 		sprintf(txtbuffer, "Internal CRC list in use (%s)", verify_get_internal_updated(disc_type));

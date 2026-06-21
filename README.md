@@ -10,7 +10,7 @@ If you have any questions about CleanRip, please make a thread over at http://ww
 * USB 2.0 support
 * Front SD support
 * BCA Dumping
-* Redump.org Rip Verification (via gc-forever.com) 
+* Redump.info Rip Verification (via gc-forever.com) 
 
 # Requirements
 * Wii (or GC)
