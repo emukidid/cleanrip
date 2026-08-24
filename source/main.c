@@ -166,12 +166,11 @@ void check_exit_status() {
 		exit(0);
 #endif
 #ifdef HW_RVL
-	if (shutdown == 1) {//Power off System
-		SYS_ResetSystem(SYS_POWEROFF, 0, 0);
+	if (shutdown == 1) { // Power off System
+		SYS_ResetSystem(SYS_POWEROFF, 0, FALSE);
 	}
-	if (shutdown == 2) { //Return to HBC/whatever
-		void (*rld)() = (void(*)()) 0x80001800;
-		rld();
+	if (shutdown == 2) { // Return to HBC/whatever
+		exit(0);
 	}
 #endif
 }
