@@ -440,14 +440,12 @@ void DrawFrameStart() {
 // Call this at the end of a screen
 void DrawFrameFinish() {
 	//Copy EFB->XFB
-	GX_SetCopyClear((GXColor){0, 0, 0, 0xFF}, GX_MAX_Z24);
-	GX_CopyDisp(xfb[whichfb],GX_TRUE);
-	GX_Flush();
+	GX_CopyDisp(xfb[whichfb], GX_TRUE);
+	GX_DrawDone();
 
 	VIDEO_SetNextFramebuffer(xfb[whichfb]);
 	VIDEO_Flush();
- 	VIDEO_WaitVSync();
-	if(vmode->viTVMode&VI_NON_INTERLACE) VIDEO_WaitVSync();
+	VIDEO_WaitForFlush();
 }
 
 void DrawDatInfo(int disc_type) {
