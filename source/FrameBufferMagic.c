@@ -332,7 +332,8 @@ void DrawDiscPercent(
     float innerRadius, float outerRadius,
     int percentage,
     GXColor fillColor,
-    float originX, float originY, bool isDualLayer
+    float originX, float originY, bool isDualLayer,
+    int errorPercent
 ) {
     drawInit();
     GX_SetTevOp(GX_TEVSTAGE0, GX_PASSCLR);
@@ -407,6 +408,18 @@ void DrawDiscPercent(
 				 r_data_start, fillOuter,
 				 fillColor);
 	}
+	// Read error position (same layer mapping as the progress)
+	if (errorPercent >= 0) {
+		if (isDualLayer) {
+			errorPercent = errorPercent > 50 ? (errorPercent - 50) * 2 : errorPercent * 2;
+		}
+		float errorR =
+			r_data_start + (r_outer_clear - r_data_start) * ((float)errorPercent / 100.0f);
+
+		DrawRing(centerX, centerY, depth - 0.003f,
+				 errorR - 1.5f, errorR + 1.5f,
+				 (GXColor){230, 0, 0, 255});
+	}
 }
 
 void _DrawBackdrop() {
@@ -440,14 +453,12 @@ void DrawFrameStart() {
 // Call this at the end of a screen
 void DrawFrameFinish() {
 	//Copy EFB->XFB
-	GX_SetCopyClear((GXColor){0, 0, 0, 0xFF}, GX_MAX_Z24);
-	GX_CopyDisp(xfb[whichfb],GX_TRUE);
-	GX_Flush();
+	GX_CopyDisp(xfb[whichfb], GX_TRUE);
+	GX_DrawDone();
 
 	VIDEO_SetNextFramebuffer(xfb[whichfb]);
 	VIDEO_Flush();
- 	VIDEO_WaitVSync();
-	if(vmode->viTVMode&VI_NON_INTERLACE) VIDEO_WaitVSync();
+ 	VIDEO_WaitForFlush();
 }
 
 void DrawDatInfo(int disc_type) {
@@ -490,7 +501,7 @@ void DrawProgressBar(int percent, char *message, int discType) {
 	DrawDatInfo(discType);
 }
 
-void DrawProgressDetailed(int percent, char *message, int startMb, int endMb, char *discTypeStr, int calculateCheckSums, int discType) {
+void DrawProgressDetailed(int percent, char *message, int startMb, int endMb, char *discTypeStr, int calculateCheckSums, int discType, int errorPercent) {
 	int x1 = ((640/2) - (PROGRESS_BOX_DETAILED_WIDTH/2));
 	int x2 = ((640/2) + (PROGRESS_BOX_DETAILED_WIDTH/2));
 	int y1 = ((480/2) - (PROGRESS_BOX_DETAILED_HEIGHT/2));
@@ -508,7 +519,8 @@ void DrawProgressDetailed(int percent, char *message, int startMb, int endMb, ch
 	int startY = ((y2+y1)/2) - ((numLines*24)/2);
 	char *tok = strtok(message,"\n");
 	while(tok != NULL) {
-		WriteFontStyled(x1 + 20, startY, tok, 0.85f, false, defaultColor);
+		float scale = GetTextScaleToFitInWidth(tok, (int)((380 - (x1 + 20)) / 0.85f)) * 0.85f;
+		WriteFontStyled(x1 + 20, startY, tok, scale, false, defaultColor);
 		tok = strtok(NULL,"\n");
 		startY+=24;
 	}
@@ -523,12 +535,12 @@ void DrawProgressDetailed(int percent, char *message, int startMb, int endMb, ch
 			20, 90,
 			percent,
 			(GXColor){0,200,200,180},
-			0.5f, 0.5f, endMb > 8000);
+			0.5f, 0.5f, endMb > 8000, errorPercent);
 	sprintf(txtbuffer,"%d %%",percent);
 	WriteFontStyled(x2 - 140, y2-24, txtbuffer, 0.75f, false, defaultColor);
 	
 	WriteFontStyled(x1 + 20, y2-72, calculateCheckSums ? "Calcs: CRC32/MD5/SHA-1" : "Calcs: CRC32", 0.75f, false, defaultColor);
-	WriteFontStyled(x1 + 20, y2-24, "Press B to cancel", 0.75f, false, defaultColor);
+	WriteFontStyled(x1 + 20, y2-24, errorPercent >= 0 ? "Press A to continue" : "Press B to cancel", 0.75f, false, defaultColor);
 	DrawDatInfo(discType);
 }
 

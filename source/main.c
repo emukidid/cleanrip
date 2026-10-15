@@ -333,25 +333,15 @@ static void Initialise() {
 	VIDEO_ClearFrameBuffer(vmode, xfb[1], COLOR_BLACK);
 	VIDEO_SetNextFramebuffer(xfb[0]);
 	VIDEO_SetPostRetraceCallback(InvalidatePADS);
-	VIDEO_SetBlack(FALSE);
+	VIDEO_SetBlack(false);
 	VIDEO_Flush();
-	VIDEO_WaitVSync();
-	if (vmode->viTVMode & VI_NON_INTERLACE)
-		VIDEO_WaitVSync();
+	VIDEO_WaitForFlush();
 
 	// setup the fifo and then init GX
 	void *gp_fifo = NULL;
 	gp_fifo = MEM_K0_TO_K1 (memalign (32, DEFAULT_FIFO_SIZE));
 	memset (gp_fifo, 0, DEFAULT_FIFO_SIZE);
 	GX_Init (gp_fifo, DEFAULT_FIFO_SIZE);
-	// clears the bg to color and clears the z buffer
-	GX_SetCopyClear ((GXColor){0,0,0,255}, 0x00000000);
-	// init viewport
-	GX_SetViewport (0, 0, vmode->fbWidth, vmode->efbHeight, 0, 1);
-	// Set the correct y scaling for efb->xfb copy operation
-	GX_SetDispCopyYScale ((f32) vmode->xfbHeight / (f32) vmode->efbHeight);
-	GX_SetDispCopyDst (vmode->fbWidth, vmode->xfbHeight);
-	GX_SetCullMode (GX_CULL_NONE); // default in rsp init
 	GX_CopyDisp (xfb[0], GX_TRUE); // This clears the efb
 	GX_CopyDisp (xfb[0], GX_TRUE); // This clears the xfb
 
@@ -471,7 +461,44 @@ static int initialise_dvd() {
 	DrawEmptyBox(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
 	WriteCentre(255, "Initialising Disc ...");
 	DrawFrameFinish();
+#ifdef HW_DOL
+	dvd_set_nr_mode(0);
+#endif
 	int ret = init_dvd();
+
+#ifdef HW_DOL
+	// A disc that is present but fails to initialise could be an NR disc
+	u32 err = dvd_get_error();
+	if (ret != 0 && (err >> 24) != 1 && (err & 0xFFFFFF) != 0x023A00
+		&& DrawYesNoDialog("Disc could not be initialised",
+						   "Is this an NR (dev/proto/beta) disc?")) {
+		dvd_set_nr_mode(1);
+		DrawFrameStart();
+		DrawEmptyBox(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
+		WriteCentre(255, "Initialising NR Disc ...");
+		DrawFrameFinish();
+		ret = init_dvd();
+		if (ret != 0) {
+			DrawFrameStart();
+			DrawEmptyBox(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
+			if (ret == NR_UNSUPPORTED_DRIVE) {
+				WriteCentre(255, "NR discs are not supported on this drive");
+			} else {
+				u32 progress, state;
+				print_gecko("NR disc init failed %i %08X\r\n", ret, dvd_get_error());
+				WriteCentre(205, "Failed to initialise NR disc");
+				WriteCentre(230, dvd_error_str());
+				dvd_get_nr_debug(&progress, &state);
+				sprintf(txtbuffer, "Drive state %08X %08X", progress, state);
+				WriteCentre(255, txtbuffer);
+				print_gecko("NR drive state %08X %08X\r\n", progress, state);
+			}
+			dvd_set_nr_mode(0);
+			wait_press_A("to continue");
+			ret = NO_DISC;
+		}
+	}
+#endif
 
 	if (ret == NO_DISC) {
 		DrawFrameStart();
@@ -1102,6 +1129,11 @@ void renameFile(char* mountPath, char* befor, char* after, char* base) {
 
 char *getDiscTypeStr(int disc_type, bool isDualLayer) {
 	if(disc_type == IS_NGC_DISC) {
+#ifdef HW_DOL
+		if(dvd_get_nr_mode()) {
+			return "GameCube (NR)";
+		}
+#endif
 		return "GameCube";
 	}
 	if(disc_type == IS_DATEL_DISC) {
@@ -1176,7 +1208,12 @@ int dump_game(int disc_type, int fs) {
 	}
 
 	// Dump the BCA for Nintendo discs
-	if(selected_device_for_logs != TYPE_READONLY) {
+	if(selected_device_for_logs != TYPE_READONLY
+#ifdef HW_DOL
+		&& !dvd_get_nr_mode()	// NR discs have no BCA
+		&& dvd_drive_date() != 0x20010619 // !Nintendo Gateway GameCube
+#endif
+		) {
 		dump_bca();
 	}
 
@@ -1329,7 +1366,7 @@ int dump_game(int disc_type, int fs) {
 					
 					DrawProgressDetailed((int)((float)((float)startLBA/(float)endLBA)*100), txtbuffer, 
 						(int) (((u64) ((u64) startLBA << 11)) / (1024*1024)),
-						(int) (((u64) ((u64) endLBA << 11)) / (1024*1024)), discTypeStr, calcChecksums, disc_type);
+						(int) (((u64) ((u64) endLBA << 11)) / (1024*1024)), discTypeStr, calcChecksums, disc_type, -1);
 			}
 			else {
 				sprintf(txtbuffer, "%dMB %4.2fKB/s - ETA %02d:%02d:%02d",
@@ -1360,13 +1397,29 @@ int dump_game(int disc_type, int fs) {
 	MQ_Close(msgq);
 
 	if(ret != -61 && ret) {
+		// startLBA is where the failed read started
+		int errorMb = (int) (((u64) ((u64) startLBA << 11)) / (1024*1024));
 		DrawFrameStart();
-		DrawEmptyBox (30,180, vmode->fbWidth-38, 350, COLOR_BLACK);
-		sprintf(txtbuffer, "%s",dvd_error_str());
-		print_gecko("Error: %s\r\n",txtbuffer);
-		WriteCentre(255,txtbuffer);
-		dvd_motor_off(1);
-		wait_press_A("to continue");
+		if(newProgressDisplay) {
+			// Keep the progress screen up, mark the error on the disc
+			int percent = (int)((float)((float)startLBA/(float)endLBA)*100);
+			sprintf(txtbuffer, "Read error at %dMB\n%s", errorMb, dvd_error_str());
+			print_gecko("Error at %dMB: %s\r\n",errorMb,dvd_error_str());
+			DrawProgressDetailed(percent, txtbuffer, errorMb,
+							(int) (((u64) ((u64) endLBA << 11)) / (1024*1024)), discTypeStr, calcChecksums, disc_type, percent);
+			dvd_motor_off(1);
+			DrawFrameFinish();
+			while ((get_buttons_pressed() & PAD_BUTTON_A));
+			while (!(get_buttons_pressed() & PAD_BUTTON_A));
+		}
+		else {
+			DrawEmptyBox (30,180, vmode->fbWidth-38, 350, COLOR_BLACK);
+			sprintf(txtbuffer, "%s",dvd_error_str());
+			print_gecko("Error at %dMB: %s\r\n",errorMb,txtbuffer);
+			WriteCentre(255,txtbuffer);
+			dvd_motor_off(1);
+			wait_press_A("to continue");
+		}
 		return 0;
 	}
 	else if (ret == -61) {
@@ -1383,7 +1436,7 @@ int dump_game(int disc_type, int fs) {
 		DrawFrameStart();
 		DrawProgressDetailed((int)((float)((float)startLBA/(float)endLBA)*100), "Finished", 
 						(int) (((u64) ((u64) startLBA << 11)) / (1024*1024)),
-						(int) (((u64) ((u64) endLBA << 11)) / (1024*1024)), discTypeStr, calcChecksums, disc_type);
+						(int) (((u64) ((u64) endLBA << 11)) / (1024*1024)), discTypeStr, calcChecksums, disc_type, -1);
 		DrawEmptyBox (30,180, vmode->fbWidth-38, 350, COLOR_BLACK);
 		sprintf(txtbuffer,"Copy completed in %u mins. Press A",diff_sec(startTime, gettime())/60);
 		WriteCentre(190,txtbuffer);

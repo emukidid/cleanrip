@@ -59,7 +59,7 @@ void init_textures();
 void DrawFrameStart();
 void DrawFrameFinish();
 void DrawProgressBar(int percent, char *message, int discType);
-void DrawProgressDetailed(int percent, char *message, int startMb, int endMb, char *discTypeStr, int calculateCheckSums, int discType);
+void DrawProgressDetailed(int percent, char *message, int startMb, int endMb, char *discTypeStr, int calculateCheckSums, int discType, int errorPercent);
 void DrawMessageBox(int type, char *message);
 void DrawRawFont(int x, int y, char *message);
 void DrawSelectableButton(int x1, int y1, int x2, int y2, char *message, int mode, u32 color);
