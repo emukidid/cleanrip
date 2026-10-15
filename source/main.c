@@ -29,6 +29,7 @@
 #include <unistd.h>
 #include <malloc.h>
 #include <stdarg.h>
+#include <sys/stat.h>
 #include <ogc/timesupp.h>
 #include <ogc/machine/processor.h>
 #include "FrameBufferMagic.h"
@@ -86,6 +87,7 @@ static int ignoreReadErrors = 0;
 static char gameName[32];
 static char internalName[512];
 static char mountPath[512];
+static char dumpPath[1024];
 static char wpadNeedScan = 0;
 static char padNeedScan = 0;
 int print_usb = 0;
@@ -934,6 +936,55 @@ static void get_settings(int disc_type) {
 	while(get_buttons_pressed() & PAD_BUTTON_B);
 }
 
+static void create_dir(char *path) {
+	struct stat st;
+	if (mkdir(path, 0755) != 0
+		&& (errno != EEXIST || stat(path, &st) != 0 || !S_ISDIR(st.st_mode))) {
+		DrawFrameStart();
+		DrawEmptyBox(30, 180, vmode->fbWidth - 38, 350, COLOR_BLACK);
+		WriteCentre(230, "Failed to create directory:");
+		WriteCentre(255, path);
+		WriteCentre(315, "Exiting in 5 seconds");
+		DrawFrameFinish();
+		sleep(5);
+		exit(0);
+	}
+}
+
+static void sanitize_dir_name(char *name) {
+	// Replace characters invalid in FAT/NTFS directory names with '_'.
+	for (int i = 0; name[i]; i++) {
+		if ((unsigned char)name[i] < 32 || strchr("/\\:*?\"<>|", name[i])) {
+			name[i] = '_';
+		}
+	}
+	size_t len = strlen(name);
+	// Remove trailing spaces and dots.
+	while (len && (name[len-1] == ' ' || name[len-1] == '.')) {
+		name[--len] = 0;
+	}
+}
+
+static void create_dump_directory() {
+	if(selected_device_for_logs == TYPE_READONLY) {
+		return;
+	}
+
+	char dirName[256];
+	strncpy(&dirName[0], &internalName[0], sizeof(dirName) - 1);
+	dirName[sizeof(dirName) - 1] = '\0';
+	sanitize_dir_name(dirName);
+	if (!dirName[0]) {
+		snprintf(dirName, sizeof(dirName), "%s", &gameName[0]);
+	}
+
+	sprintf(&dumpPath[0], "%scleanrip-dumps/", &mountPath[0]);
+	create_dir(dumpPath);
+	strcat(dumpPath, dirName);
+	strcat(dumpPath, "/");
+	create_dir(dumpPath);
+}
+
 void prompt_new_file(FILE **fp, int chunk, int fs, int silent) {
 	// Close the file and unmount the fs
 	fclose(*fp);
@@ -1034,8 +1085,9 @@ void prompt_new_file(FILE **fp, int chunk, int fs, int silent) {
 		} while (ret != 1);
 	}
 
+	create_dump_directory();
 	*fp = NULL;
-	sprintf(txtbuffer, "%s%s.part%i.iso", &mountPath[0], &gameName[0], chunk);
+	sprintf(txtbuffer, "%s%s.part%i.iso", &dumpPath[0], &gameName[0], chunk);
 	remove(&txtbuffer[0]);
 	*fp = fopen(&txtbuffer[0], "wb");
 	if (*fp == NULL) {
@@ -1054,7 +1106,7 @@ void prompt_new_file(FILE **fp, int chunk, int fs, int silent) {
 }
 
 void dump_bca() {
-	sprintf(txtbuffer, "%s%s.bca", &mountPath[0], &gameName[0]);
+	sprintf(txtbuffer, "%s%s.bca", &dumpPath[0], &gameName[0]);
 	remove(&txtbuffer[0]);
 	FILE *fp = fopen(txtbuffer, "wb");
 	if (fp) {
@@ -1097,10 +1149,10 @@ void dump_info(char *md5, char *sha1, u32 crc32, int verified, u32 seconds, char
 	}
 
 	if (name != NULL) {
-		sprintf(txtbuffer, "%s%s-dumpinfo.txt", &mountPath[0], &name[0]);
+		sprintf(txtbuffer, "%s%s-dumpinfo.txt", &dumpPath[0], &name[0]);
 	}
 	else {
-		sprintf(txtbuffer, "%s%s-dumpinfo.txt", &mountPath[0], &gameName[0]);
+		sprintf(txtbuffer, "%s%s-dumpinfo.txt", &dumpPath[0], &gameName[0]);
 	}
 	
 	remove(&txtbuffer[0]);
@@ -1150,6 +1202,7 @@ char *getDiscTypeStr(int disc_type, bool isDualLayer) {
 
 int dump_game(int disc_type, int fs) {
 
+	create_dump_directory();
 	isDumping = 1;
 	md5_state_t state;
 	md5_byte_t digest[16];
@@ -1232,9 +1285,9 @@ int dump_game(int disc_type, int fs) {
 	FILE *fp = NULL;
 	if(selected_device != TYPE_READONLY) {
 		if (opt_chunk_size < endLBA) {
-			sprintf(txtbuffer, "%s%s.part0.iso", &mountPath[0], &gameName[0]);
+			sprintf(txtbuffer, "%s%s.part0.iso", &dumpPath[0], &gameName[0]);
 		} else {
-			sprintf(txtbuffer, "%s%s.iso", &mountPath[0], &gameName[0]);
+			sprintf(txtbuffer, "%s%s.iso", &dumpPath[0], &gameName[0]);
 		}
 		remove(&txtbuffer[0]);
 		fp = fopen(&txtbuffer[0], "wb");
@@ -1445,7 +1498,7 @@ int dump_game(int disc_type, int fs) {
 		char tempstr[32];
 
 		if ((disc_type == IS_DATEL_DISC)) {
-				dump_skips(&mountPath[0], crc100000);
+				dump_skips(&dumpPath[0], crc100000);
 		}
 		char md5sum[64];
 		char sha1sum[64];
@@ -1472,22 +1525,22 @@ int dump_game(int disc_type, int fs) {
 			if (opt_chunk_size < endLBA) {
 				for (int i = 0; i < chunk; i++) {
 					sprintf(tempstr, ".part%i.iso", i);
-					renameFile(&mountPath[0], &gameName[0], verify_get_name(0), &tempstr[0]);
+					renameFile(&dumpPath[0], &gameName[0], verify_get_name(0), &tempstr[0]);
 				}
 			}
 			else {
-				renameFile(&mountPath[0], &gameName[0], verify_get_name(0), ".iso");
+				renameFile(&dumpPath[0], &gameName[0], verify_get_name(0), ".iso");
 			}
-			renameFile(&mountPath[0], &gameName[0], verify_get_name(0), ".bca");
+			renameFile(&dumpPath[0], &gameName[0], verify_get_name(0), ".bca");
 
 			name = verify_get_name(0);
 		}
 		if ((disc_type == IS_DATEL_DISC)) {
 			verified = datel_findMD5Sum(&md5sum[0]);
 			if (verified) {
-				renameFile(&mountPath[0], &gameName[0], datel_get_name(0), ".iso");
-				renameFile(&mountPath[0], &gameName[0], datel_get_name(0), ".skp");
-				renameFile(&mountPath[0], &gameName[0], datel_get_name(0), ".bca");
+				renameFile(&dumpPath[0], &gameName[0], datel_get_name(0), ".iso");
+				renameFile(&dumpPath[0], &gameName[0], datel_get_name(0), ".skp");
+				renameFile(&dumpPath[0], &gameName[0], datel_get_name(0), ".bca");
 
 				name = datel_get_name(0);
 			}
@@ -1515,14 +1568,14 @@ int dump_game(int disc_type, int fs) {
 			dump_info(NULL, NULL, crc32, verified, diff_sec(startTime, gettime()), NULL);
 		}
 		if ((disc_type == IS_DATEL_DISC) && !(verified)) {
-			dump_skips(&mountPath[0], crc100000);
+			dump_skips(&dumpPath[0], crc100000);
 			
 			char tempstr[32];
 			sprintf(tempstr, "datel_%08x", crc100000);
-			renameFile(&mountPath[0], &gameName[0], &tempstr[0], ".iso");
-			renameFile(&mountPath[0], &gameName[0], &tempstr[0], "-dumpinfo.txt");
-			renameFile(&mountPath[0], &gameName[0], &tempstr[0], ".skp");
-			renameFile(&mountPath[0], &gameName[0], &tempstr[0], ".bca");
+			renameFile(&dumpPath[0], &gameName[0], &tempstr[0], ".iso");
+			renameFile(&dumpPath[0], &gameName[0], &tempstr[0], "-dumpinfo.txt");
+			renameFile(&dumpPath[0], &gameName[0], &tempstr[0], ".skp");
+			renameFile(&dumpPath[0], &gameName[0], &tempstr[0], ".bca");
 		}
 		dvd_motor_off(1);
 		wait_press_A_exit_B(false);
