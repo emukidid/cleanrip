@@ -12,6 +12,8 @@ If you have any questions about CleanRip, please make a thread over at http://ww
 * BCA Dumping
 * Redump.info Rip Verification (via gc-forever.com) 
 
+Dumps, BCA files and verification logs are saved to `/cleanrip-dumps/<game name>/` on the selected device, using the disc ID if the title is empty. Invalid directory-name characters are replaced with underscores.
+
 # Requirements
 * Wii (or GC)
 * Wii/GC Controller
