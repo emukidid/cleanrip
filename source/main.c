@@ -497,6 +497,10 @@ static int initialise_dvd() {
 			wait_press_A("to continue");
 			ret = NO_DISC;
 		}
+		else {
+			dvd_set_nr_verify(DrawYesNoDialog("Enable read error detection?",
+											  "(doubles the time taken, recommended)"));
+		}
 	}
 #endif
 
@@ -1176,6 +1180,11 @@ int dump_game(int disc_type, int fs) {
 
 	// The read size
 	u32 opt_read_size = READ_SIZE;
+#ifdef HW_DOL
+	if (dvd_get_nr_mode() && dvd_get_nr_verify()) {
+		opt_read_size = NR_VERIFY_READ_SIZE;
+	}
+#endif
 
 	u32 startLBA = 0;
 	u32 endLBA = (disc_type == IS_NGC_DISC || disc_type == IS_DATEL_DISC) ? NGC_DISC_SIZE
@@ -1211,7 +1220,7 @@ int dump_game(int disc_type, int fs) {
 	if(selected_device_for_logs != TYPE_READONLY
 #ifdef HW_DOL
 		&& !dvd_get_nr_mode()	// NR discs have no BCA
-		&& dvd_drive_date() != 0x20010619 // !Nintendo Gateway GameCube
+		&& dvd_known_drive()
 #endif
 		) {
 		dump_bca();

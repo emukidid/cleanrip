@@ -46,7 +46,11 @@ int DVD_LowRead64Datel(void* dst, u32 len, uint64_t offset, int isKnownDatel);
 void xeno_disable();
 void dvd_set_nr_mode(int enable);
 int dvd_get_nr_mode();
+void dvd_set_nr_verify(int enable);
+int dvd_get_nr_verify();
+#define NR_VERIFY_READ_SIZE	0x80000
 void dvd_get_nr_debug(u32* progress, u32* state);
 u32 dvd_drive_date();
+int dvd_known_drive();
 #endif
 

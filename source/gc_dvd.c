@@ -38,6 +38,8 @@
 u32 dvd_hard_init = 0;
 static u32 read_cmd = NORMAL;
 
+static int dvd_read_cmd(void* dst, u32 len, uint64_t offset);
+
 #ifdef HW_RVL
 volatile u32* dvd = (volatile u32*) 0xCD806000;
 #else
@@ -127,6 +129,13 @@ static int nr_servo = -1;		// servo setup that initialised the disc, -1 if none 
 // aligned to the 2048 bytes the host reads (frame byte 6 onwards)
 static u32 nr_corr[16][2048 / 4];
 
+// Verified NR reads: because we have EDC disabled, we can't detect faulty reads
+#define NR_RETRIES	5
+static int nr_verify = 0;
+static int nr_verify_failed = 0;	// last read had sectors no two reads agreed on
+static u8 nr_second[NR_VERIFY_READ_SIZE] __attribute__((aligned(32)));
+static u8 nr_reread[NR_RETRIES][16 * 2048] __attribute__((aligned(32)));
+
 // Standard debug drive stuff below
 static void dvd_writemem_32(u32 addr, u32 dat)
 {
@@ -189,6 +198,13 @@ static const char* drive_patch_ptr(u32 date)
 	case 0x20010831: return DriveQ;
 	}
 	return NULL;
+}
+
+// To gate debug stuff to only drives we know dvd_unlock works on.
+static int known_drive = 0;
+
+int dvd_known_drive() {
+	return known_drive;
 }
 
 static void dvd_set_patch_mode(u32 mode)
@@ -358,10 +374,112 @@ static int dvd_enable_nr_patches(int servo)
 	return ret ? -1 : 0;
 }
 
+// Read once more after a read elsewhere, so it can't come from the cache
+static int nr_read_again(void* dst, u32 lba, u32 count)
+{
+	static u8 evict[2048] __attribute__((aligned(32)));
+	u32 near = lba >= 0x1000 ? lba - 0x800 : lba + 0x800;
+	dvd_read_cmd(evict, 2048, (u64)near << 11);
+	return dvd_read_cmd(dst, count << 11, (u64)lba << 11);
+}
+
+/*
+ * Read the block again until each of them has two reads that agree
+ */
+static int nr_settle_block(u8* out, const u8* second, u32 start, u32 end, u32 bad)
+{
+	u32 b = start & ~15;
+	u32 lo = b > start ? b : start;
+	u32 hi = b + 16 < end ? b + 16 : end;
+
+	print_gecko("NR sectors %u-%u: reads differ (mask %04X), reading again\r\n", lo, hi - 1, bad);
+	for (int t = 0; t < NR_RETRIES && bad; t++) {
+		if (nr_read_again(nr_reread[t], lo, hi - lo)) {
+			return 1;
+		}
+		for (u32 s = lo; s < hi; s++) {
+			u32 bit = 1 << (s & 15);
+			if (!(bad & bit)) {
+				continue;
+			}
+			const u8* now = nr_reread[t] + ((s - lo) << 11);
+			const u8* agree = NULL;
+			if (!memcmp(now, out + ((s - start) << 11), 2048)) {
+				agree = out + ((s - start) << 11);
+			}
+			else if (!memcmp(now, second + ((s - start) << 11), 2048)) {
+				agree = now;
+			}
+			for (int u = 0; u < t && !agree; u++) {
+				if (!memcmp(now, nr_reread[u] + ((s - lo) << 11), 2048)) {
+					agree = now;
+				}
+			}
+			if (agree) {
+				if (agree != out + ((s - start) << 11)) {
+					memcpy(out + ((s - start) << 11), agree, 2048);
+				}
+				bad &= ~bit;
+			}
+		}
+		if (!bad) {
+			print_gecko("NR sectors %u-%u: settled after %i more reads\r\n", lo, hi - 1, t + 1);
+		}
+	}
+	if (bad) {
+		print_gecko("NR sectors %u-%u: no two reads agree (mask %04X)\r\n", lo, hi - 1, bad);
+		nr_verify_failed = 1;
+		return 1;
+	}
+	return 0;
+}
+
+static int nr_read_verified(u8* dst, u32 len, u64 offset)
+{
+	u32 start = offset >> 11;
+	u32 end = start + (len >> 11);
+
+	if (dvd_read_cmd(dst, len, offset)) {
+		return 1;
+	}
+	// A small read could still be in the drives cache for the second read
+	int ret = len >= 8 * 16 * 2048 ? dvd_read_cmd(nr_second, len, offset)
+		: nr_read_again(nr_second, start, end - start);
+	if (ret) {
+		return 1;
+	}
+	for (u32 b = start & ~15; b < end; b += 16) {
+		u32 bad = 0;
+		for (u32 s = b > start ? b : start; s < b + 16 && s < end; s++) {
+			if (memcmp(dst + ((s - start) << 11), nr_second + ((s - start) << 11), 2048)) {
+				bad |= 1 << (s & 15);
+			}
+		}
+		if (bad) {
+			u32 lo = b > start ? b : start;
+			if (nr_settle_block(dst + ((lo - start) << 11), nr_second + ((lo - start) << 11),
+					lo, end, bad)) {
+				return 1;
+			}
+		}
+	}
+	return 0;
+}
+
 void dvd_set_nr_mode(int enable) {
 	nr_mode = enable;
 	nr_corr_ready = 0;
 	nr_servo = -1;
+	nr_verify = 0;
+}
+
+void dvd_set_nr_verify(int enable) {
+	nr_verify = enable;
+	print_gecko("NR verified reads: %s\r\n", enable ? "on" : "off");
+}
+
+int dvd_get_nr_verify() {
+	return nr_verify;
 }
 
 int dvd_get_nr_mode() {
@@ -374,6 +492,10 @@ int dvd_get_nr_mode() {
  * the firmware variables that move between drive versions.
  */
 void dvd_get_nr_debug(u32* progress, u32* state) {
+	if (!known_drive) {
+		*progress = *state = 0;
+		return;
+	}
 	dvd_unlock();
 	*progress = dvd_readmem_32(0x40ead0);
 	*state = dvd_readmem_32(0x40ed00);
@@ -404,9 +526,19 @@ int init_dvd() {
 	DVD_LowReset(DVD_RESETHARD);
 	usleep(1150000);
 	DVD_LowReset(DVD_RESETHARD);
-	dvd_unlock();
+	u32 date = dvd_drive_date();
+	known_drive = drive_patch_ptr(date) != NULL;
+	if (known_drive) {
+		dvd_unlock();
+	}
+	else {
+		print_gecko("Drive %08X not known, no drive memory commands\r\n", date);
+	}
 	memset(cached_bca, 0, 64);
 	if (nr_mode) {
+		if (!known_drive) {
+			return NR_UNSUPPORTED_DRIVE;
+		}
 		// Try the retail servo setup first and the NR
 		// reader's if the disc doesn't initialise with it, then stick with
 		// what worked for later re-inits during the dump.
@@ -428,7 +560,9 @@ int init_dvd() {
 		}
 	}
 	else {
-		dvd_readmem_array(0x415460, cached_bca, 64);
+		if (known_drive) {
+			dvd_readmem_array(0x415460, cached_bca, 64);
+		}
 		dvd_read_id();
 	}
 	if (!dvd_get_error()) {
@@ -556,6 +690,25 @@ int DVD_LowRead64(void* dst, u32 len, uint64_t offset) {
 	if (offset >> 2 > 0xFFFFFFFF)
 		return -1;
 
+#ifdef HW_DOL
+	if (nr_mode && nr_corr_ready) {
+		nr_verify_failed = 0;
+		for (u32 done = 0; done < len; ) {
+			u32 n = len - done < NR_VERIFY_READ_SIZE ? len - done : NR_VERIFY_READ_SIZE;
+			int ret = nr_verify ? nr_read_verified((u8*)dst + done, n, offset + done)
+				: dvd_read_cmd((u8*)dst + done, n, offset + done);
+			if (ret)
+				return 1;
+			done += n;
+		}
+		nr_descramble(dst, len, offset);
+		return 0;
+	}
+#endif
+	return dvd_read_cmd(dst, len, offset);
+}
+
+static int dvd_read_cmd(void* dst, u32 len, uint64_t offset) {
 	if ((((u32) dst) & 0xC0000000) == 0x80000000) // cached?
 		dvd[0] = 0x2E;
 	dvd[1] = 0;
@@ -571,11 +724,6 @@ int DVD_LowRead64(void* dst, u32 len, uint64_t offset) {
 
 	if (dvd[0] & 0x4)
 		return 1;
-#ifdef HW_DOL
-	if (nr_mode && nr_corr_ready) {
-		nr_descramble(dst, len, offset);
-	}
-#endif
 	return 0;
 }
 
@@ -640,6 +788,10 @@ void xeno_disable() {
 
 static char error_str[256];
 char *dvd_error_str() {
+#ifdef HW_DOL
+	if (nr_mode && nr_verify_failed)
+		return "Unrecovered read error (reads differ)";
+#endif
 	u32 err = dvd_get_error();
 	if (!err)
 		return "OK";
